@@ -41,8 +41,9 @@ Any prominent real-world programming language (ex. Java, Python, etc.)
 
 ### TA Feedback
 * For the idea, providing tree and sequence diagram, he said about the concern for depending on syntax too much with advice "it needs to think about what happened in execution not what happen inside."
-* For the idea of runtime error analysis, he gives a feedback to link input values with exception. 
-  * It is better to track everything influenced by input and how the input cause exception.
+  * So, we decide not to take this idea
+* For the idea of runtime error analysis, he gives a feedback to link input values with exception. It is better to track everything influenced by input and how the input cause exception.
+  * So, we decide to connect/combine the idea of runtime error analysis with possible input values.
 
 ### Responsibilities
 
