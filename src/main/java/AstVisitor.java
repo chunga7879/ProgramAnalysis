@@ -8,12 +8,31 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class AstVisitor implements GenericVisitor<Object, Object> {
+    private String targetMethod;
+
+    public AstVisitor(String targetMethod) {
+        this.targetMethod = targetMethod;
+    }
+
     @Override
     public Object visit(CompilationUnit n, Object arg) {
-        for (BinaryExpr be: n.findAll(BinaryExpr.class)) {
-            be.accept(this, null);
+        List<MethodDeclaration> declarations = n.findAll(
+                MethodDeclaration.class,
+                methodDeclaration -> Objects.equals(methodDeclaration.getNameAsString(), targetMethod)
+        );
+        if (declarations.isEmpty()) throw new RuntimeException("Method not found");
+        for (MethodDeclaration dec: declarations) {
+            dec.accept(this, arg);
         }
         return null;
     }
@@ -90,6 +109,12 @@ public class AstVisitor implements GenericVisitor<Object, Object> {
 
     @Override
     public Object visit(MethodDeclaration n, Object arg) {
+        Optional<BlockStmt> body = n.getBody();
+        if (body.isPresent()) {
+            for (Statement s : body.get().getStatements()) {
+                s.accept(this, arg);
+            }
+        }
         return null;
     }
 
@@ -248,11 +273,29 @@ public class AstVisitor implements GenericVisitor<Object, Object> {
 
     @Override
     public Object visit(MethodCallExpr n, Object arg) {
+        NodeList<Expression> methodArgs = n.getArguments();
+        if (!methodArgs.isEmpty()) {
+            ResolvedMethodDeclaration dec = n.resolve();
+            for (int i = 0; i < methodArgs.size(); i++) {
+                Expression methodArg = methodArgs.get(i);
+                if (methodArg instanceof NullLiteralExpr) {
+                    ResolvedParameterDeclaration pDec = dec.getParam(i);
+                    if (pDec instanceof JavaParserParameterDeclaration paramDec) {
+                        NodeList<AnnotationExpr> annotations = paramDec.getWrappedNode().getAnnotations();
+                        if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "NotNull"))) {
+                            System.out.println(n + " is passing null to non-nullable argument " + paramDec.getWrappedNode().getNameAsString());
+                        }
+                    }
+                }
+            }
+        }
         return null;
     }
 
     @Override
     public Object visit(NameExpr n, Object arg) {
+        ResolvedValueDeclaration dec = n.resolve();
+        // dec will be where the variable was originally declared
         return null;
     }
 
@@ -338,7 +381,7 @@ public class AstVisitor implements GenericVisitor<Object, Object> {
 
     @Override
     public Object visit(ExpressionStmt n, Object arg) {
-        return null;
+        return n.getExpression().accept(this, arg);
     }
 
     @Override
@@ -358,7 +401,7 @@ public class AstVisitor implements GenericVisitor<Object, Object> {
 
     @Override
     public Object visit(ReturnStmt n, Object arg) {
-        return null;
+        return n.getExpression().isPresent() ? n.getExpression().get().accept(this, arg) : null;
     }
 
     @Override
