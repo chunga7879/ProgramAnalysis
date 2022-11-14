@@ -1,3 +1,5 @@
+package demo;
+
 public class ArithmeticExceptionExample {
 
     // throws ArithmeticException if y is 0
