@@ -1,4 +1,4 @@
-package analysis.models;
+package analysis.model;
 
 public class VariablesState {
 }

@@ -1,6 +1,6 @@
 package analysis;
 
-import analysis.models.VariablesState;
+import analysis.model.VariablesState;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
