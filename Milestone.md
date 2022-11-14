@@ -67,7 +67,7 @@ Any prominent real-world programming language (ex. Java, Python, etc.)
 # Milestone 3
 
 ## Project mockup
-See the results of the study [here](https://docs.google.com/document/d/1JJHXh6V-9dyOU6LWsA6AC1xYlG6Ga5CRW9KppHqRKJw/edit#).
+See the results of the study [here](https://docs.google.com/document/d/1s9kJZhugibSClv30y_vehpwmT5QMzwrcgU_T8KU31UQ/edit).
 
 Some pseudo code is also available [here](https://docs.google.com/document/d/1Bj9LG0nBri2cVTdeBYa_x0tmj76wMndX2Voi_znQNNk/edit).
 
@@ -83,7 +83,7 @@ No major changes have been made.
   - Considered spoon and JavaParser
   - Settled on [JavaParser](https://javaparser.org/)
 - [x] Research - Visualization
-  - Considering using PlanetUML.
-  - We can generate PlanetUML code and pass it to the PlanetUML generator/api to get the actual visualization.
+  - Considering using PlantUML.
+  - We can generate PlantUML code and pass it to the PlanetUML generator/api to get the actual visualization.
 - [x] First User Study
   - Results of the study [here](https://docs.google.com/document/d/1JJHXh6V-9dyOU6LWsA6AC1xYlG6Ga5CRW9KppHqRKJw/edit#).
