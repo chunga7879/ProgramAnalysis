@@ -67,12 +67,17 @@ Any prominent real-world programming language (ex. Java, Python, etc.)
 # Milestone 3
 
 ## Project mockup
-See the results of the study [here](https://docs.google.com/document/d/1s9kJZhugibSClv30y_vehpwmT5QMzwrcgU_T8KU31UQ/edit).
+See the design and examples [here](https://docs.google.com/document/d/1s9kJZhugibSClv30y_vehpwmT5QMzwrcgU_T8KU31UQ/edit).
 
 Some pseudo code is also available [here](https://docs.google.com/document/d/1Bj9LG0nBri2cVTdeBYa_x0tmj76wMndX2Voi_znQNNk/edit).
 
 ## User Study
 Results of the study are available [here](https://docs.google.com/document/d/1JJHXh6V-9dyOU6LWsA6AC1xYlG6Ga5CRW9KppHqRKJw/edit#).
+#### Summary
+- Analysis is helpful for simple methods but less so for complex methods
+- Having errors show in the call graph that can’t happen is confusing
+- Utilizing annotations is easily understandable
+
 
 ## Original Design Changes
 No major changes have been made.
