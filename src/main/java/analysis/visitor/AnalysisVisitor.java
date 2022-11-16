@@ -1,6 +1,7 @@
-package analysis;
+package analysis.visitor;
 
 import analysis.model.VariablesState;
+import analysis.values.AnyValue;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -18,9 +19,11 @@ import java.util.Optional;
 
 public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
     private final String targetMethod;
+    private final ExpressionVisitor expressionVisitor;
 
     public AnalysisVisitor(String targetMethod) {
         this.targetMethod = targetMethod;
+        this.expressionVisitor = new ExpressionVisitor();
     }
 
     @Override
@@ -38,6 +41,10 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
     @Override
     public Void visit(MethodDeclaration n, VariablesState arg) {
         Optional<BlockStmt> body = n.getBody();
+        for (Parameter p : n.getParameters()) {
+            // TODO: handle annotations for parameters
+            arg.setVariable(p, new AnyValue());
+        }
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);
     }
 
@@ -51,6 +58,7 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
 
     @Override
     public Void visit(ExpressionStmt n, VariablesState arg) {
+        n.getExpression().accept(expressionVisitor, arg);
         return null;
     }
 
@@ -119,6 +127,9 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
         return null;
     }
 
+
+    // region ----Not required----
+    // Move any we're not using here
     @Override
     public Void visit(Name n, VariablesState arg) {
         return null;
@@ -254,9 +265,6 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
         return null;
     }
 
-
-    // region ----Not required----
-    // Move any we're not using here
     @Override
     public Void visit(LabeledStmt n, VariablesState arg) {
         return null;

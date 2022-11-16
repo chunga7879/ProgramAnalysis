@@ -1,6 +1,7 @@
 package ui;
 
-import analysis.AnalysisVisitor;
+import analysis.model.VariablesState;
+import analysis.visitor.AnalysisVisitor;
 import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.Problem;
 import com.github.javaparser.StaticJavaParser;
@@ -28,7 +29,7 @@ public class Main {
             System.out.println("Finished compiling");
             try {
                 System.out.println("Starting analysis...");
-                compilationUnit.accept(new AnalysisVisitor(method), null);
+                compilationUnit.accept(new AnalysisVisitor(method), new VariablesState());
                 System.out.println("Finished analysis");
             } catch (Exception e) {
                 System.err.println("Analysis error: " + e.getMessage());
