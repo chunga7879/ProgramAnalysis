@@ -11,6 +11,14 @@ public class IntegerRange extends PossibleValues {
         this.max = max;
     }
 
+    public int getMin() {
+        return min;
+    }
+
+    public int getMax() {
+        return max;
+    }
+
     @Override
     public PossibleValues merge(PossibleValues other) {
         return other.mergeTo(this);
