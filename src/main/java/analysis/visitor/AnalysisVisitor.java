@@ -103,12 +103,18 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
         ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, arg);
         VariablesState trueState = conditionStates.getTrueState();
         VariablesState falseState = conditionStates.getFalseState();
+
+        // IF case
         AnalysisLogger.log(n, "IF TRUE: " + trueState.toFormattedString());
         n.getThenStmt().accept(this, trueState);
+
+        // ELSE case
         AnalysisLogger.log(n, "IF FALSE: " + falseState.toFormattedString());
         if (n.getElseStmt().isPresent()) {
             n.getElseStmt().get().accept(this, falseState);
         }
+
+        // Merge together
         arg.copyValuesFrom(trueState.mergeCopy(mergeVisitor, falseState));
         AnalysisLogger.logEnd(n, "MERGED: " + arg.toFormattedString());
         return null;

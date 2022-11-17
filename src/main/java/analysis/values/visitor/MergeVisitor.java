@@ -1,6 +1,9 @@
 package analysis.values.visitor;
 
-import analysis.values.*;
+import analysis.values.EmptyValue;
+import analysis.values.IntegerRange;
+import analysis.values.PossibleValues;
+import analysis.values.StringValue;
 
 /**
  * Visitor for getting possible values after merging operation of a & b

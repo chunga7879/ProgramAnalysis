@@ -36,6 +36,7 @@ public abstract class PossibleValues implements ValueVisitable {
     public String toString() {
         return toFormattedString();
     }
+
     /**
      * Get a formatted string describing the domain
      */

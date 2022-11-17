@@ -8,10 +8,16 @@ import com.github.javaparser.ast.Node;
  * Logger for viewing the state of the analysis
  */
 public final class AnalysisLogger {
+    /**
+     * Log the state of the arg at a node
+     */
     public static void log(Node n, VariablesState arg) {
         log(n, arg.toFormattedString());
     }
 
+    /**
+     * Log a message at a node
+     */
     public static void log(Node n, String message) {
         String lineCount = "?";
         if (n.getRange().isPresent()) {
@@ -25,8 +31,6 @@ public final class AnalysisLogger {
 
     /**
      * Log the end of the control statement
-     * @param n
-     * @param message
      */
     public static void logEnd(Node n, String message) {
         String lineCount = "?";
@@ -38,6 +42,9 @@ public final class AnalysisLogger {
         System.out.printf("[%2s] %-20s | %s\n", lineCount, line, message);
     }
 
+    /**
+     * Get first line of the string
+     */
     private static String getFirstLine(String str) {
         String[] split = str.split("\n");
         if (split.length < 1) return "";

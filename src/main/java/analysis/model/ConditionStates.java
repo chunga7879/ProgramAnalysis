@@ -1,5 +1,8 @@
 package analysis.model;
 
+/**
+ * Store a state for when the conditional is true and another for when it is false
+ */
 public class ConditionStates {
     public VariablesState trueState;
     public VariablesState falseState;

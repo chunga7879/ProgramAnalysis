@@ -93,7 +93,6 @@ public class VariablesState {
      * @param other Other state to merge
      */
     public void merge(MergeVisitor mergeVisitor, VariablesState other) {
-        // TODO: implement
         if (!this.isDomainEmpty() && !other.isDomainEmpty()) {
             for (Map.Entry<Node, PossibleValues> entry : this.variableMap.entrySet()) {
                 PossibleValues otherValues = other.variableMap.get(entry.getKey());

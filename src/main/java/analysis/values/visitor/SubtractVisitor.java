@@ -1,9 +1,7 @@
 package analysis.values.visitor;
 
-import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
-import analysis.values.StringValue;
 import utils.MathUtil;
 
 /**
