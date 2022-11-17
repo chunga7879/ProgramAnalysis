@@ -38,4 +38,9 @@ public class IntegerRange extends PossibleValues {
     public <T> T acceptOp(OperationVisitor<T> visitor, IntegerRange a) {
         return visitor.visit(a, this);
     }
+
+    @Override
+    public String toFormattedString() {
+        return "[" + min + "," + max + "]";
+    }
 }

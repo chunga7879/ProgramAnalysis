@@ -1,9 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
+import analysis.values.*;
 
 /**
  * Visitor for value operation
@@ -12,10 +9,13 @@ import analysis.values.StringValue;
 public interface OperationVisitor<T> {
     T visitAbstract(PossibleValues a, PossibleValues b);
     T visitAbstract(AnyValue a, PossibleValues b);
+    T visitAbstract(EmptyValue a, PossibleValues b);
     T visitAbstract(IntegerRange a, PossibleValues b);
     T visitAbstract(StringValue a, PossibleValues b);
 
     T visit(PossibleValues a, PossibleValues b);
+    T visit(EmptyValue a, PossibleValues b);
+    T visit(PossibleValues a, EmptyValue b);
     T visit(IntegerRange a, IntegerRange b);
     T visit(StringValue a, StringValue b);
     T visit(PossibleValues a, StringValue b);
