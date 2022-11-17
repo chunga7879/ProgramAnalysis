@@ -17,7 +17,7 @@ public class IntegerRange extends PossibleValues {
     }
 
     @Override
-    public PossibleValues mergeTo(IntegerRange other) {
+    protected IntegerRange mergeTo(IntegerRange other) {
         return new IntegerRange(
                 Math.min(this.min, other.min),
                 Math.max(this.max, other.max)
@@ -30,28 +30,23 @@ public class IntegerRange extends PossibleValues {
     }
 
     @Override
-    public IntegerRange addTo(IntegerRange firstValue) {
+    protected IntegerRange addTo(IntegerRange target) {
         return new IntegerRange(
-                MathUtil.addToLimit(firstValue.min, this.min),
-                MathUtil.addToLimit(firstValue.max, this.max)
+                MathUtil.addToLimit(target.min, this.min),
+                MathUtil.addToLimit(target.max, this.max)
         );
     }
 
     @Override
-    public PossibleValues addTo(StringValue firstValue) {
-        return firstValue.addTo(this);
+    public PossibleValues subtract(PossibleValues target) {
+        return target.subtractFrom(this);
     }
 
     @Override
-    public PossibleValues subtract(PossibleValues other) {
-        return other.subtractFrom(this);
-    }
-
-    @Override
-    public IntegerRange subtractFrom(IntegerRange firstValue) {
+    protected IntegerRange subtractFrom(IntegerRange target) {
         return new IntegerRange(
-                MathUtil.subtractToLimit(firstValue.min, this.max),
-                MathUtil.subtractToLimit(firstValue.max, this.min)
+                MathUtil.subtractToLimit(target.min, this.max),
+                MathUtil.subtractToLimit(target.max, this.min)
         );
     }
 }

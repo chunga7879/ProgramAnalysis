@@ -16,21 +16,21 @@ public abstract class PossibleValues {
     /**
      * @see PossibleValues#add(PossibleValues)
      */
-    public PossibleValues mergeTo(PossibleValues other) {
+    protected PossibleValues mergeTo(PossibleValues other) {
         return new AnyValue();
     }
 
     /**
      * @see PossibleValues#add(PossibleValues)
      */
-    public PossibleValues mergeTo(IntegerRange other) {
+    protected PossibleValues mergeTo(IntegerRange other) {
         return new AnyValue();
     }
 
     /**
      * @see PossibleValues#add(PossibleValues)
      */
-    public PossibleValues mergeTo(StringValue other) {
+    protected PossibleValues mergeTo(StringValue other) {
         return new AnyValue();
     }
 
@@ -45,53 +45,53 @@ public abstract class PossibleValues {
     }
 
     /**
-     * Add firstValue + this and return value
+     * Add target + this and return value
      *
-     * @param firstValue Value 'this' is being added to
+     * @param target Value 'this' is being added to
      * @return Result of addition
      */
-    protected PossibleValues addTo(PossibleValues firstValue) {
+    protected PossibleValues addTo(PossibleValues target) {
         return new AnyValue();
     }
 
     /**
      * @see PossibleValues#addTo(PossibleValues)
      */
-    protected PossibleValues addTo(IntegerRange firstValue) {
+    protected PossibleValues addTo(IntegerRange target) {
         return new AnyValue();
     }
 
     /**
      * @see PossibleValues#addTo(PossibleValues)
      */
-    protected PossibleValues addTo(StringValue firstValue) {
+    protected PossibleValues addTo(StringValue target) {
         return new AnyValue();
     }
 
     /**
-     * Subtract this - other and return value
+     * Subtract this - target and return value
      *
-     * @param other Value being subtracted from this
+     * @param target Value being subtracted from this
      * @return Result of subtraction
      */
-    public PossibleValues subtract(PossibleValues other) {
-        return other.subtractFrom(this);
+    public PossibleValues subtract(PossibleValues target) {
+        return target.subtractFrom(this);
     }
 
     /**
-     * Subtract firstValue - this and return value
+     * Subtract target - this and return value
      *
-     * @param firstValue Value 'this' is being subtracted from
+     * @param target Value 'this' is being subtracted from
      * @return Result of subtraction
      */
-    protected PossibleValues subtractFrom(PossibleValues firstValue) {
+    protected PossibleValues subtractFrom(PossibleValues target) {
         return new AnyValue();
     }
 
     /**
      * @see PossibleValues#subtractFrom(PossibleValues)
      */
-    protected PossibleValues subtractFrom(IntegerRange firstValue) {
+    protected PossibleValues subtractFrom(IntegerRange target) {
         return new AnyValue();
     }
 }

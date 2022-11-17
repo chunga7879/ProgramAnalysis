@@ -12,7 +12,7 @@ public class StringValue extends PossibleValues {
     }
 
     @Override
-    public PossibleValues mergeTo(StringValue other) {
+    protected PossibleValues mergeTo(StringValue other) {
         // TODO: implement merge
         return new StringValue();
     }
@@ -23,19 +23,19 @@ public class StringValue extends PossibleValues {
     }
 
     @Override
-    public StringValue addTo(PossibleValues firstValue) {
+    protected StringValue addTo(PossibleValues target) {
         // TODO: implement add
         return new StringValue();
     }
 
     @Override
-    public StringValue addTo(IntegerRange firstValue) {
+    protected StringValue addTo(IntegerRange target) {
         // TODO: implement add
         return new StringValue();
     }
 
     @Override
-    public StringValue addTo(StringValue firstValue) {
+    protected StringValue addTo(StringValue target) {
         // TODO: implement add
         return new StringValue();
     }
