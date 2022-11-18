@@ -91,4 +91,5 @@ No major changes have been made.
   - Considering using PlantUML.
   - We can generate PlantUML code and pass it to the PlanetUML generator/api to get the actual visualization.
 - [x] First User Study
-  - Results of the study [here](https://docs.google.com/document/d/1JJHXh6V-9dyOU6LWsA6AC1xYlG6Ga5CRW9KppHqRKJw/edit#).
+  - User 1: Results of the study [here](https://docs.google.com/document/d/1JJHXh6V-9dyOU6LWsA6AC1xYlG6Ga5CRW9KppHqRKJw/edit#).
+  - User 2: Results of the study [here](https://docs.google.com/document/d/1C3Lpz9sdsoHcYlyXDcWB-hhsP-SZOPds2dBTn9_1hnc/edit#).
