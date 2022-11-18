@@ -4,7 +4,7 @@ import analysis.values.EmptyValue;
 import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
 
-public class RestrictLessThanOrEqualVisitor extends OperationVisitorWithDefault {
+public class RestrictLessThanOrEqualVisitor extends RestrictionVisitor {
     @Override
     public PossibleValues visit(IntegerRange a, IntegerRange b) {
         if (a.getMin() > b.getMax()) return new EmptyValue();
