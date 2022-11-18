@@ -12,6 +12,26 @@ public final class EmptyValue extends PossibleValues {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
+        return visitor.visit((PossibleValues) a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, AnyValue a) {
+        return visitor.visit((PossibleValues) a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
+        return visitor.visit((PossibleValues) a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
+        return visitor.visit((PossibleValues) a, this);
+    }
+
+    @Override
     public boolean isEmpty() {
         return true;
     }

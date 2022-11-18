@@ -14,11 +14,11 @@ public abstract class PossibleValues implements ValueVisitable {
         return visitor.visit(a, this);
     }
 
-    public <T> T acceptOp(OperationVisitor<T> visitor, EmptyValue a) {
+    public final <T> T acceptOp(OperationVisitor<T> visitor, EmptyValue a) {
         return visitor.visit(a, this);
     }
 
-    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerRange a) {
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
         return visitor.visit(a, this);
     }
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {

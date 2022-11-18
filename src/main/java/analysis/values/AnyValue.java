@@ -19,7 +19,7 @@ public class AnyValue extends PossibleValues {
     }
 
     @Override
-    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerRange a) {
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
         return visitor.visit(a, this);
     }
 

@@ -1,6 +1,7 @@
 package analysis.values.visitor;
 
 import analysis.values.IntegerRange;
+import analysis.values.IntegerValue;
 import analysis.values.PossibleValues;
 import analysis.values.StringValue;
 import utils.MathUtil;
@@ -10,7 +11,7 @@ import utils.MathUtil;
  */
 public class AddVisitor extends OperationVisitorWithDefault {
     @Override
-    public PossibleValues visit(IntegerRange a, IntegerRange b) {
+    public PossibleValues visit(IntegerValue a, IntegerValue b) {
         return new IntegerRange(
                 MathUtil.addToLimit(a.getMin(), b.getMin()),
                 MathUtil.addToLimit(a.getMax(), b.getMax())
