@@ -115,13 +115,13 @@ Plan for final user study #1 [here](https://docs.google.com/document/d/1-g3DCVza
 | Analysis: Primitives | Devon | 11/18~11/21 (Mon) |
 | Analysis: Strings | Devon | 11/18~11/21 (Mon) |
 | Analysis: Objects | Shiven | 11/18~11/21 (Mon) |
+| Analysis: Method calls | Shiven | 11/18~11/21 (Mon) |
 | Analysis: Arithmetic operations | Shiven | 11/18~11/21 (Mon) |
 | Analysis: More conditional operations | Emiru | 11/18~11/21 (Mon) |
 | Analysis: Loops | Emiru | 11/18~11/21 (Mon) |
 | Analysis: Arrays | Emiru | 11/18~11/21 (Mon) |
 | Visualization: Basic | Chunga, Katherine | 11/18~11/21 (Mon) |
 | Analysis: Primitive Wrappers | Devon | 11/18~11/25 (Fri) |
-| Analysis: Method calls | Shiven | 11/18~11/25 (Fri) |
 | Analysis: Lists | Emiru | 11/18~11/25 (Fri) |
 | Visualization: Complex (loops, etc...) | Chunga, Katherine | 11/18~11/25 (Fri) |
 | Final User Study | Chunga, Emiru | 11/21~11/26 (Sat) |
