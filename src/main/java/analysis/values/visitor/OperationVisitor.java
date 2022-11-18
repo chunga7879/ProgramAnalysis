@@ -17,6 +17,8 @@ public interface OperationVisitor<T> {
     T visit(EmptyValue a, PossibleValues b);
     T visit(PossibleValues a, EmptyValue b);
     T visit(IntegerRange a, IntegerRange b);
+    T visit(IntegerRange a, AnyValue b);
+    T visit(AnyValue a, IntegerRange b);
     T visit(StringValue a, StringValue b);
     T visit(PossibleValues a, StringValue b);
     T visit(StringValue a, PossibleValues b);
