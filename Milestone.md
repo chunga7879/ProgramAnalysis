@@ -93,3 +93,48 @@ No major changes have been made.
 - [x] First User Study
   - User 1: Results of the study [here](https://docs.google.com/document/d/1JJHXh6V-9dyOU6LWsA6AC1xYlG6Ga5CRW9KppHqRKJw/edit#).
   - User 2: Results of the study [here](https://docs.google.com/document/d/1C3Lpz9sdsoHcYlyXDcWB-hhsP-SZOPds2dBTn9_1hnc/edit#).
+
+# Milestone 4
+## Status of Implementation
+Completed/In-Review:
+- Tracking integer (range) variables
+- Tracking variable declarations/assignments
+- Tracking simple integer operations ('+', '-')
+- Tracking variables through if statements
+  - Tracking variables restricted by if conditions ('>', '<=')
+- Concrete design of visualization utilizing PlantUML library
+
+## Final User Study Plan
+Plan for final user study #1 [here](https://docs.google.com/document/d/1-g3DCVzaaz2V3TAX0o6ezeWUWyOC5LHBKOOkbZBqJYs/edit)
+- Same questions except more requirement for the user to write code
+- Remove last question
+
+## Planned Timeline
+| What | Who | When |
+|------|-----|------|
+| Analysis: Primitives | Devon | 11/18~11/21 (Mon) |
+| Analysis: Strings | Devon | 11/18~11/21 (Mon) |
+| Analysis: Objects | Shiven | 11/18~11/21 (Mon) |
+| Analysis: Arithmetic operations | Shiven | 11/18~11/21 (Mon) |
+| Analysis: More conditional operations | Emiru | 11/18~11/21 (Mon) |
+| Analysis: Loops | Emiru | 11/18~11/21 (Mon) |
+| Analysis: Arrays | Emiru | 11/18~11/21 (Mon) |
+| Visualization: Basic | Chunga, Katherine | 11/18~11/21 (Mon) |
+| Analysis: Primitive Wrappers | Devon | 11/18~11/25 (Fri) |
+| Analysis: Method calls | Shiven | 11/18~11/25 (Fri) |
+| Analysis: Lists | Emiru | 11/18~11/25 (Fri) |
+| Visualization: Complex (loops, etc...) | Chunga, Katherine | 11/18~11/25 (Fri) |
+| Final User Study | Chunga, Emiru | 11/21~11/26 (Sat) |
+| Video - Script | Katherine | 11/21~11/26 (Sat) |
+| Video - Voiceover | Shiven | 11/26~11/27 (Sun) |
+| Video - Editing | Katherine | 11/27~11/28 (Mon) |
+| Final testing / Bug fixing | Everyone | 11/25~11/30 (Wed) |
+
+## Completed Timeline
+| What | Who | Status |
+|------|-----|------|
+| Sketch/Design examples/Scenario | Katherine, Shiven | ✔️ |
+| Research - Analysis | Shiven, Emiru, Devon | ✔️ |
+| Research - Visualization | Chunga, Katherine | ✔️ |
+| First User Study | Chunga, Emiru | ✔️ |
+
