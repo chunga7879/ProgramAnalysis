@@ -19,7 +19,7 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
-    public PossibleValues visitAbstract(IntegerRange a, PossibleValues b) {
+    public PossibleValues visitAbstract(IntegerValue a, PossibleValues b) {
         return b.acceptOp(this, a);
     }
 
@@ -44,17 +44,17 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
-    public PossibleValues visit(IntegerRange a, IntegerRange b) {
+    public PossibleValues visit(IntegerValue a, IntegerValue b) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(IntegerRange a, AnyValue b) {
+    public PossibleValues visit(IntegerValue a, AnyValue b) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(AnyValue a, IntegerRange b) {
+    public PossibleValues visit(AnyValue a, IntegerValue b) {
         return new AnyValue();
     }
 
