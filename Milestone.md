@@ -109,6 +109,8 @@ Plan for final user study #1 [here](https://docs.google.com/document/d/1-g3DCVza
 - Same questions except more requirement for the user to write code
 - Remove last question
 
+Plan for last user study #2 [here](https://docs.google.com/document/d/1bEJiU5YBf67wCE-Pl0bYzAzn25mnn8ByNqm5zVlFz8c/edit#)
+
 ## Planned Timeline
 | What | Who | When |
 |------|-----|------|
