@@ -1,5 +1,7 @@
 package analysis.values;
 
+import analysis.values.visitor.OperationVisitor;
+
 public class StringValue extends PossibleValues {
 
     public StringValue() {
@@ -7,36 +9,27 @@ public class StringValue extends PossibleValues {
     }
 
     @Override
-    public PossibleValues merge(PossibleValues other) {
-        return other.mergeTo(this);
+    public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
+        return visitor.visitAbstract(this, b);
     }
 
     @Override
-    protected PossibleValues mergeTo(StringValue other) {
-        // TODO: implement merge
-        return new StringValue();
+    public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
+        return visitor.visit(a, this);
     }
 
     @Override
-    public PossibleValues add(PossibleValues other) {
-        return other.addTo(this);
+    public <T> T acceptOp(OperationVisitor<T> visitor, AnyValue a) {
+        return visitor.visit(a, this);
     }
 
     @Override
-    protected StringValue addTo(PossibleValues target) {
-        // TODO: implement add
-        return new StringValue();
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerRange a) {
+        return visitor.visit(a, this);
     }
 
     @Override
-    protected StringValue addTo(IntegerRange target) {
-        // TODO: implement add
-        return new StringValue();
-    }
-
-    @Override
-    protected StringValue addTo(StringValue target) {
-        // TODO: implement add
-        return new StringValue();
+    public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
+        return visitor.visit(a, this);
     }
 }

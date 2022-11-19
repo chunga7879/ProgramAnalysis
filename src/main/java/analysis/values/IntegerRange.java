@@ -1,6 +1,6 @@
 package analysis.values;
 
-import utils.MathUtil;
+import analysis.values.visitor.OperationVisitor;
 
 public class IntegerRange extends PossibleValues {
     private final int min;
@@ -20,41 +20,22 @@ public class IntegerRange extends PossibleValues {
     }
 
     @Override
-    public PossibleValues merge(PossibleValues other) {
-        return other.mergeTo(this);
+    public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
+        return visitor.visitAbstract(this, b);
     }
 
     @Override
-    protected IntegerRange mergeTo(IntegerRange other) {
-        return new IntegerRange(
-                Math.min(this.min, other.min),
-                Math.max(this.max, other.max)
-        );
+    public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
+        return visitor.visit(a, this);
     }
 
     @Override
-    public PossibleValues add(PossibleValues other) {
-        return other.addTo(this);
+    public <T> T acceptOp(OperationVisitor<T> visitor, AnyValue a) {
+        return visitor.visit(a, this);
     }
 
     @Override
-    protected IntegerRange addTo(IntegerRange target) {
-        return new IntegerRange(
-                MathUtil.addToLimit(target.min, this.min),
-                MathUtil.addToLimit(target.max, this.max)
-        );
-    }
-
-    @Override
-    public PossibleValues subtract(PossibleValues target) {
-        return target.subtractFrom(this);
-    }
-
-    @Override
-    protected IntegerRange subtractFrom(IntegerRange target) {
-        return new IntegerRange(
-                MathUtil.subtractToLimit(target.min, this.max),
-                MathUtil.subtractToLimit(target.max, this.min)
-        );
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerRange a) {
+        return visitor.visit(a, this);
     }
 }
