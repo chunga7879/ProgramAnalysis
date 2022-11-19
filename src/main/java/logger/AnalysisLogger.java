@@ -1,18 +1,40 @@
 package logger;
 
+import analysis.model.AnalysisError;
 import analysis.model.VariablesState;
 import com.github.javaparser.Range;
 import com.github.javaparser.ast.Node;
+
+import java.util.List;
 
 /**
  * Logger for viewing the state of the analysis
  */
 public final class AnalysisLogger {
+
     /**
      * Log the state of the arg at a node
      */
     public static void log(Node n, VariablesState arg) {
+        log(n, arg, null);
+    }
+
+    /**
+     * Log the state of the arg and errors at a node
+     */
+    public static void log(Node n, VariablesState arg, List<AnalysisError> errors) {
         log(n, arg.toFormattedString());
+        if (errors != null && !errors.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Errors: ");
+            boolean first = true;
+            for (AnalysisError error : errors) {
+                if (!first) sb.append(", ");
+                sb.append("'").append(error.getMessage()).append("'");
+                first = false;
+            }
+            log(n, sb.toString());
+        }
     }
 
     /**

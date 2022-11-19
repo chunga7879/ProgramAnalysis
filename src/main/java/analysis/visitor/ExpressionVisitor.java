@@ -1,5 +1,6 @@
 package analysis.visitor;
 
+import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
@@ -22,7 +23,7 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 
-public class ExpressionVisitor implements GenericVisitor<PossibleValues, VariablesState> {
+public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
     private final AddVisitor addVisitor;
     private final SubtractVisitor subtractVisitor;
@@ -34,7 +35,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Variabl
     }
 
     @Override
-    public PossibleValues visit(VariableDeclarationExpr n, VariablesState arg) {
+    public PossibleValues visit(VariableDeclarationExpr n, ExpressionAnalysisState arg) {
         for (VariableDeclarator declarator : n.getVariables()) {
             declarator.accept(this, arg);
         }
@@ -42,48 +43,50 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Variabl
     }
 
     @Override
-    public PossibleValues visit(VariableDeclarator n, VariablesState arg) {
+    public PossibleValues visit(VariableDeclarator n, ExpressionAnalysisState arg) {
         if (n.getInitializer().isPresent()) {
             PossibleValues value = n.getInitializer().get().accept(this, arg);
-            arg.setVariable(n, value);
+            VariablesState state = arg.getVariablesState();
+            state.setVariable(n, value);
             return value;
         }
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(AssignExpr n, VariablesState arg) {
+    public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
         Expression target = n.getTarget();
         PossibleValues value = n.getValue().accept(this, arg);
         if (target instanceof NameExpr nameTarget) {
+            VariablesState state = arg.getVariablesState();
             ResolvedValueDeclaration dec = nameTarget.resolve();
             if (dec instanceof JavaParserVariableDeclaration jpVarDec) {
-                arg.setVariable(jpVarDec.getVariableDeclarator(), value);
+                state.setVariable(jpVarDec.getVariableDeclarator(), value);
             }
             if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
-                arg.setVariable(jpParamDec.getWrappedNode(), value);
+                state.setVariable(jpParamDec.getWrappedNode(), value);
             }
         }
         return value;
     }
 
     @Override
-    public PossibleValues visit(ArrayAccessExpr n, VariablesState arg) {
+    public PossibleValues visit(ArrayAccessExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ArrayCreationExpr n, VariablesState arg) {
+    public PossibleValues visit(ArrayCreationExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ArrayInitializerExpr n, VariablesState arg) {
+    public PossibleValues visit(ArrayInitializerExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(BinaryExpr n, VariablesState arg) {
+    public PossibleValues visit(BinaryExpr n, ExpressionAnalysisState arg) {
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
         return switch (n.getOperator()) {
@@ -94,476 +97,477 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Variabl
     }
 
     @Override
-    public PossibleValues visit(CastExpr n, VariablesState arg) {
+    public PossibleValues visit(CastExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ClassExpr n, VariablesState arg) {
+    public PossibleValues visit(ClassExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ConditionalExpr n, VariablesState arg) {
+    public PossibleValues visit(ConditionalExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(EnclosedExpr n, VariablesState arg) {
+    public PossibleValues visit(EnclosedExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(FieldAccessExpr n, VariablesState arg) {
+    public PossibleValues visit(FieldAccessExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(InstanceOfExpr n, VariablesState arg) {
+    public PossibleValues visit(InstanceOfExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(StringLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(StringLiteralExpr n, ExpressionAnalysisState arg) {
         return new StringValue();
     }
 
     @Override
-    public PossibleValues visit(IntegerLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(IntegerLiteralExpr n, ExpressionAnalysisState arg) {
         return new IntegerRange(n.asNumber().intValue(), n.asNumber().intValue());
     }
 
     @Override
-    public PossibleValues visit(LongLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(LongLiteralExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(CharLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(CharLiteralExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(DoubleLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(DoubleLiteralExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(BooleanLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(BooleanLiteralExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(NullLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(NullLiteralExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(MethodCallExpr n, VariablesState arg) {
+    public PossibleValues visit(MethodCallExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(NameExpr n, VariablesState arg) {
+    public PossibleValues visit(NameExpr n, ExpressionAnalysisState arg) {
         ResolvedValueDeclaration dec = n.resolve();
+        VariablesState state = arg.getVariablesState();
         if (dec instanceof JavaParserVariableDeclaration jpVarDec) {
-            return arg.getVariable(jpVarDec.getVariableDeclarator());
+            return state.getVariable(jpVarDec.getVariableDeclarator());
         }
         if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
-            return arg.getVariable(jpParamDec.getWrappedNode());
+            return state.getVariable(jpParamDec.getWrappedNode());
         }
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ObjectCreationExpr n, VariablesState arg) {
+    public PossibleValues visit(ObjectCreationExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ThisExpr n, VariablesState arg) {
+    public PossibleValues visit(ThisExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SuperExpr n, VariablesState arg) {
+    public PossibleValues visit(SuperExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(UnaryExpr n, VariablesState arg) {
+    public PossibleValues visit(UnaryExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     // region ----Not required----
     // Move any we're not using here
     @Override
-    public PossibleValues visit(CompilationUnit n, VariablesState arg) {
+    public PossibleValues visit(CompilationUnit n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(MethodDeclaration n, VariablesState arg) {
+    public PossibleValues visit(MethodDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(BlockStmt n, VariablesState arg) {
+    public PossibleValues visit(BlockStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ExpressionStmt n, VariablesState arg) {
+    public PossibleValues visit(ExpressionStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SwitchStmt n, VariablesState arg) {
+    public PossibleValues visit(SwitchStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SwitchEntry n, VariablesState arg) {
+    public PossibleValues visit(SwitchEntry n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(BreakStmt n, VariablesState arg) {
+    public PossibleValues visit(BreakStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ReturnStmt n, VariablesState arg) {
+    public PossibleValues visit(ReturnStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(IfStmt n, VariablesState arg) {
+    public PossibleValues visit(IfStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(WhileStmt n, VariablesState arg) {
+    public PossibleValues visit(WhileStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ContinueStmt n, VariablesState arg) {
+    public PossibleValues visit(ContinueStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(DoStmt n, VariablesState arg) {
+    public PossibleValues visit(DoStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ForEachStmt n, VariablesState arg) {
+    public PossibleValues visit(ForEachStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ForStmt n, VariablesState arg) {
+    public PossibleValues visit(ForStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ThrowStmt n, VariablesState arg) {
+    public PossibleValues visit(ThrowStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(TryStmt n, VariablesState arg) {
+    public PossibleValues visit(TryStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(CatchClause n, VariablesState arg) {
+    public PossibleValues visit(CatchClause n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(Name n, VariablesState arg) {
+    public PossibleValues visit(Name n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SimpleName n, VariablesState arg) {
+    public PossibleValues visit(SimpleName n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(LabeledStmt n, VariablesState arg) {
+    public PossibleValues visit(LabeledStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(EmptyStmt n, VariablesState arg) {
+    public PossibleValues visit(EmptyStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(NodeList n, VariablesState arg) {
+    public PossibleValues visit(NodeList n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(PackageDeclaration n, VariablesState arg) {
+    public PossibleValues visit(PackageDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(TypeParameter n, VariablesState arg) {
+    public PossibleValues visit(TypeParameter n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(LineComment n, VariablesState arg) {
+    public PossibleValues visit(LineComment n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(BlockComment n, VariablesState arg) {
+    public PossibleValues visit(BlockComment n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ClassOrInterfaceDeclaration n, VariablesState arg) {
+    public PossibleValues visit(ClassOrInterfaceDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(RecordDeclaration n, VariablesState arg) {
+    public PossibleValues visit(RecordDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(CompactConstructorDeclaration n, VariablesState arg) {
+    public PossibleValues visit(CompactConstructorDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(EnumDeclaration n, VariablesState arg) {
+    public PossibleValues visit(EnumDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(EnumConstantDeclaration n, VariablesState arg) {
+    public PossibleValues visit(EnumConstantDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(AnnotationDeclaration n, VariablesState arg) {
+    public PossibleValues visit(AnnotationDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(AnnotationMemberDeclaration n, VariablesState arg) {
+    public PossibleValues visit(AnnotationMemberDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(FieldDeclaration n, VariablesState arg) {
+    public PossibleValues visit(FieldDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ConstructorDeclaration n, VariablesState arg) {
+    public PossibleValues visit(ConstructorDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(Parameter n, VariablesState arg) {
+    public PossibleValues visit(Parameter n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(InitializerDeclaration n, VariablesState arg) {
+    public PossibleValues visit(InitializerDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(JavadocComment n, VariablesState arg) {
+    public PossibleValues visit(JavadocComment n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ClassOrInterfaceType n, VariablesState arg) {
+    public PossibleValues visit(ClassOrInterfaceType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(PrimitiveType n, VariablesState arg) {
+    public PossibleValues visit(PrimitiveType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ArrayType n, VariablesState arg) {
+    public PossibleValues visit(ArrayType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ArrayCreationLevel n, VariablesState arg) {
+    public PossibleValues visit(ArrayCreationLevel n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(IntersectionType n, VariablesState arg) {
+    public PossibleValues visit(IntersectionType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(MarkerAnnotationExpr n, VariablesState arg) {
+    public PossibleValues visit(MarkerAnnotationExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SingleMemberAnnotationExpr n, VariablesState arg) {
+    public PossibleValues visit(SingleMemberAnnotationExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(NormalAnnotationExpr n, VariablesState arg) {
+    public PossibleValues visit(NormalAnnotationExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(MemberValuePair n, VariablesState arg) {
+    public PossibleValues visit(MemberValuePair n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ExplicitConstructorInvocationStmt n, VariablesState arg) {
+    public PossibleValues visit(ExplicitConstructorInvocationStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(LocalClassDeclarationStmt n, VariablesState arg) {
+    public PossibleValues visit(LocalClassDeclarationStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(LocalRecordDeclarationStmt n, VariablesState arg) {
+    public PossibleValues visit(LocalRecordDeclarationStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(AssertStmt n, VariablesState arg) {
+    public PossibleValues visit(AssertStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(UnionType n, VariablesState arg) {
+    public PossibleValues visit(UnionType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(VoidType n, VariablesState arg) {
+    public PossibleValues visit(VoidType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(WildcardType n, VariablesState arg) {
+    public PossibleValues visit(WildcardType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(UnknownType n, VariablesState arg) {
+    public PossibleValues visit(UnknownType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SynchronizedStmt n, VariablesState arg) {
+    public PossibleValues visit(SynchronizedStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(LambdaExpr n, VariablesState arg) {
+    public PossibleValues visit(LambdaExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(MethodReferenceExpr n, VariablesState arg) {
+    public PossibleValues visit(MethodReferenceExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(TypeExpr n, VariablesState arg) {
+    public PossibleValues visit(TypeExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ImportDeclaration n, VariablesState arg) {
+    public PossibleValues visit(ImportDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ModuleDeclaration n, VariablesState arg) {
+    public PossibleValues visit(ModuleDeclaration n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ModuleRequiresDirective n, VariablesState arg) {
+    public PossibleValues visit(ModuleRequiresDirective n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ModuleExportsDirective n, VariablesState arg) {
+    public PossibleValues visit(ModuleExportsDirective n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ModuleProvidesDirective n, VariablesState arg) {
+    public PossibleValues visit(ModuleProvidesDirective n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ModuleUsesDirective n, VariablesState arg) {
+    public PossibleValues visit(ModuleUsesDirective n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ModuleOpensDirective n, VariablesState arg) {
+    public PossibleValues visit(ModuleOpensDirective n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(UnparsableStmt n, VariablesState arg) {
+    public PossibleValues visit(UnparsableStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(ReceiverParameter n, VariablesState arg) {
+    public PossibleValues visit(ReceiverParameter n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(VarType n, VariablesState arg) {
+    public PossibleValues visit(VarType n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(Modifier n, VariablesState arg) {
+    public PossibleValues visit(Modifier n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(SwitchExpr n, VariablesState arg) {
+    public PossibleValues visit(SwitchExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(YieldStmt n, VariablesState arg) {
+    public PossibleValues visit(YieldStmt n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(TextBlockLiteralExpr n, VariablesState arg) {
+    public PossibleValues visit(TextBlockLiteralExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
 
     @Override
-    public PossibleValues visit(PatternExpr n, VariablesState arg) {
+    public PossibleValues visit(PatternExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
     // endregion ----Not required----

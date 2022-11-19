@@ -1,6 +1,7 @@
 package analysis.visitor;
 
 import analysis.model.ConditionStates;
+import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.PossibleValues;
 import analysis.values.visitor.IntersectVisitor;
@@ -21,7 +22,7 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 
-public class ConditionVisitor implements GenericVisitor<ConditionStates, VariablesState> {
+public class ConditionVisitor implements GenericVisitor<ConditionStates, ExpressionAnalysisState> {
     private ExpressionVisitor expressionVisitor;
     private MergeVisitor mergeVisitor;
     private IntersectVisitor intersectVisitor;
@@ -38,7 +39,7 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Variabl
     }
 
     @Override
-    public ConditionStates visit(BinaryExpr n, VariablesState arg) {
+    public ConditionStates visit(BinaryExpr n, ExpressionAnalysisState arg) {
         Expression leftExpr = n.getLeft();
         Expression rightExpr = n.getRight();
         if (isBooleanOperator(n.getOperator())) {
@@ -46,8 +47,9 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Variabl
         }
         PossibleValues leftValues = leftExpr.accept(expressionVisitor, arg);
         PossibleValues rightValues = rightExpr.accept(expressionVisitor, arg);
-        VariablesState trueState = arg.copy();
-        VariablesState falseState = arg.copy();
+        VariablesState state = arg.getVariablesState();
+        VariablesState trueState = state.copy();
+        VariablesState falseState = state.copy();
 
         switch (n.getOperator()) {
             case GREATER -> {
@@ -74,10 +76,11 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Variabl
     }
 
     private ConditionStates handleBooleanOperators(Expression leftExpr, Expression rightExpr,
-                                                   BinaryExpr.Operator operator, VariablesState arg) {
+                                                   BinaryExpr.Operator operator, ExpressionAnalysisState arg) {
         // TODO: handle visiting assignments
         ConditionStates leftStates = leftExpr.accept(this, arg);
         ConditionStates rightStates = rightExpr.accept(this, arg);
+        VariablesState state = arg.getVariablesState();
         return switch (operator) {
             case AND -> new ConditionStates(
                     leftStates.getTrueState().intersectCopy(intersectVisitor, rightStates.getTrueState()),
@@ -87,7 +90,7 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Variabl
                     leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()),
                     leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState())
             );
-            default -> new ConditionStates(arg.copy(), arg.copy());
+            default -> new ConditionStates(state.copy(), state.copy());
         };
     }
 
@@ -105,27 +108,27 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Variabl
     }
 
     @Override
-    public ConditionStates visit(UnaryExpr n, VariablesState arg) {
+    public ConditionStates visit(UnaryExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(NameExpr n, VariablesState arg) {
+    public ConditionStates visit(NameExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(BooleanLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(BooleanLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(InstanceOfExpr n, VariablesState arg) {
+    public ConditionStates visit(InstanceOfExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(AssignExpr n, VariablesState arg) {
+    public ConditionStates visit(AssignExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
@@ -133,472 +136,472 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Variabl
     // region ----Not required----
     // Move any we're not using here
     @Override
-    public ConditionStates visit(CompilationUnit n, VariablesState arg) {
+    public ConditionStates visit(CompilationUnit n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(PackageDeclaration n, VariablesState arg) {
+    public ConditionStates visit(PackageDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(TypeParameter n, VariablesState arg) {
+    public ConditionStates visit(TypeParameter n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(LineComment n, VariablesState arg) {
+    public ConditionStates visit(LineComment n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(BlockComment n, VariablesState arg) {
+    public ConditionStates visit(BlockComment n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ClassOrInterfaceDeclaration n, VariablesState arg) {
+    public ConditionStates visit(ClassOrInterfaceDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(RecordDeclaration n, VariablesState arg) {
+    public ConditionStates visit(RecordDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(CompactConstructorDeclaration n, VariablesState arg) {
+    public ConditionStates visit(CompactConstructorDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(EnumDeclaration n, VariablesState arg) {
+    public ConditionStates visit(EnumDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(EnumConstantDeclaration n, VariablesState arg) {
+    public ConditionStates visit(EnumConstantDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(AnnotationDeclaration n, VariablesState arg) {
+    public ConditionStates visit(AnnotationDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(AnnotationMemberDeclaration n, VariablesState arg) {
+    public ConditionStates visit(AnnotationMemberDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(FieldDeclaration n, VariablesState arg) {
+    public ConditionStates visit(FieldDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(VariableDeclarator n, VariablesState arg) {
+    public ConditionStates visit(VariableDeclarator n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ConstructorDeclaration n, VariablesState arg) {
+    public ConditionStates visit(ConstructorDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(MethodDeclaration n, VariablesState arg) {
+    public ConditionStates visit(MethodDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(Parameter n, VariablesState arg) {
+    public ConditionStates visit(Parameter n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(InitializerDeclaration n, VariablesState arg) {
+    public ConditionStates visit(InitializerDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(JavadocComment n, VariablesState arg) {
+    public ConditionStates visit(JavadocComment n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ClassOrInterfaceType n, VariablesState arg) {
+    public ConditionStates visit(ClassOrInterfaceType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(PrimitiveType n, VariablesState arg) {
+    public ConditionStates visit(PrimitiveType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ArrayType n, VariablesState arg) {
+    public ConditionStates visit(ArrayType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ArrayCreationLevel n, VariablesState arg) {
+    public ConditionStates visit(ArrayCreationLevel n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(IntersectionType n, VariablesState arg) {
+    public ConditionStates visit(IntersectionType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(UnionType n, VariablesState arg) {
+    public ConditionStates visit(UnionType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(VoidType n, VariablesState arg) {
+    public ConditionStates visit(VoidType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(WildcardType n, VariablesState arg) {
+    public ConditionStates visit(WildcardType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(UnknownType n, VariablesState arg) {
+    public ConditionStates visit(UnknownType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ArrayAccessExpr n, VariablesState arg) {
+    public ConditionStates visit(ArrayAccessExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ArrayCreationExpr n, VariablesState arg) {
+    public ConditionStates visit(ArrayCreationExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ArrayInitializerExpr n, VariablesState arg) {
+    public ConditionStates visit(ArrayInitializerExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(CastExpr n, VariablesState arg) {
+    public ConditionStates visit(CastExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ClassExpr n, VariablesState arg) {
+    public ConditionStates visit(ClassExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ConditionalExpr n, VariablesState arg) {
+    public ConditionStates visit(ConditionalExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(EnclosedExpr n, VariablesState arg) {
+    public ConditionStates visit(EnclosedExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(FieldAccessExpr n, VariablesState arg) {
+    public ConditionStates visit(FieldAccessExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(StringLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(StringLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(IntegerLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(IntegerLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(LongLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(LongLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(CharLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(CharLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(DoubleLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(DoubleLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(NullLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(NullLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(MethodCallExpr n, VariablesState arg) {
+    public ConditionStates visit(MethodCallExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ObjectCreationExpr n, VariablesState arg) {
+    public ConditionStates visit(ObjectCreationExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ThisExpr n, VariablesState arg) {
+    public ConditionStates visit(ThisExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SuperExpr n, VariablesState arg) {
+    public ConditionStates visit(SuperExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(VariableDeclarationExpr n, VariablesState arg) {
+    public ConditionStates visit(VariableDeclarationExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(MarkerAnnotationExpr n, VariablesState arg) {
+    public ConditionStates visit(MarkerAnnotationExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SingleMemberAnnotationExpr n, VariablesState arg) {
+    public ConditionStates visit(SingleMemberAnnotationExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(NormalAnnotationExpr n, VariablesState arg) {
+    public ConditionStates visit(NormalAnnotationExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(MemberValuePair n, VariablesState arg) {
+    public ConditionStates visit(MemberValuePair n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ExplicitConstructorInvocationStmt n, VariablesState arg) {
+    public ConditionStates visit(ExplicitConstructorInvocationStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(LocalClassDeclarationStmt n, VariablesState arg) {
+    public ConditionStates visit(LocalClassDeclarationStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(LocalRecordDeclarationStmt n, VariablesState arg) {
+    public ConditionStates visit(LocalRecordDeclarationStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(AssertStmt n, VariablesState arg) {
+    public ConditionStates visit(AssertStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(BlockStmt n, VariablesState arg) {
+    public ConditionStates visit(BlockStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(LabeledStmt n, VariablesState arg) {
+    public ConditionStates visit(LabeledStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(EmptyStmt n, VariablesState arg) {
+    public ConditionStates visit(EmptyStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ExpressionStmt n, VariablesState arg) {
+    public ConditionStates visit(ExpressionStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SwitchStmt n, VariablesState arg) {
+    public ConditionStates visit(SwitchStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SwitchEntry n, VariablesState arg) {
+    public ConditionStates visit(SwitchEntry n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(BreakStmt n, VariablesState arg) {
+    public ConditionStates visit(BreakStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ReturnStmt n, VariablesState arg) {
+    public ConditionStates visit(ReturnStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(IfStmt n, VariablesState arg) {
+    public ConditionStates visit(IfStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(WhileStmt n, VariablesState arg) {
+    public ConditionStates visit(WhileStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ContinueStmt n, VariablesState arg) {
+    public ConditionStates visit(ContinueStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(DoStmt n, VariablesState arg) {
+    public ConditionStates visit(DoStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ForEachStmt n, VariablesState arg) {
+    public ConditionStates visit(ForEachStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ForStmt n, VariablesState arg) {
+    public ConditionStates visit(ForStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ThrowStmt n, VariablesState arg) {
+    public ConditionStates visit(ThrowStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SynchronizedStmt n, VariablesState arg) {
+    public ConditionStates visit(SynchronizedStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(TryStmt n, VariablesState arg) {
+    public ConditionStates visit(TryStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(CatchClause n, VariablesState arg) {
+    public ConditionStates visit(CatchClause n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(LambdaExpr n, VariablesState arg) {
+    public ConditionStates visit(LambdaExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(MethodReferenceExpr n, VariablesState arg) {
+    public ConditionStates visit(MethodReferenceExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(TypeExpr n, VariablesState arg) {
+    public ConditionStates visit(TypeExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(NodeList n, VariablesState arg) {
+    public ConditionStates visit(NodeList n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(Name n, VariablesState arg) {
+    public ConditionStates visit(Name n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SimpleName n, VariablesState arg) {
+    public ConditionStates visit(SimpleName n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ImportDeclaration n, VariablesState arg) {
+    public ConditionStates visit(ImportDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ModuleDeclaration n, VariablesState arg) {
+    public ConditionStates visit(ModuleDeclaration n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ModuleRequiresDirective n, VariablesState arg) {
+    public ConditionStates visit(ModuleRequiresDirective n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ModuleExportsDirective n, VariablesState arg) {
+    public ConditionStates visit(ModuleExportsDirective n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ModuleProvidesDirective n, VariablesState arg) {
+    public ConditionStates visit(ModuleProvidesDirective n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ModuleUsesDirective n, VariablesState arg) {
+    public ConditionStates visit(ModuleUsesDirective n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ModuleOpensDirective n, VariablesState arg) {
+    public ConditionStates visit(ModuleOpensDirective n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(UnparsableStmt n, VariablesState arg) {
+    public ConditionStates visit(UnparsableStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(ReceiverParameter n, VariablesState arg) {
+    public ConditionStates visit(ReceiverParameter n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(VarType n, VariablesState arg) {
+    public ConditionStates visit(VarType n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(Modifier n, VariablesState arg) {
+    public ConditionStates visit(Modifier n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(SwitchExpr n, VariablesState arg) {
+    public ConditionStates visit(SwitchExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(YieldStmt n, VariablesState arg) {
+    public ConditionStates visit(YieldStmt n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(TextBlockLiteralExpr n, VariablesState arg) {
+    public ConditionStates visit(TextBlockLiteralExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 
     @Override
-    public ConditionStates visit(PatternExpr n, VariablesState arg) {
+    public ConditionStates visit(PatternExpr n, ExpressionAnalysisState arg) {
         return null;
     }
     // endregion ----Not required----

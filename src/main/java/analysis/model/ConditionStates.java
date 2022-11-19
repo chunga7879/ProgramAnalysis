@@ -4,8 +4,8 @@ package analysis.model;
  * Store a state for when the conditional is true and another for when it is false
  */
 public class ConditionStates {
-    public VariablesState trueState;
-    public VariablesState falseState;
+    private VariablesState trueState;
+    private VariablesState falseState;
 
     public ConditionStates(VariablesState trueState, VariablesState falseState) {
         this.trueState = trueState;
