@@ -169,6 +169,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Variabl
         if (dec instanceof JavaParserVariableDeclaration jpVarDec) {
             return arg.getVariable(jpVarDec.getVariableDeclarator());
         }
+        if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
+            return arg.getVariable(jpParamDec.getWrappedNode());
+        }
         return new AnyValue();
     }
 

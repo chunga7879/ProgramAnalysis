@@ -1,9 +1,8 @@
 package analysis.values.visitor;
 
-import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
+import analysis.values.IntegerValue;
 import analysis.values.PossibleValues;
-import analysis.values.StringValue;
 import utils.MathUtil;
 
 /**
@@ -11,7 +10,7 @@ import utils.MathUtil;
  */
 public class SubtractVisitor extends OperationVisitorWithDefault {
     @Override
-    public PossibleValues visit(IntegerRange a, IntegerRange b) {
+    public PossibleValues visit(IntegerValue a, IntegerValue b) {
         return new IntegerRange(
                 MathUtil.subtractToLimit(a.getMin(), b.getMax()),
                 MathUtil.subtractToLimit(a.getMax(), b.getMin())

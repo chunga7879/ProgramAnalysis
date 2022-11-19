@@ -1,7 +1,10 @@
 package analysis.visitor;
 
+import analysis.model.ConditionStates;
 import analysis.model.VariablesState;
 import analysis.values.AnyValue;
+import analysis.values.visitor.IntersectVisitor;
+import analysis.values.visitor.MergeVisitor;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -12,6 +15,7 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import logger.AnalysisLogger;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,10 +24,20 @@ import java.util.Optional;
 public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
     private final String targetMethod;
     private final ExpressionVisitor expressionVisitor;
+    private final ConditionVisitor conditionVisitor;
+    private final MergeVisitor mergeVisitor;
+    private final IntersectVisitor intersectVisitor;
 
     public AnalysisVisitor(String targetMethod) {
         this.targetMethod = targetMethod;
+        this.mergeVisitor = new MergeVisitor();
+        this.intersectVisitor = new IntersectVisitor();
         this.expressionVisitor = new ExpressionVisitor();
+        this.conditionVisitor = new ConditionVisitor(
+                this.expressionVisitor,
+                this.mergeVisitor,
+                this.intersectVisitor
+        );
     }
 
     @Override
@@ -45,6 +59,7 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
             // TODO: handle annotations for parameters
             arg.setVariable(p, new AnyValue());
         }
+        AnalysisLogger.log(n.getName(), arg);
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);
     }
 
@@ -59,6 +74,7 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
     @Override
     public Void visit(ExpressionStmt n, VariablesState arg) {
         n.getExpression().accept(expressionVisitor, arg);
+        AnalysisLogger.log(n, arg);
         return null;
     }
 
@@ -84,6 +100,23 @@ public class AnalysisVisitor implements GenericVisitor<Void, VariablesState> {
 
     @Override
     public Void visit(IfStmt n, VariablesState arg) {
+        ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, arg);
+        VariablesState trueState = conditionStates.getTrueState();
+        VariablesState falseState = conditionStates.getFalseState();
+
+        // IF case
+        AnalysisLogger.log(n, "IF TRUE: " + trueState.toFormattedString());
+        n.getThenStmt().accept(this, trueState);
+
+        // ELSE case
+        AnalysisLogger.log(n, "IF FALSE: " + falseState.toFormattedString());
+        if (n.getElseStmt().isPresent()) {
+            n.getElseStmt().get().accept(this, falseState);
+        }
+
+        // Merge together
+        arg.copyValuesFrom(trueState.mergeCopy(mergeVisitor, falseState));
+        AnalysisLogger.logEnd(n, "MERGED: " + arg.toFormattedString());
         return null;
     }
 

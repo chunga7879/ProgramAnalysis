@@ -1,9 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
+import analysis.values.*;
 
 public abstract class OperationVisitorWithDefault implements OperationVisitor<PossibleValues> {
     @Override
@@ -17,7 +14,12 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
-    public PossibleValues visitAbstract(IntegerRange a, PossibleValues b) {
+    public PossibleValues visitAbstract(EmptyValue a, PossibleValues b) {
+        return b.acceptOp(this, a);
+    }
+
+    @Override
+    public PossibleValues visitAbstract(IntegerValue a, PossibleValues b) {
         return b.acceptOp(this, a);
     }
 
@@ -32,7 +34,27 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
-    public PossibleValues visit(IntegerRange a, IntegerRange b) {
+    public PossibleValues visit(EmptyValue a, PossibleValues b) {
+        return a;
+    }
+
+    @Override
+    public PossibleValues visit(PossibleValues a, EmptyValue b) {
+        return b;
+    }
+
+    @Override
+    public PossibleValues visit(IntegerValue a, IntegerValue b) {
+        return new AnyValue();
+    }
+
+    @Override
+    public PossibleValues visit(IntegerValue a, AnyValue b) {
+        return new AnyValue();
+    }
+
+    @Override
+    public PossibleValues visit(AnyValue a, IntegerValue b) {
         return new AnyValue();
     }
 

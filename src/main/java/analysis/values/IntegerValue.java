@@ -2,24 +2,9 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
-public class IntegerRange extends IntegerValue {
-    private final int min;
-    private final int max;
-
-    public IntegerRange(int min, int max) {
-        this.min = min;
-        this.max = max;
-    }
-
-    @Override
-    public int getMin() {
-        return min;
-    }
-
-    @Override
-    public int getMax() {
-        return max;
-    }
+public abstract class IntegerValue extends PossibleValues {
+    public abstract int getMin();
+    public abstract int getMax();
 
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
@@ -42,7 +27,7 @@ public class IntegerRange extends IntegerValue {
     }
 
     @Override
-    public String toFormattedString() {
-        return "[" + min + "," + max + "]";
+    public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
+        return visitor.visit(a, this);
     }
 }

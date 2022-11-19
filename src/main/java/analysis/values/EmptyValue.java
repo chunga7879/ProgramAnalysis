@@ -2,7 +2,10 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
-public class AnyValue extends PossibleValues {
+/**
+ * Empty domain
+ */
+public final class EmptyValue extends PossibleValues {
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
         return visitor.visitAbstract(this, b);
@@ -10,26 +13,31 @@ public class AnyValue extends PossibleValues {
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
-        return visitor.visit(a, this);
+        return visitor.visit((PossibleValues) a, this);
     }
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, AnyValue a) {
-        return visitor.visit(a, this);
+        return visitor.visit((PossibleValues) a, this);
     }
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
-        return visitor.visit(a, this);
+        return visitor.visit((PossibleValues) a, this);
     }
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
-        return visitor.visit(a, this);
+        return visitor.visit((PossibleValues) a, this);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return true;
     }
 
     @Override
     public String toFormattedString() {
-        return "{any}";
+        return "{empty}";
     }
 }
