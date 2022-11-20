@@ -6,12 +6,19 @@ import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.stmt.IfStmt;
+import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static analysis.visitor.VisitorTestUtils.*;
 
 public class IfStatementTest {
+    @BeforeEach
+    public void runBefore() {
+        AnalysisLogger.setLog(true);
+    }
+
     @Test
     public void ifElseTest() {
         String code = """
