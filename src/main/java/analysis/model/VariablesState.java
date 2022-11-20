@@ -47,7 +47,7 @@ public class VariablesState {
     }
 
     private PossibleValues getVariableHelper(Node node) {
-        if (isDomainEmpty) return new EmptyValue();
+        if (isDomainEmpty || !variableMap.containsKey(node)) return new EmptyValue();
         return variableMap.get(node);
     }
 
@@ -95,9 +95,11 @@ public class VariablesState {
     public void merge(MergeVisitor mergeVisitor, VariablesState other) {
         if (!this.isDomainEmpty() && !other.isDomainEmpty()) {
             for (Map.Entry<Node, PossibleValues> entry : this.variableMap.entrySet()) {
-                PossibleValues otherValues = other.variableMap.get(entry.getKey());
-                PossibleValues mergedValues = entry.getValue().acceptAbstractOp(mergeVisitor, otherValues);
-                this.setVariableHelper(entry.getKey(), mergedValues);
+                if (other.variableMap.containsKey(entry.getKey())) {
+                    PossibleValues otherValues = other.variableMap.get(entry.getKey());
+                    PossibleValues mergedValues = entry.getValue().acceptAbstractOp(mergeVisitor, otherValues);
+                    this.setVariableHelper(entry.getKey(), mergedValues);
+                }
             }
             for (Map.Entry<Node, PossibleValues> entry : other.variableMap.entrySet()) {
                 if (!this.variableMap.containsKey(entry.getKey())) {
@@ -106,6 +108,7 @@ public class VariablesState {
             }
         } else if (this.isDomainEmpty() && other.isDomainEmpty()) {
             clear();
+            this.setDomainEmpty();
         } else if (this.isDomainEmpty()) {
             copyValuesFrom(other);
         }
@@ -116,7 +119,18 @@ public class VariablesState {
      * @param other Other state to intersect
      */
     public void intersect(IntersectVisitor intersectVisitor, VariablesState other) {
-        // TODO: implement
+        if (this.isDomainEmpty() || other.isDomainEmpty) {
+            clear();
+            this.setDomainEmpty();
+        } else {
+            for (Map.Entry<Node, PossibleValues> entry : this.variableMap.entrySet()) {
+                if (other.variableMap.containsKey(entry.getKey())) {
+                    PossibleValues otherValues = other.variableMap.get(entry.getKey());
+                    PossibleValues intersectValues = entry.getValue().acceptAbstractOp(intersectVisitor, otherValues);
+                    this.setVariableHelper(entry.getKey(), intersectValues);
+                }
+            }
+        }
     }
 
     /**
@@ -132,7 +146,7 @@ public class VariablesState {
      * @return Copy of the state
      */
     public VariablesState copy() {
-        // TODO: when objects are added, need to handle copying size
+        // TODO: when mutable objects are added, need to handle copying properties
         return new VariablesState(this.variableMap, this.isDomainEmpty);
     }
 
@@ -147,6 +161,7 @@ public class VariablesState {
     }
 
     public String toFormattedString() {
+        if (this.isDomainEmpty()) return "empty domain";
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (Map.Entry<Node, PossibleValues> entry : this.variableMap.entrySet()) {
@@ -165,5 +180,21 @@ public class VariablesState {
             first = false;
         }
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof VariablesState that)) return false;
+
+        if (isDomainEmpty != that.isDomainEmpty) return false;
+        return variableMap.equals(that.variableMap);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = variableMap.hashCode();
+        result = 31 * result + (isDomainEmpty ? 1 : 0);
+        return result;
     }
 }
