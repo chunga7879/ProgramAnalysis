@@ -163,7 +163,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             e.accept(expressionVisitor, exprAnalysisState);
         }
         AnalysisLogger.log(n, "FOR INITIALIZE: " + varState.toFormattedString());
-        VariablesState mergeState = varState.copy(); // State tracking the change in values between iterations
+        VariablesState mergeState = varState.copy(); // State tracking the values in all iterations
         VariablesState currentState = mergeState.copy(); // State tracking the values in each iteration
         VariablesState exitState = new VariablesState(); // State tracking the values when the loop exits
         exitState.setDomainEmpty();
