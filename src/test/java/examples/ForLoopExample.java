@@ -7,6 +7,7 @@ public class ForLoopExample {
         for (int i = 0; i < 10; i = i + 1) {
             a = i + 10;
         }
+        System.out.println(a);
     }
 
     // For loop, with non-fixed iterations
@@ -15,6 +16,7 @@ public class ForLoopExample {
         for (int i = 0; i < x; i = i + 1) {
             a = i + 5;
         }
+        System.out.println(a);
     }
 
     // For loop, with infinite loops
@@ -23,9 +25,10 @@ public class ForLoopExample {
         for (int i = 0; i < x; i = i - 1) {
             a = i + 5;
         }
+        System.out.println(a);
     }
 
-    // For loop, with infinite loops
+    // For loop, with loops inside loops
     void testForLoopInside(int x) {
         int a = 10;
         for (int i = 0; i < 100; i = i + 1) {
@@ -35,5 +38,6 @@ public class ForLoopExample {
                 }
             }
         }
+        System.out.println(a);
     }
 }

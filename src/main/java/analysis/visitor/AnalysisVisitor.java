@@ -197,7 +197,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
             AnalysisLogger.log(n, "FOR [" + i + "] ITERATION START STATE: ", currentState);
             AnalysisState analysisState = new AnalysisState(currentState);
-            n.getBody().accept(loopAnalysisVisitor, analysisState);
+            EndState bodyEndState = n.getBody().accept(loopAnalysisVisitor, analysisState);
+            // TODO: add early breaks from bodyEndState to exitState
             for (Expression e : n.getUpdate()) {
                 e.accept(loopExprVisitor, loopExprAnalysisState);
             }
