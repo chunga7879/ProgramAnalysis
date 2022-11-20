@@ -2,6 +2,9 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
+/**
+ * Represents an integer range between min and max (inclusive)
+ */
 public class IntegerRange extends IntegerValue {
     private final int min;
     private final int max;
@@ -44,5 +47,15 @@ public class IntegerRange extends IntegerValue {
     @Override
     public String toFormattedString() {
         return "[" + min + "," + max + "]";
+    }
+
+    /**
+     * Check if n is in the integer range
+     * @param n the integer to check
+     * @return true if n is in the integer range; false otherwise
+     */
+    @Override
+    public boolean inRange(int n) {
+        return n >= min  && n <= max;
     }
 }

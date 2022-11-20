@@ -6,9 +6,7 @@ import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
 import analysis.values.StringValue;
-import analysis.values.visitor.AddVisitor;
-import analysis.values.visitor.MergeVisitor;
-import analysis.values.visitor.SubtractVisitor;
+import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -26,12 +24,16 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
     private final AddVisitor addVisitor;
+    private final DivideVisitor divideVisitor;
     private final SubtractVisitor subtractVisitor;
+    private final MultiplyVisitor multiplyVisitor;
 
     public ExpressionVisitor() {
         this.mergeVisitor = new MergeVisitor();
         this.addVisitor = new AddVisitor();
+        this.divideVisitor = new DivideVisitor();
         this.subtractVisitor = new SubtractVisitor();
+        this.multiplyVisitor = new MultiplyVisitor();
     }
 
     @Override
@@ -90,8 +92,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
         return switch (n.getOperator()) {
+            case DIVIDE -> leftValue.acceptAbstractOp(divideVisitor, rightValue);
             case PLUS -> leftValue.acceptAbstractOp(addVisitor, rightValue);
             case MINUS -> leftValue.acceptAbstractOp(subtractVisitor, rightValue);
+            case MULTIPLY -> leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
             default -> new AnyValue();
         };
     }
