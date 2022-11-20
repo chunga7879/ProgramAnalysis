@@ -24,8 +24,8 @@ public class ForStatementTest {
     public void forLoopFixedTest() {
         String code = """
                 public class Main {
-                    void testForLoopFixed(int a) {
-                        for (int i = 0; i < 10; i = i + 1) {
+                    void testForLoopFixed(int a, int b) {
+                        for (int i = 0; i < b; i = i + 1) {
                             a = a + i;
                         }
                     }
@@ -34,17 +34,19 @@ public class ForStatementTest {
         CompilationUnit compiled = compile(code);
         ForStmt forStatement = getForStatements(compiled).get(0);
         Parameter a = getParameter(compiled, "a");
+        Parameter b = getParameter(compiled, "b");
         VariableDeclarator i = getVariable(compiled, "i");
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(a, new IntegerRange(10, 10));
+        varState.setVariable(b, new IntegerRange(10, 20));
         forStatement.accept(new AnalysisVisitor(""), analysisState);
         IntegerRange aVal = (IntegerRange) varState.getVariable(a);
         Assertions.assertEquals(55, aVal.getMin());
-        Assertions.assertEquals(55, aVal.getMax());
+        Assertions.assertEquals(200, aVal.getMax());
         IntegerRange iVal = (IntegerRange) varState.getVariable(i);
         Assertions.assertEquals(10, iVal.getMin());
-        Assertions.assertEquals(10, iVal.getMax());
+        Assertions.assertEquals(20, iVal.getMax());
     }
 
     @Test
