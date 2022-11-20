@@ -37,6 +37,11 @@ public final class EmptyValue extends PossibleValues {
     }
 
     @Override
+    public boolean canBeNull() {
+        return false;
+    }
+
+    @Override
     public String toFormattedString() {
         return "{empty}";
     }

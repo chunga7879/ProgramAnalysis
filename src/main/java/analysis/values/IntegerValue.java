@@ -30,4 +30,9 @@ public abstract class IntegerValue extends PossibleValues {
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
     }
+
+    @Override
+    public boolean canBeNull() {
+        return false;
+    }
 }

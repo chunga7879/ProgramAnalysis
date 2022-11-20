@@ -2,10 +2,7 @@ package analysis.visitor;
 
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
+import analysis.values.*;
 import analysis.values.visitor.AddVisitor;
 import analysis.values.visitor.MergeVisitor;
 import analysis.values.visitor.SubtractVisitor;
@@ -158,7 +155,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(NullLiteralExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return new NullValue();
     }
 
     @Override

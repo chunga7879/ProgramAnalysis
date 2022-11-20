@@ -32,6 +32,8 @@ public abstract class PossibleValues implements ValueVisitable {
         return false;
     }
 
+    public abstract boolean canBeNull();
+
     @Override
     public String toString() {
         return toFormattedString();

@@ -32,4 +32,10 @@ public class StringValue extends PossibleValues {
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
     }
+
+    @Override
+    public boolean canBeNull() {
+        // TODO: edit
+        return true;
+    }
 }
