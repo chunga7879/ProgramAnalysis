@@ -3,35 +3,15 @@ package analysis.visitor;
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.IntegerRange;
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.stmt.IfStmt;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Objects;
+import static analysis.visitor.VisitorTestUtils.*;
 
 public class IfStatementTest {
-
-    private CompilationUnit compile(String code) {
-        StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new ReflectionTypeSolver()));
-        return StaticJavaParser.parse(code);
-    }
-
-    private Parameter getParameter(CompilationUnit compilationUnit, String paramName) {
-        return compilationUnit.findFirst(
-                Parameter.class,
-                parameter -> Objects.equals(parameter.getNameAsString(), paramName)).orElseThrow();
-    }
-
-    private List<IfStmt> getIfStatements(CompilationUnit compilationUnit) {
-        return compilationUnit.findAll(IfStmt.class);
-    }
-
     @Test
     public void ifElseTest() {
         String code = """
