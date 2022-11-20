@@ -40,4 +40,15 @@ public final class EmptyValue extends PossibleValues {
     public String toFormattedString() {
         return "{empty}";
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof EmptyValue;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * getClass().hashCode();
+    }
 }

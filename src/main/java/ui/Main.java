@@ -9,18 +9,21 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import logger.AnalysisLogger;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) throw new IOException("Requires: [Java file path] [Method name]");
+        if (args.length < 2) throw new IOException("Requires: [Java file path] [Method name] -d");
         String filePath = args[0];
         String method = args[1];
+        if (args.length >= 3 && Objects.equals(args[2], "-d")) AnalysisLogger.setLog(true);
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new ReflectionTypeSolver()));
         CompilationUnit compilationUnit;
         try {

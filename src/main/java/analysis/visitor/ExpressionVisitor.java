@@ -29,9 +29,17 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     private final SubtractVisitor subtractVisitor;
 
     public ExpressionVisitor() {
-        this.mergeVisitor = new MergeVisitor();
-        this.addVisitor = new AddVisitor();
-        this.subtractVisitor = new SubtractVisitor();
+        this(new MergeVisitor(), new AddVisitor(), new SubtractVisitor());
+    }
+
+    public ExpressionVisitor(
+            MergeVisitor mergeVisitor,
+            AddVisitor addVisitor,
+            SubtractVisitor subtractVisitor
+    ) {
+        this.mergeVisitor = mergeVisitor;
+        this.addVisitor = addVisitor;
+        this.subtractVisitor = subtractVisitor;
     }
 
     @Override
