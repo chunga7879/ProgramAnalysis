@@ -9,6 +9,7 @@ import analysis.values.StringValue;
 import analysis.values.visitor.AddVisitor;
 import analysis.values.visitor.MergeVisitor;
 import analysis.values.visitor.SubtractVisitor;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -19,9 +20,20 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import com.github.javaparser.javadoc.Javadoc;
+import com.github.javaparser.javadoc.JavadocBlockTag;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+
+import java.util.List;
+import java.util.Objects;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -163,6 +175,39 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(MethodCallExpr n, ExpressionAnalysisState arg) {
+        NodeList<Expression> methodArgs = n.getArguments();
+        ResolvedMethodDeclaration dec = n.resolve();
+        for (int i = 0; i < methodArgs.size(); i++) {
+            Expression methodArg = methodArgs.get(i);
+            if (methodArg instanceof NullLiteralExpr) {
+                ResolvedParameterDeclaration pDec = dec.getParam(i);
+                if (pDec instanceof JavaParserParameterDeclaration paramDec) {
+                    NodeList<AnnotationExpr> annotations = paramDec.getWrappedNode().getAnnotations();
+                    if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "NotNull"))) {
+                        // TODO: handle null pointer exception
+                    }
+                }
+            }
+        }
+        if (dec instanceof JavaParserMethodDeclaration methodDec) {
+            JavadocComment javadocComment = methodDec.getWrappedNode().getJavadocComment().orElse(null);
+            if (javadocComment != null) {
+                Javadoc javadoc = javadocComment.parse();
+                List<JavadocBlockTag> throwTags = javadoc.getBlockTags().stream().filter(x -> x.getType() == JavadocBlockTag.Type.THROWS).toList();
+                for (JavadocBlockTag throwTag : throwTags) {
+                    String exceptionName = throwTag.getName().orElse(null);
+                    if (exceptionName == null) continue;
+                    NameExpr nameExpr = new NameExpr(exceptionName);
+                    nameExpr.setParentNode(methodDec.getWrappedNode());
+                    ResolvedType resolvedType = StaticJavaParser.getParserConfiguration().getSymbolResolver().get().calculateType(nameExpr);
+                    ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
+                    boolean isRuntimeException = runtimeExceptionType.isAssignableBy(resolvedType);
+                    if (isRuntimeException) {
+                        // TODO: handle runtime exception from throws in JavaDocs
+                    }
+                }
+            }
+        }
         return new AnyValue();
     }
 
