@@ -121,8 +121,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         }
 
         // Merge together
-        varState.copyValuesFrom(trueVarState.mergeCopy(mergeVisitor, falseVarState));
-        AnalysisLogger.logEnd(n, "MERGED: " + varState.toFormattedString());
+        VariablesState mergedState = new VariablesState();
+        if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
+        if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
+        varState.copyValuesFrom(mergedState);
+        AnalysisLogger.logEnd(n, "IF MERGED: " + varState.toFormattedString());
         return null;
     }
 

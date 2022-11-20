@@ -1,9 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.EmptyValue;
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
-import analysis.values.PossibleValues;
+import analysis.values.*;
 
 public class RestrictEqualsVisitor extends RestrictionVisitor {
     @Override
@@ -14,4 +11,15 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
     }
 
     // TODO: handle equals for different types
+    @Override
+    public PossibleValues visit(PossibleValues a, StringValue b) {
+        if (a instanceof IntegerValue) return new EmptyValue(); // handle this better
+        return a;
+    }
+
+    @Override
+    public PossibleValues visit(StringValue a, PossibleValues b) {
+        if (b instanceof IntegerValue) return new EmptyValue(); // handle this better
+        return a;
+    }
 }

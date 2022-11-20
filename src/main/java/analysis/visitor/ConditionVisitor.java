@@ -122,20 +122,27 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
     private ConditionStates handleBooleanOperators(Expression leftExpr, Expression rightExpr,
                                                    BinaryExpr.Operator operator, ExpressionAnalysisState arg) {
         // TODO: handle visiting assignments
+        // TODO: re-compute domains when values get updated
         ConditionStates leftStates = leftExpr.accept(this, arg);
         ConditionStates rightStates = rightExpr.accept(this, arg);
         VariablesState state = arg.getVariablesState();
-        return switch (operator) {
-            case AND -> new ConditionStates(
-                    leftStates.getTrueState().intersectCopy(intersectVisitor, rightStates.getTrueState()),
-                    leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState())
-            );
-            case OR -> new ConditionStates(
-                    leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()),
-                    leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState())
-            );
-            default -> new ConditionStates(state.copy(), state.copy());
-        };
+        switch (operator) {
+            case AND -> {
+                return new ConditionStates(
+                        leftStates.getTrueState().intersectCopy(intersectVisitor, rightStates.getTrueState()),
+                        leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState())
+                );
+            }
+            case OR -> {
+                return new ConditionStates(
+                        leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()),
+                        leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState())
+                );
+            }
+            default -> {
+                return new ConditionStates(state.copy(), state.copy());
+            }
+        }
     }
 
     private ConditionStates getConditionStatesFromBinaryExpr(
@@ -177,27 +184,43 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
 
     @Override
     public ConditionStates visit(UnaryExpr n, ExpressionAnalysisState arg) {
-        return null;
+        if (n.getOperator() == UnaryExpr.Operator.LOGICAL_COMPLEMENT) {
+            ConditionStates condStates = n.getExpression().accept(this, arg);
+            return new ConditionStates(condStates.getFalseState(), condStates.getTrueState());
+        }
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
     }
 
     @Override
     public ConditionStates visit(NameExpr n, ExpressionAnalysisState arg) {
-        return null;
+        // TODO: handle when boolean type is added
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+    }
+
+    @Override
+    public ConditionStates visit(EnclosedExpr n, ExpressionAnalysisState arg) {
+        return n.getInner().accept(this, arg);
     }
 
     @Override
     public ConditionStates visit(BooleanLiteralExpr n, ExpressionAnalysisState arg) {
-        return null;
+        if (n.getValue()) {
+            return new ConditionStates(arg.getVariablesState().copy(), VariablesState.createEmpty());
+        } else {
+            return new ConditionStates(VariablesState.createEmpty(), arg.getVariablesState().copy());
+        }
     }
 
     @Override
     public ConditionStates visit(InstanceOfExpr n, ExpressionAnalysisState arg) {
-        return null;
+        // TODO: handle instanceOf when object subtypes are added
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
     }
 
     @Override
     public ConditionStates visit(AssignExpr n, ExpressionAnalysisState arg) {
-        return null;
+        // TODO: handle assign when boolean is added
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
     }
 
 
@@ -370,11 +393,6 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
 
     @Override
     public ConditionStates visit(ConditionalExpr n, ExpressionAnalysisState arg) {
-        return null;
-    }
-
-    @Override
-    public ConditionStates visit(EnclosedExpr n, ExpressionAnalysisState arg) {
         return null;
     }
 

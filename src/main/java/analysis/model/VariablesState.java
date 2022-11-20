@@ -25,6 +25,12 @@ public class VariablesState {
         this.isDomainEmpty = isDomainEmpty;
     }
 
+    public static VariablesState createEmpty() {
+        VariablesState state = new VariablesState();
+        state.setDomainEmpty();
+        return state;
+    }
+
     public void setVariable(VariableDeclarator declaratorNode, PossibleValues value) {
         setVariableHelper(declaratorNode, value);
     }
