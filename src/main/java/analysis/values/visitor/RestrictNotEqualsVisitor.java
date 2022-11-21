@@ -15,13 +15,13 @@ public class RestrictNotEqualsVisitor extends RestrictionVisitor {
 
     @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
-        if (b instanceof NullValue) return new EmptyValue(); // TODO: handle this better
+        if (b.equals(a)) return new EmptyValue();
         return a;
     }
 
     @Override
     public PossibleValues visit(ObjectValue a, NullValue b) {
-        if (a instanceof NullValue) return new EmptyValue(); // TODO: handle this better
+        if (a.equals(b)) return new EmptyValue();
         return a.withNotNullable();
     }
 }
