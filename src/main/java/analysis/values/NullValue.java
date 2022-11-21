@@ -5,7 +5,7 @@ import analysis.values.visitor.OperationVisitor;
 /**
  * Value that is null
  */
-public class NullValue extends ObjectValues {
+public class NullValue extends ObjectValue {
     public static final NullValue VALUE = new NullValue();
 
     private NullValue() {
@@ -17,17 +17,17 @@ public class NullValue extends ObjectValues {
     }
 
     @Override
-    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValues a) {
+    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValue a) {
         return visitor.visit(a, this);
     }
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, NullValue a) {
-        return visitor.visit(a, (ObjectValues) this);
+        return visitor.visit(a, (ObjectValue) this);
     }
 
     @Override
-    public ObjectValues withNullable() {
+    public ObjectValue withNullable() {
         return this;
     }
 

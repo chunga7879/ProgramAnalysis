@@ -2,7 +2,7 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
-public abstract class IntegerValue extends PrimitiveValues {
+public abstract class IntegerValue extends PrimitiveValue {
     public abstract int getMin();
     public abstract int getMax();
 

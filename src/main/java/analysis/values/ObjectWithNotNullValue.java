@@ -5,24 +5,24 @@ import analysis.values.visitor.OperationVisitor;
 /**
  * Values that are objects that can/cannot be null
  */
-public abstract class ObjectWithNotNullValues extends ObjectValues {
+public abstract class ObjectWithNotNullValue extends ObjectValue {
     private boolean canBeNull;
 
-    public ObjectWithNotNullValues() {
+    public ObjectWithNotNullValue() {
         this.canBeNull = true;
     }
 
-    public ObjectWithNotNullValues(boolean canBeNull) {
+    public ObjectWithNotNullValue(boolean canBeNull) {
         this.canBeNull = canBeNull;
     }
 
-    public ObjectWithNotNullValues withNullable() {
-        ObjectWithNotNullValues copy = this.copy();
+    public ObjectWithNotNullValue withNullable() {
+        ObjectWithNotNullValue copy = this.copy();
         copy.canBeNull = true;
         return copy;
     }
 
-    public abstract ObjectWithNotNullValues copy();
+    public abstract ObjectWithNotNullValue copy();
 
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {

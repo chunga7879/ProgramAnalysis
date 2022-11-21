@@ -2,7 +2,7 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
-public class StringValue extends ObjectWithNotNullValues {
+public class StringValue extends ObjectWithNotNullValue {
 
     public StringValue() {
         // TODO: add domain for String
@@ -35,11 +35,11 @@ public class StringValue extends ObjectWithNotNullValues {
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, NullValue a) {
-        return visitor.visit(a, (ObjectValues) this);
+        return visitor.visit(a, (ObjectValue) this);
     }
 
     @Override
-    public ObjectWithNotNullValues copy() {
+    public ObjectWithNotNullValue copy() {
         // TODO: implement
         return new StringValue();
     }

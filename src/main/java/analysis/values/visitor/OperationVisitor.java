@@ -12,7 +12,7 @@ public interface OperationVisitor<T> {
     T visitAbstract(EmptyValue a, PossibleValues b);
     T visitAbstract(IntegerValue a, PossibleValues b);
     T visitAbstract(StringValue a, PossibleValues b);
-    T visitAbstract(ObjectValues a, PossibleValues b);
+    T visitAbstract(ObjectValue a, PossibleValues b);
     T visitAbstract(NullValue a, PossibleValues b);
 
     T visit(PossibleValues a, PossibleValues b);
@@ -24,6 +24,6 @@ public interface OperationVisitor<T> {
     T visit(StringValue a, StringValue b);
     T visit(PossibleValues a, StringValue b);
     T visit(StringValue a, PossibleValues b);
-    T visit(NullValue a, ObjectValues b);
-    T visit(ObjectValues a, NullValue b);
+    T visit(NullValue a, ObjectValue b);
+    T visit(ObjectValue a, NullValue b);
 }

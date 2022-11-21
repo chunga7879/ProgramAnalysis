@@ -5,8 +5,8 @@ import analysis.values.visitor.OperationVisitor;
 /**
  * Values that are objects (pointers)
  */
-public abstract class ObjectValues extends PossibleValues {
-    public abstract ObjectValues withNullable();
+public abstract class ObjectValue extends PossibleValues {
+    public abstract ObjectValue withNullable();
 
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
@@ -14,7 +14,7 @@ public abstract class ObjectValues extends PossibleValues {
     }
 
     @Override
-    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValues a) {
+    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValue a) {
         return visitor.visit(a, this);
     }
 

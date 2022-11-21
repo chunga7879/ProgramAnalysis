@@ -31,12 +31,12 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     }
 
     @Override
-    public PossibleValues visit(NullValue a, ObjectValues b) {
+    public PossibleValues visit(NullValue a, ObjectValue b) {
         return b.withNullable();
     }
 
     @Override
-    public PossibleValues visit(ObjectValues a, NullValue b) {
+    public PossibleValues visit(ObjectValue a, NullValue b) {
         return a.withNullable();
     }
 }

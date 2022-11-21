@@ -3,9 +3,9 @@ package analysis.values;
 /**
  * Object values that can have subclasses
  */
-public class ExtendibleObjectValues extends ObjectWithNotNullValues {
+public class ExtendibleObjectValue extends ObjectWithNotNullValue {
     @Override
-    public ObjectWithNotNullValues copy() {
+    public ObjectWithNotNullValue copy() {
         return null;
     }
 }
