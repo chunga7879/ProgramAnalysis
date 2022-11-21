@@ -32,4 +32,15 @@ public class AnyValue extends PossibleValues {
     public String toFormattedString() {
         return "{any}";
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof AnyValue;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * getClass().hashCode();
+    }
 }

@@ -32,4 +32,16 @@ public class StringValue extends PossibleValues {
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        // TODO: implement
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        // TODO: implement
+        return 0;
+    }
 }
