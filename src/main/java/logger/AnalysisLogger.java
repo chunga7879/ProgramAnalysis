@@ -11,11 +11,17 @@ import java.util.List;
  * Logger for viewing the state of the analysis
  */
 public final class AnalysisLogger {
+    private static boolean doLog = false;
+
+    public static void setLog(boolean doLog) {
+        AnalysisLogger.doLog = doLog;
+    }
 
     /**
      * Log the state of the arg at a node
      */
     public static void log(Node n, VariablesState arg) {
+        if (!doLog) return;
         log(n, arg, null);
     }
 
@@ -23,6 +29,7 @@ public final class AnalysisLogger {
      * Log the state of the arg and errors at a node
      */
     public static void log(Node n, VariablesState arg, List<AnalysisError> errors) {
+        if (!doLog) return;
         log(n, arg.toFormattedString());
         if (errors != null && !errors.isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -40,7 +47,16 @@ public final class AnalysisLogger {
     /**
      * Log a message at a node
      */
+    public static void log(Node n, String message, VariablesState state) {
+        if (!doLog) return;
+        log(n, message + state.toFormattedString());
+    }
+
+    /**
+     * Log a message at a node
+     */
     public static void log(Node n, String message) {
+        if (!doLog) return;
         String lineCount = "?";
         if (n.getRange().isPresent()) {
             Range range = n.getRange().get();
@@ -52,9 +68,19 @@ public final class AnalysisLogger {
     }
 
     /**
+     * Log a message at a node
+     */
+    public static void logEnd(Node n, String message, VariablesState state) {
+        if (!doLog) return;
+        log(n, message + state.toFormattedString());
+    }
+
+
+    /**
      * Log the end of the control statement
      */
     public static void logEnd(Node n, String message) {
+        if (!doLog) return;
         String lineCount = "?";
         if (n.getRange().isPresent()) {
             Range range = n.getRange().get();

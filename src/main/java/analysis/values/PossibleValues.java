@@ -53,4 +53,10 @@ public abstract class PossibleValues implements ValueVisitable {
     public String toFormattedString() {
         return "{domain}";
     }
+
+    @Override
+    public abstract boolean equals(Object obj);
+
+    @Override
+    public abstract int hashCode();
 }

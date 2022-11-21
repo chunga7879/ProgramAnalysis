@@ -45,4 +45,20 @@ public class IntegerRange extends IntegerValue {
     public String toFormattedString() {
         return "[" + min + "," + max + "]";
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof IntegerRange that)) return false;
+
+        if (min != that.min) return false;
+        return max == that.max;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = min;
+        result = 31 * result + max;
+        return result;
+    }
 }
