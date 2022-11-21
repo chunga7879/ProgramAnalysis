@@ -18,7 +18,7 @@ public abstract class ObjectValue extends PossibleValues {
     }
 
     /**
-     * Create an object value that is a copy of this but nullable
+     * Create an object value that is this value but nullable
      */
     public abstract ObjectValue withNullable();
 

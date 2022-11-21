@@ -17,6 +17,7 @@ public abstract class ObjectWithNotNullValue extends ObjectValue {
     }
 
     public ObjectWithNotNullValue withNullable() {
+        if (this.canBeNull()) return this;
         ObjectWithNotNullValue copy = this.copy();
         copy.canBeNull = true;
         return copy;
