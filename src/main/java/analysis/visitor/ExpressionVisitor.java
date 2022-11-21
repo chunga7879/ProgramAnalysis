@@ -155,7 +155,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(NullLiteralExpr n, ExpressionAnalysisState arg) {
-        return new NullValue();
+        return NullValue.VALUE;
     }
 
     @Override

@@ -2,7 +2,7 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
-public abstract class IntegerValue extends PossibleValues {
+public abstract class IntegerValue extends PrimitiveValues {
     public abstract int getMin();
     public abstract int getMax();
 
@@ -29,10 +29,5 @@ public abstract class IntegerValue extends PossibleValues {
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
-    }
-
-    @Override
-    public boolean canBeNull() {
-        return false;
     }
 }

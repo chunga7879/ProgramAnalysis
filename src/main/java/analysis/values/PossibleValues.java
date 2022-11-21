@@ -25,6 +25,14 @@ public abstract class PossibleValues implements ValueVisitable {
         return visitor.visit(a, this);
     }
 
+    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValues a) {
+        return visitor.visit(a, this);
+    }
+
+    public <T> T acceptOp(OperationVisitor<T> visitor, NullValue a) {
+        return visitor.visit(a, this);
+    }
+
     /**
      * Is the domain empty?
      */

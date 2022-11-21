@@ -8,5 +8,7 @@ public interface ValueVisitable {
     <T> T acceptOp(OperationVisitor<T> visitor, AnyValue a);
     <T> T acceptOp(OperationVisitor<T> visitor, EmptyValue a);
     <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a);
+    <T> T acceptOp(OperationVisitor<T> visitor, ObjectValues a);
+    <T> T acceptOp(OperationVisitor<T> visitor, NullValue a);
     <T> T acceptOp(OperationVisitor<T> visitor, StringValue a);
 }

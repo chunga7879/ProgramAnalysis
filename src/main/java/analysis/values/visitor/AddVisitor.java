@@ -1,9 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
+import analysis.values.*;
 import utils.MathUtil;
 
 /**
@@ -32,6 +29,18 @@ public class AddVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(StringValue a, PossibleValues b) {
+        // TODO: implement
+        return new StringValue();
+    }
+
+    @Override
+    public PossibleValues visit(NullValue a, ObjectValues b) {
+        // TODO: implement
+        return new StringValue();
+    }
+
+    @Override
+    public PossibleValues visit(ObjectValues a, NullValue b) {
         // TODO: implement
         return new StringValue();
     }
