@@ -29,6 +29,12 @@ public class AnyValue extends PossibleValues {
     }
 
     @Override
+    public boolean canBeNull() {
+        return true;
+    }
+
+
+    @Override
     public String toFormattedString() {
         return "{any}";
     }

@@ -1,9 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.EmptyValue;
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
-import analysis.values.PossibleValues;
+import analysis.values.*;
 
 public class IntersectVisitor extends OperationVisitorWithDefault {
     @Override
@@ -17,4 +14,15 @@ public class IntersectVisitor extends OperationVisitorWithDefault {
     }
 
     // TODO: implement
+    @Override
+    public PossibleValues visit(NullValue a, ObjectValue b) {
+        if (!b.canBeNull()) return new EmptyValue();
+        return a;
+    }
+
+    @Override
+    public PossibleValues visit(ObjectValue a, NullValue b) {
+        if (!a.canBeNull()) return new EmptyValue();
+        return b;
+    }
 }

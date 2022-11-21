@@ -22,4 +22,16 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
         if (b instanceof IntegerValue) return new EmptyValue(); // handle this better
         return a;
     }
+
+    @Override
+    public PossibleValues visit(NullValue a, ObjectValue b) {
+        if (b.canBeNull()) return a;
+        return new EmptyValue();
+    }
+
+    @Override
+    public PossibleValues visit(ObjectValue a, NullValue b) {
+        if (a.canBeNull()) return b;
+        return new EmptyValue();
+    }
 }

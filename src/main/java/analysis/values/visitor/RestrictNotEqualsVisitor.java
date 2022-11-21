@@ -1,9 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.EmptyValue;
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
-import analysis.values.PossibleValues;
+import analysis.values.*;
 
 public class RestrictNotEqualsVisitor extends RestrictionVisitor {
     @Override
@@ -14,5 +11,17 @@ public class RestrictNotEqualsVisitor extends RestrictionVisitor {
         if (b.getMin() == a.getMax() && a.getMax() != Integer.MIN_VALUE) return new IntegerRange(a.getMin(), a.getMax() - 1);
         // TODO: If we add a opposite of range (i.e. everything except for X), could do more handling here
         return a;
+    }
+
+    @Override
+    public PossibleValues visit(NullValue a, ObjectValue b) {
+        if (b.equals(a)) return new EmptyValue();
+        return a;
+    }
+
+    @Override
+    public PossibleValues visit(ObjectValue a, NullValue b) {
+        if (a.equals(b)) return new EmptyValue();
+        return a.withNotNullable();
     }
 }
