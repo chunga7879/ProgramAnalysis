@@ -45,6 +45,12 @@ public class StringValue extends ObjectWithNotNullValue {
     }
 
     @Override
+    public String toFormattedString() {
+        return this.canBeNull() ? "{null, String}" : "{String}";
+    }
+
+
+    @Override
     public boolean equals(Object obj) {
         // TODO: implement
         return false;

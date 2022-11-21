@@ -17,6 +17,26 @@ public class NullValue extends ObjectValue {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, AnyValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
+        return visitor.visit((ObjectValue) a, this);
+    }
+
+    @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValue a) {
         return visitor.visit(a, this);
     }
@@ -40,6 +60,12 @@ public class NullValue extends ObjectValue {
     public boolean canBeNull() {
         return true;
     }
+
+    @Override
+    public String toFormattedString() {
+        return "null";
+    }
+
 
     @Override
     public boolean equals(Object o) {
