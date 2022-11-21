@@ -32,7 +32,23 @@ public class NullValue extends ObjectValue {
     }
 
     @Override
+    public EmptyValue withNotNullable() {
+        return new EmptyValue();
+    }
+
+    @Override
     public boolean canBeNull() {
         return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof NullValue;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * getClass().hashCode();
     }
 }

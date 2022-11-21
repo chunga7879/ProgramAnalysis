@@ -22,6 +22,11 @@ public abstract class ObjectValue extends PossibleValues {
      */
     public abstract ObjectValue withNullable();
 
+    /**
+     * Create an object value that is this value but not nullable
+     */
+    public abstract PossibleValues withNotNullable();
+
     @Override
     public abstract boolean canBeNull();
 }

@@ -16,10 +16,19 @@ public abstract class ObjectWithNotNullValue extends ObjectValue {
         this.canBeNull = canBeNull;
     }
 
+    @Override
     public ObjectWithNotNullValue withNullable() {
         if (this.canBeNull()) return this;
         ObjectWithNotNullValue copy = this.copy();
         copy.canBeNull = true;
+        return copy;
+    }
+
+    @Override
+    public ObjectWithNotNullValue withNotNullable() {
+        if (!this.canBeNull()) return this;
+        ObjectWithNotNullValue copy = this.copy();
+        copy.canBeNull = false;
         return copy;
     }
 

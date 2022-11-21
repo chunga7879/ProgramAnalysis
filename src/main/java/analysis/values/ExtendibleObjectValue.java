@@ -8,4 +8,16 @@ public class ExtendibleObjectValue extends ObjectWithNotNullValue {
     public ObjectWithNotNullValue copy() {
         return null;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        // TODO: implement
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        // TODO: implement
+        return 0;
+    }
 }
