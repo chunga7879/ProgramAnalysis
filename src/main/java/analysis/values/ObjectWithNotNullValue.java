@@ -22,6 +22,9 @@ public abstract class ObjectWithNotNullValue extends ObjectValue {
         return copy;
     }
 
+    /**
+     * Create a copy of this object
+     */
     public abstract ObjectWithNotNullValue copy();
 
     @Override

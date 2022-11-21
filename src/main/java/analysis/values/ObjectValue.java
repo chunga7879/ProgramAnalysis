@@ -6,7 +6,6 @@ import analysis.values.visitor.OperationVisitor;
  * Values that are objects (pointers)
  */
 public abstract class ObjectValue extends PossibleValues {
-    public abstract ObjectValue withNullable();
 
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
@@ -17,6 +16,11 @@ public abstract class ObjectValue extends PossibleValues {
     public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValue a) {
         return visitor.visit(a, this);
     }
+
+    /**
+     * Create an object value that is a copy of this but nullable
+     */
+    public abstract ObjectValue withNullable();
 
     @Override
     public abstract boolean canBeNull();
