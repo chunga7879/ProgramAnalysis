@@ -25,12 +25,22 @@ public abstract class PossibleValues implements ValueVisitable {
         return visitor.visit(a, this);
     }
 
+    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValue a) {
+        return visitor.visit(a, this);
+    }
+
+    public <T> T acceptOp(OperationVisitor<T> visitor, NullValue a) {
+        return visitor.visit(a, this);
+    }
+
     /**
      * Is the domain empty?
      */
     public boolean isEmpty() {
         return false;
     }
+
+    public abstract boolean canBeNull();
 
     @Override
     public String toString() {
@@ -43,4 +53,10 @@ public abstract class PossibleValues implements ValueVisitable {
     public String toFormattedString() {
         return "{domain}";
     }
+
+    @Override
+    public abstract boolean equals(Object obj);
+
+    @Override
+    public abstract int hashCode();
 }

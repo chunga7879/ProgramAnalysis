@@ -29,4 +29,14 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     public PossibleValues visit(PossibleValues a, EmptyValue b) {
         return a;
     }
+
+    @Override
+    public PossibleValues visit(NullValue a, ObjectValue b) {
+        return b.withNullable();
+    }
+
+    @Override
+    public PossibleValues visit(ObjectValue a, NullValue b) {
+        return a.withNullable();
+    }
 }
