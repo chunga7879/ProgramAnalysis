@@ -2,10 +2,7 @@ package analysis.visitor;
 
 import analysis.model.*;
 import analysis.values.AnyValue;
-import analysis.values.visitor.AddApproximateVisitor;
-import analysis.values.visitor.IntersectVisitor;
-import analysis.values.visitor.MergeVisitor;
-import analysis.values.visitor.SubtractApproximateVisitor;
+import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -180,7 +177,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
                 // If # of loop runs is too long, start to approximate changes
                 isApprox = true;
                 AnalysisLogger.log(n, "FOR [" + i + "] TOO MANY ITERATIONS");
-                loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new SubtractApproximateVisitor());
+                loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new DivideVisitor(),
+                        new MultiplyVisitor(), new SubtractApproximateVisitor());
                 loopAnalysisVisitor = new AnalysisVisitor(targetMethod, loopExprVisitor);
             }
 

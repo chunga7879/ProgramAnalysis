@@ -33,22 +33,21 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     private final MultiplyVisitor multiplyVisitor;
 
     public ExpressionVisitor() {
-        this(new MergeVisitor(), new AddVisitor(), new SubtractVisitor());
+        this(new MergeVisitor(), new AddVisitor(), new DivideVisitor(), new MultiplyVisitor(), new SubtractVisitor());
     }
 
     public ExpressionVisitor(
             MergeVisitor mergeVisitor,
             AddVisitor addVisitor,
+            DivideVisitor divideVisitor,
+            MultiplyVisitor multiplyVisitor,
             SubtractVisitor subtractVisitor
     ) {
         this.mergeVisitor = mergeVisitor;
         this.addVisitor = addVisitor;
+        this.divideVisitor = divideVisitor;
+        this.multiplyVisitor = multiplyVisitor;
         this.subtractVisitor = subtractVisitor;
-        this.mergeVisitor = new MergeVisitor();
-        this.addVisitor = new AddVisitor();
-        this.divideVisitor = new DivideVisitor();
-        this.subtractVisitor = new SubtractVisitor();
-        this.multiplyVisitor = new MultiplyVisitor();
     }
 
     @Override
