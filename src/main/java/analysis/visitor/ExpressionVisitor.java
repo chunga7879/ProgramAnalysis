@@ -1,5 +1,6 @@
 package analysis.visitor;
 
+import analysis.model.AnalysisError;
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
@@ -31,6 +32,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -178,37 +180,85 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         return NullValue.VALUE;
     }
 
+    /**
+     * A method call on an object in the form
+     * a.b(c)
+     * where a = method scope, b = method name, c = method arg(s)
+     */
     @Override
     public PossibleValues visit(MethodCallExpr n, ExpressionAnalysisState arg) {
-        NodeList<Expression> methodArgs = n.getArguments();
+        Optional<Expression> scope = n.getScope();
+        String methodName = n.getName().asString();
+
+        // handle method scope if present
+        if (scope.isPresent()) {
+            Expression object = scope.get();
+            PossibleValues objectValue = object.accept(this, arg);
+
+            if (objectValue instanceof NullValue) {
+                arg.addError(new AnalysisError("Method call " + methodName + " can cause a NullPointerException"));
+            }
+        }
+
         ResolvedMethodDeclaration dec = n.resolve();
+
+        // handle method args
+        NodeList<Expression> methodArgs = n.getArguments();
         for (int i = 0; i < methodArgs.size(); i++) {
             Expression methodArg = methodArgs.get(i);
-            if (methodArg instanceof NullLiteralExpr) {
-                ResolvedParameterDeclaration pDec = dec.getParam(i);
-                if (pDec instanceof JavaParserParameterDeclaration paramDec) {
-                    NodeList<AnnotationExpr> annotations = paramDec.getWrappedNode().getAnnotations();
+            PossibleValues expValue = methodArg.accept(this, arg);
+
+            ResolvedParameterDeclaration paramDec = dec.getParam(i);
+            if (paramDec instanceof JavaParserParameterDeclaration javaParamDec) {
+                NodeList<AnnotationExpr> annotations = javaParamDec.getWrappedNode().getAnnotations();
+
+                if (expValue instanceof NullValue) {
                     if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "NotNull"))) {
-                        // TODO: handle null pointer exception
+                        arg.addError(new AnalysisError("Null argument passed to " + methodName));
+                    }
+                // TODO: fix cases
+                } else if (expValue instanceof IntegerValue) {
+                    if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "Positive"))) {
+                        arg.addError(new AnalysisError("Invalid argument passed to " + methodName));
+                    }
+                    else if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "PositiveOrZero"))) {
+                        arg.addError(new AnalysisError("Invalid argument passed to " + methodName));
+                    }
+                    else if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "Negative"))) {
+                        arg.addError(new AnalysisError("Invalid argument passed to " + methodName));
+                    }
+                    else if (annotations.stream().anyMatch(x -> Objects.equals(x.getNameAsString(), "NegativeOrZero"))) {
+                        arg.addError(new AnalysisError("Invalid argument passed to " + methodName));
                     }
                 }
             }
         }
+
+        // handle exceptions in Javadoc
         if (dec instanceof JavaParserMethodDeclaration methodDec) {
             JavadocComment javadocComment = methodDec.getWrappedNode().getJavadocComment().orElse(null);
+
             if (javadocComment != null) {
                 Javadoc javadoc = javadocComment.parse();
-                List<JavadocBlockTag> throwTags = javadoc.getBlockTags().stream().filter(x -> x.getType() == JavadocBlockTag.Type.THROWS).toList();
+                List<JavadocBlockTag> throwTags = javadoc.getBlockTags().stream()
+                        .filter(x -> x.getType() == JavadocBlockTag.Type.THROWS).toList();
+
                 for (JavadocBlockTag throwTag : throwTags) {
                     String exceptionName = throwTag.getName().orElse(null);
-                    if (exceptionName == null) continue;
+
+                    if (exceptionName == null) {
+                        continue;
+                    }
+
+                    // TODO: add other cases / handle exceptions in throws tag more elegantly
                     NameExpr nameExpr = new NameExpr(exceptionName);
                     nameExpr.setParentNode(methodDec.getWrappedNode());
                     ResolvedType resolvedType = StaticJavaParser.getParserConfiguration().getSymbolResolver().get().calculateType(nameExpr);
                     ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
                     boolean isRuntimeException = runtimeExceptionType.isAssignableBy(resolvedType);
+
                     if (isRuntimeException) {
-                        // TODO: handle runtime exception from throws in JavaDocs
+                        arg.addError(new AnalysisError(methodName + " can throw runtime exception"));
                     }
                 }
             }

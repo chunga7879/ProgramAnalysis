@@ -35,4 +35,8 @@ public class ExpressionAnalysisState {
     public void setErrors(List<AnalysisError> errors) {
         this.errors = errors;
     }
+
+    public void addError(AnalysisError error) {
+        this.errors.add(error);
+    }
 }
