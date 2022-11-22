@@ -29,7 +29,24 @@ public class AnyValue extends PossibleValues {
     }
 
     @Override
+    public boolean canBeNull() {
+        return true;
+    }
+
+
+    @Override
     public String toFormattedString() {
         return "{any}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof AnyValue;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * getClass().hashCode();
     }
 }

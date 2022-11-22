@@ -2,6 +2,10 @@ package analysis.visitor;
 
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.*;
+import analysis.values.visitor.AddVisitor;
+import analysis.values.visitor.MergeVisitor;
+import analysis.values.visitor.SubtractVisitor;
 import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
@@ -29,6 +33,17 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     private final MultiplyVisitor multiplyVisitor;
 
     public ExpressionVisitor() {
+        this(new MergeVisitor(), new AddVisitor(), new SubtractVisitor());
+    }
+
+    public ExpressionVisitor(
+            MergeVisitor mergeVisitor,
+            AddVisitor addVisitor,
+            SubtractVisitor subtractVisitor
+    ) {
+        this.mergeVisitor = mergeVisitor;
+        this.addVisitor = addVisitor;
+        this.subtractVisitor = subtractVisitor;
         this.mergeVisitor = new MergeVisitor();
         this.addVisitor = new AddVisitor();
         this.divideVisitor = new DivideVisitor();
@@ -162,7 +177,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(NullLiteralExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return NullValue.VALUE;
     }
 
     @Override

@@ -2,10 +2,13 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
-public class StringValue extends ObjectWithNotNullValue {
+/**
+ * Value that is null
+ */
+public class NullValue extends ObjectValue {
+    public static final NullValue VALUE = new NullValue();
 
-    public StringValue() {
-        // TODO: add domain for String
+    private NullValue() {
     }
 
     @Override
@@ -30,6 +33,11 @@ public class StringValue extends ObjectWithNotNullValue {
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
+        return visitor.visit((ObjectValue) a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, ObjectValue a) {
         return visitor.visit(a, this);
     }
 
@@ -39,26 +47,34 @@ public class StringValue extends ObjectWithNotNullValue {
     }
 
     @Override
-    public ObjectWithNotNullValue copy() {
-        // TODO: implement
-        return new StringValue();
+    public ObjectValue withNullable() {
+        return this;
+    }
+
+    @Override
+    public EmptyValue withNotNullable() {
+        return new EmptyValue();
+    }
+
+    @Override
+    public boolean canBeNull() {
+        return true;
     }
 
     @Override
     public String toFormattedString() {
-        return this.canBeNull() ? "{null, String}" : "{String}";
+        return "null";
     }
 
 
     @Override
-    public boolean equals(Object obj) {
-        // TODO: implement
-        return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof NullValue;
     }
 
     @Override
     public int hashCode() {
-        // TODO: implement
-        return 0;
+        return 31 * getClass().hashCode();
     }
 }
