@@ -1,5 +1,9 @@
 package visualization;
 
+import net.sourceforge.plantuml.SourceStringReader;
+
+import java.io.*;
+
 public class Diagram {
     private StringBuilder diagramString;
 
@@ -39,5 +43,25 @@ public class Diagram {
         }
         addStatementNode(statement);
         diagramString.append("note right:" + error);
+    }
+
+    /**
+     * Creates PNG of diagram
+     * NOTE: PNG creation referenced from: https://plantuml.com/api
+     * @param pngName Location where to store PNG created
+     */
+    public void createDiagramPNG(String pngName) {
+        try {
+            OutputStream png = new FileOutputStream(pngName);
+            SourceStringReader sourceStringReader = new SourceStringReader(getDiagramString());
+            String desc = sourceStringReader.generateImage(png);
+        } catch (FileNotFoundException fileNotFoundException) {
+            System.out.println(fileNotFoundException);
+            System.out.println("Error occurred when creating output stream.");
+        } catch (IOException io) {
+            // TODO: error handling
+            System.out.println(io);
+            System.out.println("Error occurred when creating PNG from SourceStringReader");
+        }
     }
 }
