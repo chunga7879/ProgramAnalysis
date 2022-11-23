@@ -90,4 +90,9 @@ public abstract class RestrictionVisitor implements OperationVisitor<PossibleVal
     public PossibleValues visit(ObjectValue a, NullValue b) {
         return new EmptyValue();
     }
+
+    @Override
+    public PossibleValues visit(ArrayValue a, ArrayValue b) {
+        return a;
+    }
 }

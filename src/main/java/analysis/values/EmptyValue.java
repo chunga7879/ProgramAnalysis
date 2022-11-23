@@ -6,6 +6,8 @@ import analysis.values.visitor.OperationVisitor;
  * Empty domain
  */
 public final class EmptyValue extends PossibleValues {
+    public static final EmptyValue VALUE = new EmptyValue();
+
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
         return visitor.visitAbstract(this, b);

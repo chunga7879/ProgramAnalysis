@@ -92,4 +92,9 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     public PossibleValues visit(ObjectValue a, NullValue b) {
         return new AnyValue();
     }
+
+    @Override
+    public PossibleValues visit(ArrayValue a, ArrayValue b) {
+        return new AnyValue();
+    }
 }

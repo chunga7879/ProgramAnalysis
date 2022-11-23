@@ -160,6 +160,7 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         PossibleValues rightFalseRestrictedValues = rightValues.acceptAbstractOp(oppositeFlippedConditionVisitor, leftValues);
         if (leftTrueRestrictedValues.isEmpty() || rightTrueRestrictedValues.isEmpty()) trueState.setDomainEmpty();
         if (leftFalseRestrictedValues.isEmpty() || rightFalseRestrictedValues.isEmpty()) falseState.setDomainEmpty();
+        // TODO: restrict for array length
         if (leftExpr instanceof NameExpr leftVar) {
             restrictNameExpr(leftVar, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
         }
