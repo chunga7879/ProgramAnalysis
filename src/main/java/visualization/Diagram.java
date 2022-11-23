@@ -18,7 +18,7 @@ public class Diagram {
 
     public void endDiagram() {
         diagramString.append("stop\n");
-        diagramString.append("@enduml\n");
+        diagramString.append("@enduml");
     }
 
     public String getDiagramString() {
