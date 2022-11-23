@@ -61,7 +61,7 @@ public class Diagram {
             diagramString.append("#Red");
         }
         addStatementNode(statement);
-        diagramString.append("note right:" + error);
+        diagramString.append("note right:" + error + "\n");
     }
 
     /**
