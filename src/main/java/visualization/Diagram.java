@@ -3,6 +3,7 @@ package visualization;
 import net.sourceforge.plantuml.SourceStringReader;
 
 import java.io.*;
+import java.util.List;
 
 public class Diagram {
     private StringBuilder diagramString;
@@ -25,17 +26,35 @@ public class Diagram {
         return diagramString.toString();
     }
 
-    public void addStatementNode(String statement) {
+    public void addNode(DiagramNode node) {
+        switch (node.error()) {
+            case POTENTIAL -> addErrorNode(node.statement(), node.errorDescription(), true);
+            case DEFINITE -> addErrorNode(node.statement(), node.errorDescription(), false);
+            case NONE -> addStatementNode(node.statement());
+            default -> throw new RuntimeException("Invalid type of DiagramNode");
+        }
+    }
+
+    private void addStatementNode(String statement) {
         diagramString.append(":" + statement + ";\n");
+    }
+
+    public void addIfNode(String conditional, List<String> trueBranch, List<String> falseBranch) {
+        diagramString.append("if (" + conditional + ") then (true)\n");
+        for (String statement : trueBranch) {
+            addStatementNode(statement);
+        }
+        diagramString.append("else (false)\n");
+
     }
 
     /**
      * Adds a node to the plantUML diagram, where the statement has an error
      * @param statement Statement that causes error
      * @param error Error description; format should be [ERROR NAME]:[EXPRESSION CAUSING ERROR]
-     * @param potentialError If true, error is potential/dependant on runtime values, if false, error is definite to occur
+     * @param potentialError true: error is potential/dependant on runtime values; false: error is definite to occur regardless of value
      */
-    public void addErrorNode(String statement, String error, boolean potentialError) {
+    private void addErrorNode(String statement, String error, boolean potentialError) {
         if (potentialError) {
             diagramString.append("#Orange");
         } else {
@@ -54,14 +73,11 @@ public class Diagram {
         try {
             OutputStream png = new FileOutputStream(pngName);
             SourceStringReader sourceStringReader = new SourceStringReader(getDiagramString());
-            String desc = sourceStringReader.generateImage(png);
+            sourceStringReader.outputImage(png);
         } catch (FileNotFoundException fileNotFoundException) {
-            System.out.println(fileNotFoundException);
-            System.out.println("Error occurred when creating output stream.");
+            System.out.println("Error occurred when creating output stream: " + fileNotFoundException);
         } catch (IOException io) {
-            // TODO: error handling
-            System.out.println(io);
-            System.out.println("Error occurred when creating PNG from SourceStringReader");
+            System.out.println("Error occurred when creating PNG from SourceStringReader: " + io);
         }
     }
 }

@@ -13,8 +13,9 @@ public class DiagramTest {
 
     @Test
     public void createSimpleDiagram() {
+        DiagramNode node = new DiagramNode("int b = 1", Error.NONE, "");
         diagram.startDiagram();
-        diagram.addStatementNode("int b = 1");
+        diagram.addNode(node);
         diagram.endDiagram();
         diagram.createDiagramPNG(outputLocation + "SimpleDiagram.png");
     }
