@@ -131,12 +131,13 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
         if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
         varState.copyValuesFrom(mergedState);
-        AnalysisLogger.logEnd(n, "IF MERGED: ", varState);
+        AnalysisLogger.logEndFormat(n, "IF MERGED: %s", varState);
         return null;
     }
 
     @Override
     public EndState visit(WhileStmt n, AnalysisState arg) {
+        handleLoop(n, "WHILE", arg, n.getCondition(), n.getBody(), null);
         return null;
     }
 
@@ -163,6 +164,22 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             e.accept(expressionVisitor, exprAnalysisState);
         }
         AnalysisLogger.log(n, "FOR INITIALIZE: " + varState.toFormattedString());
+
+        handleLoop(n, "FOR", arg, n.getCompare().orElse(null), n.getBody(), n.getUpdate());
+        return null;
+    }
+
+    /**
+     * Handle a loop statement
+     * @param loopNode Node containing the loop
+     * @param loopName Name of the loop
+     * @param state    AnalysisState at the loop
+     * @param compare  Condition to continue loop
+     * @param body     Body inside the loop
+     * @param update   Updater (i.e. for loop)
+     */
+    private void handleLoop(Node loopNode, String loopName, AnalysisState state, Expression compare, Statement body, NodeList<Expression> update) {
+        VariablesState varState = state.getVariablesState();
         VariablesState mergeState = varState.copy(); // State tracking the values in all iterations
         VariablesState currentState = mergeState.copy(); // State tracking the values in each iteration
         VariablesState exitState = new VariablesState(); // State tracking the values when the loop exits
@@ -175,47 +192,49 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         int i = 0;
         boolean isApprox = false;
         do {
-            AnalysisLogger.log(n, "FOR [" + i + "] MERGE STATE: ", mergeState);
+            AnalysisLogger.logFormat(loopNode, "%s [%s] MERGE STATE: %s", loopName, i, mergeState);
             if (i > 1000 && !isApprox) {
                 // If # of loop runs is too long, start to approximate changes
                 isApprox = true;
-                AnalysisLogger.log(n, "FOR [" + i + "] TOO MANY ITERATIONS");
+                AnalysisLogger.logFormat(loopNode, "%s [%s] TOO MANY ITERATIONS", loopName, i);
                 loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new SubtractApproximateVisitor());
                 loopAnalysisVisitor = new AnalysisVisitor(targetMethod, loopExprVisitor);
             }
 
             ExpressionAnalysisState loopExprAnalysisState = new ExpressionAnalysisState(currentState);
-            if (n.getCompare().isPresent()) {
-                ConditionStates condStates = n.getCompare().get().accept(conditionVisitor, loopExprAnalysisState);
+            if (compare != null) {
+                ConditionStates condStates = compare.accept(conditionVisitor, loopExprAnalysisState);
                 if (!condStates.getFalseState().isDomainEmpty()) {
                     exitState.merge(mergeVisitor, condStates.getFalseState());
+                    AnalysisLogger.logFormat(loopNode, "%s [%s] EXIT STATE: %s", loopName, i, exitState);
                 }
                 if (condStates.getTrueState().isDomainEmpty()) break;
                 currentState.copyValuesFrom(condStates.getTrueState());
-                AnalysisLogger.log(n, "FOR [" + i + "] CONDITION: ", currentState);
+                AnalysisLogger.logFormat(loopNode, "%s [%s] CONDITION: %s", loopName, i, currentState);
             }
 
-            AnalysisLogger.log(n, "FOR [" + i + "] ITERATION START STATE: ", currentState);
+            AnalysisLogger.logFormat(loopNode, "%s [%s] ITERATION START STATE: %s", loopName, i, currentState);
             AnalysisState analysisState = new AnalysisState(currentState);
-            EndState bodyEndState = n.getBody().accept(loopAnalysisVisitor, analysisState);
+            EndState bodyEndState = body.accept(loopAnalysisVisitor, analysisState);
             // TODO: add early breaks from bodyEndState to exitState
-            for (Expression e : n.getUpdate()) {
-                e.accept(loopExprVisitor, loopExprAnalysisState);
+            if (update != null) {
+                for (Expression e : update) {
+                    e.accept(loopExprVisitor, loopExprAnalysisState);
+                }
             }
-            AnalysisLogger.logEnd(n, "FOR [" + i + "] ITERATION STATE: ", currentState);
+            AnalysisLogger.logEndFormat(loopNode, "%s [%s] ITERATION STATE: %s", loopName, i, currentState);
 
             VariablesState prevState = mergeState.copy();
             mergeState.merge(mergeVisitor, currentState);
             if (Objects.equals(mergeState, prevState)) {
-                AnalysisLogger.logEnd(n, "FOR [" + i + "] UNCHANGED: ", mergeState);
+                AnalysisLogger.logEndFormat(loopNode, "%s [%s] UNCHANGED: %s", loopName, i, mergeState);
                 break;
             }
             i++;
         } while (true);
-        AnalysisLogger.logEnd(n, "FOR EXIT STATE: ", exitState);
-        if (exitState.isDomainEmpty()) AnalysisLogger.logEnd(n, "FOR LOOP IS INFINITE");
-        arg.getVariablesState().copyValuesFrom(exitState);
-        return null;
+        AnalysisLogger.logEndFormat(loopNode, "%s EXIT STATE: %s", loopName, exitState);
+        if (exitState.isDomainEmpty()) AnalysisLogger.logEndFormat(loopNode, "%s LOOP IS INFINITE", loopName);
+        varState.copyValuesFrom(exitState);
     }
 
     @Override
