@@ -17,6 +17,7 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import logger.AnalysisLogger;
+import utils.ValueUtil;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,70 +64,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         Optional<BlockStmt> body = n.getBody();
         for (Parameter p : n.getParameters()) {
             // TODO: handle annotations for parameters
-            varState.setVariable(p, getValueForParameter(p, arg));
+            PossibleValues val = ValueUtil.getValueForType(p.getType().resolve(), p.getAnnotations(), arg.getVariablesState(), expressionVisitor);
+            varState.setVariable(p, val);
         }
         AnalysisLogger.log(n.getName(), varState);
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);
-    }
-
-    /**
-     * Get the initial value for the parameters
-     */
-    private PossibleValues getValueForParameter(Parameter parameter, AnalysisState arg) {
-        Type paramType = parameter.getType();
-        if (paramType.isPrimitiveType()) {
-            return switch(paramType.asPrimitiveType().getType()) {
-                case INT -> IntegerRange.ANY_VALUE;
-                case BOOLEAN -> AnyValue.VALUE;
-                default -> AnyValue.VALUE;
-            };
-        } else if (paramType.isArrayType()) {
-            return getArrayValueForParameter(parameter, arg);
-        }
-        return AnyValue.VALUE;
-    }
-
-    /**
-     * Get the initial value for the array parameter
-     * using @NotNull and @Size annotations
-     */
-    private ArrayValue getArrayValueForParameter(Parameter parameter, AnalysisState arg) {
-        NodeList<AnnotationExpr> annotations = parameter.getAnnotations();
-
-        // @Size annotation
-        AnnotationExpr sizeAnnotation = annotations.stream()
-                .filter(x -> x.getNameAsString().equalsIgnoreCase("size") && x.isNormalAnnotationExpr())
-                .findAny()
-                .orElse(null);
-        IntegerValue length;
-        if (sizeAnnotation != null) {
-            NodeList<MemberValuePair> memValPair = sizeAnnotation.asNormalAnnotationExpr().getPairs();
-            MemberValuePair minMemValPair = memValPair.stream().filter(x -> x.getNameAsString().equalsIgnoreCase("min")).findAny().orElse(null);
-            MemberValuePair maxMemValPair = memValPair.stream().filter(x -> x.getNameAsString().equalsIgnoreCase("max")).findAny().orElse(null);
-            int min = ArrayValue.MIN_LENGTH_NUM;
-            if (minMemValPair != null) {
-                PossibleValues minValue = minMemValPair.getValue().accept(expressionVisitor, new ExpressionAnalysisState(arg.getVariablesState()));
-                if (minValue instanceof IntegerValue minIntValue && minIntValue.getMin() >= ArrayValue.MIN_LENGTH_NUM) {
-                    min = minIntValue.getMin();
-                }
-            }
-            int max = ArrayValue.MAX_LENGTH_NUM;
-            if (maxMemValPair != null) {
-                PossibleValues maxValue = maxMemValPair.getValue().accept(expressionVisitor, new ExpressionAnalysisState(arg.getVariablesState()));
-                if (maxValue instanceof IntegerValue maxIntValue && maxIntValue.getMax() >= min) {
-                    maxIntValue.getMax();
-                    max = maxIntValue.getMax();
-                }
-            }
-            length = new IntegerRange(min, max);
-        } else {
-            length = ArrayValue.DEFAULT_LENGTH;
-        }
-
-        // @NotNull annotation
-        boolean notNull = annotations.stream().anyMatch(x -> x.getNameAsString().equalsIgnoreCase("notnull"));
-
-        return new ArrayValue(length, !notNull);
     }
 
     @Override

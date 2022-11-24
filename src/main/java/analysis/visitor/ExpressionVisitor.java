@@ -19,6 +19,7 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+import utils.ValueUtil;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -104,18 +105,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         ResolvedType type = n.getName().calculateResolvedType();
         if (type.isArray()) {
             ResolvedType componentType = type.asArrayType().getComponentType();
-            if (componentType.isPrimitive()) {
-                return switch (componentType.asPrimitive()) {
-                    case INT -> IntegerRange.ANY_VALUE;
-                    case BOOLEAN -> AnyValue.VALUE; // TODO: boolean
-                    default -> AnyValue.VALUE;
-                };
-            } else if (componentType.isReferenceType()) {
-                String qualifiedName = componentType.asReferenceType().getQualifiedName();
-                if (qualifiedName.equalsIgnoreCase("java.lang.String")) {
-                    return new StringValue();
-                }
-            }
+            return ValueUtil.getValueForType(componentType);
         }
         return AnyValue.VALUE;
     }
