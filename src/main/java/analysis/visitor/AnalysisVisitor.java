@@ -16,11 +16,17 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import com.github.javaparser.javadoc.Javadoc;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
+import utils.JavadocUtil;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> {
     private final String targetMethod;
@@ -103,6 +109,14 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(ReturnStmt n, AnalysisState arg) {
+        VariablesState varState = arg.getVariablesState();
+        if (n.getExpression().isPresent()) {
+            ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+            n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
+            AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+            // TODO: check annotation against return
+        }
+        varState.setDomainEmpty();
         return null;
     }
 
@@ -220,6 +234,35 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(ThrowStmt n, AnalysisState arg) {
+        VariablesState varState = arg.getVariablesState();
+        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+        n.getExpression().accept(expressionVisitor, exprAnalysisState);
+        AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+
+        if (varState.isDomainEmpty()) return null;
+        ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
+
+        ResolvedType throwType = n.getExpression().calculateResolvedType();
+        if (throwType.isReferenceType() && runtimeExceptionType.isAssignableBy(throwType)) {
+            // Check if the thrown RuntimeException is in the throws signature or the @throws annotation in Javadocs
+            boolean inSignature = false;
+            boolean inJavadocs = false;
+            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+            if (dec != null) {
+                inSignature = dec.getThrownExceptions().stream().map(Type::resolve).anyMatch(x -> runtimeExceptionType.isAssignableBy(x) && x.isAssignableBy(throwType));
+
+                Javadoc javadoc = dec.getJavadoc().orElse(null);
+                if (javadoc != null) {
+                    Set<ResolvedType> throwsTags = JavadocUtil.getThrows(dec);
+                    inJavadocs = throwsTags.stream().anyMatch(x -> x.isAssignableBy(throwType));
+                }
+            }
+
+            AnalysisLogger.log(n, "RUNTIME THROW " + throwType.asReferenceType().getQualifiedName() + ((!inSignature && !inJavadocs) ? " (Not in signature/Javadoc)" : ""));
+        } else {
+            AnalysisLogger.log(n, "THROW " + throwType.asReferenceType().getQualifiedName());
+        }
+        varState.setDomainEmpty();
         return null;
     }
 
