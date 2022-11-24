@@ -114,7 +114,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
             n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
             AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
-            // TODO: check annotation against return
+            // TODO: check annotation against return (add to EndState and compute at visit MethodDeclaration)
         }
         varState.setDomainEmpty();
         return null;
@@ -242,6 +242,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         if (varState.isDomainEmpty()) return null;
         ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
 
+        // TODO: add exception to EndState and move computation to visit MethodDeclaration
         ResolvedType throwType = n.getExpression().calculateResolvedType();
         if (throwType.isReferenceType() && runtimeExceptionType.isAssignableBy(throwType)) {
             // Check if the thrown RuntimeException is in the throws signature or the @throws annotation in Javadocs
