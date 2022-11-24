@@ -47,9 +47,9 @@ public final class AnalysisLogger {
     /**
      * Log a message at a node
      */
-    public static void logFormat(Node n, String message, Object... other) {
+    public static void logFormat(Node n, String format, Object... args) {
         if (!doLog) return;
-        log(n, String.format(message, other));
+        log(n, String.format(format, args));
     }
 
     /**
@@ -70,9 +70,9 @@ public final class AnalysisLogger {
     /**
      * Log the end of the control statement
      */
-    public static void logEndFormat(Node n, String message, Object... other) {
+    public static void logEndFormat(Node n, String format, Object... arg) {
         if (!doLog) return;
-        logEnd(n, String.format(message, other));
+        logEnd(n, String.format(format, arg));
     }
 
 
