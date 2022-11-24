@@ -30,14 +30,17 @@ public class IntersectVisitor extends OperationVisitorWithDefault {
     public PossibleValues visit(ArrayValue a, ArrayValue b) {
         PossibleValues length = visit(a.getLength(), b.getLength());
         if (length instanceof IntegerValue intLength) {
-            return withNullableSet(new ArrayValue(intLength), a, b);
+            return new ArrayValue(intLength, canBeNull(a, b));
         } else if (length instanceof EmptyValue) {
             return new EmptyValue();
         }
-        return withNullableSet(new ArrayValue(), a, b);
+        return new ArrayValue(ArrayValue.DEFAULT_LENGTH, canBeNull(a, b));
     }
 
-    PossibleValues withNullableSet(ObjectValue val, ObjectValue a, ObjectValue b) {
-        return (a.canBeNull() && b.canBeNull()) ? val.withNullable() : val.withNotNullable();
+    /**
+     * Whether an intersect of a & b can be null
+     */
+    private boolean canBeNull(ObjectValue a, ObjectValue b) {
+        return a.canBeNull() && b.canBeNull();
     }
 }
