@@ -10,6 +10,7 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public class VariablesState {
     private final Map<Node, PossibleValues> variableMap;
@@ -55,6 +56,21 @@ public class VariablesState {
     private PossibleValues getVariableHelper(Node node) {
         if (isDomainEmpty || !variableMap.containsKey(node)) return new EmptyValue();
         return variableMap.get(node);
+    }
+
+    public void updateVariable(VariableDeclarator declaratorNode, Function<PossibleValues, PossibleValues> updateFunc) {
+        updateVariableHelper(declaratorNode, updateFunc);
+    }
+
+    public void updateVariable(Parameter parameter, Function<PossibleValues, PossibleValues> updateFunc) {
+        updateVariableHelper(parameter, updateFunc);
+    }
+
+    private void updateVariableHelper(Node node, Function<PossibleValues, PossibleValues> updateFunc) {
+        PossibleValues val = getVariableHelper(node);
+        if (val.isEmpty()) return;
+        PossibleValues updatedVal = updateFunc.apply(val);
+        setVariableHelper(node, updatedVal);
     }
 
     /**

@@ -31,10 +31,10 @@ public class IntersectVisitor extends OperationVisitorWithDefault {
         PossibleValues length = visit(a.getLength(), b.getLength());
         if (length instanceof IntegerValue intLength) {
             return new ArrayValue(intLength, canBeNull(a, b));
-        } else if (length instanceof EmptyValue) {
-            return new EmptyValue();
+        } else if (length.isEmpty()) {
+            return EmptyValue.VALUE;
         }
-        return new ArrayValue(ArrayValue.DEFAULT_LENGTH, canBeNull(a, b));
+        return ArrayValue.ANY_VALUE;
     }
 
     /**

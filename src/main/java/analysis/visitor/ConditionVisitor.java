@@ -1,8 +1,10 @@
 package analysis.visitor;
 
+import analysis.model.AnalysisError;
 import analysis.model.ConditionStates;
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.ArrayValue;
 import analysis.values.PossibleValues;
 import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
@@ -18,6 +20,10 @@ import com.github.javaparser.ast.visitor.GenericVisitor;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
 
 public class ConditionVisitor implements GenericVisitor<ConditionStates, ExpressionAnalysisState> {
     private ExpressionVisitor expressionVisitor;
@@ -54,65 +60,13 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         PossibleValues rightValues = rightExpr.accept(expressionVisitor, arg);
         VariablesState state = arg.getVariablesState();
 
-        switch (n.getOperator()) {
-            case EQUALS -> {
-                return getConditionStatesFromBinaryExpr(
-                        leftExpr, rightExpr,
-                        leftValues, rightValues,
-                        restrictEQVisitor, restrictEQVisitor,
-                        restrictNEQVisitor, restrictNEQVisitor,
-                        state
-                );
-            }
-            case NOT_EQUALS -> {
-                return getConditionStatesFromBinaryExpr(
-                        leftExpr, rightExpr,
-                        leftValues, rightValues,
-                        restrictNEQVisitor, restrictNEQVisitor,
-                        restrictEQVisitor, restrictEQVisitor,
-                        state
-                );
-            }
-            case GREATER -> {
-                return getConditionStatesFromBinaryExpr(
-                        leftExpr, rightExpr,
-                        leftValues, rightValues,
-                        restrictGTVisitor, restrictLTVisitor,
-                        restrictLTEVisitor, restrictGTEVisitor,
-                        state
-                );
-            }
-            case GREATER_EQUALS -> {
-                return getConditionStatesFromBinaryExpr(
-                        leftExpr, rightExpr,
-                        leftValues, rightValues,
-                        restrictGTEVisitor, restrictLTEVisitor,
-                        restrictLTVisitor, restrictGTVisitor,
-                        state
-                );
-            }
-            case LESS -> {
-                return getConditionStatesFromBinaryExpr(
-                        leftExpr, rightExpr,
-                        leftValues, rightValues,
-                        restrictLTVisitor, restrictGTVisitor,
-                        restrictGTEVisitor, restrictLTEVisitor,
-                        state
-                );
-            }
-            case LESS_EQUALS -> {
-                return getConditionStatesFromBinaryExpr(
-                        leftExpr, rightExpr,
-                        leftValues, rightValues,
-                        restrictLTEVisitor, restrictGTEVisitor,
-                        restrictGTVisitor, restrictLTEVisitor,
-                        state
-                );
-            }
-            default -> {
-                return new ConditionStates(state.copy(), state.copy());
-            }
-        }
+        ConditionStates condStates = getConditionStatesFromBinaryExpr(
+                    leftExpr, rightExpr,
+                    leftValues, rightValues,
+                    n.getOperator(),
+                    state, arg.getErrors());
+        if (condStates == null) return new ConditionStates(state.copy(), state.copy(), arg.getErrors());
+        return condStates;
     }
 
     private boolean isBooleanOperator(BinaryExpr.Operator operator) {
@@ -125,22 +79,27 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         // TODO: re-compute domains when values get updated
         ConditionStates leftStates = leftExpr.accept(this, arg);
         ConditionStates rightStates = rightExpr.accept(this, arg);
+        List<AnalysisError> errors = new ArrayList<>();
+        errors.addAll(leftStates.getErrors());
+        errors.addAll(rightStates.getErrors());
         VariablesState state = arg.getVariablesState();
         switch (operator) {
             case AND -> {
                 return new ConditionStates(
                         leftStates.getTrueState().intersectCopy(intersectVisitor, rightStates.getTrueState()),
-                        leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState())
+                        leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState()),
+                        errors
                 );
             }
             case OR -> {
                 return new ConditionStates(
                         leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()),
-                        leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState())
+                        leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState()),
+                        errors
                 );
             }
             default -> {
-                return new ConditionStates(state.copy(), state.copy());
+                return new ConditionStates(state.copy(), state.copy(), errors);
             }
         }
     }
@@ -148,28 +107,81 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
     private ConditionStates getConditionStatesFromBinaryExpr(
             Expression leftExpr, Expression rightExpr,
             PossibleValues leftValues, PossibleValues rightValues,
-            RestrictionVisitor conditionVisitor, RestrictionVisitor flippedConditionVisitor,
-            RestrictionVisitor oppositeConditionVisitor, RestrictionVisitor oppositeFlippedConditionVisitor,
-            VariablesState state
+            BinaryExpr.Operator operator,
+            VariablesState state, List<AnalysisError> errors
     ) {
+        RestrictionVisitor conditionVisitor;
+        RestrictionVisitor flippedConditionVisitor;
+        RestrictionVisitor oppositeConditionVisitor;
+        RestrictionVisitor oppositeFlippedConditionVisitor;
+
+        switch (operator) {
+            case EQUALS -> {
+                conditionVisitor = restrictEQVisitor;
+                flippedConditionVisitor = restrictEQVisitor;
+                oppositeConditionVisitor = restrictNEQVisitor;
+                oppositeFlippedConditionVisitor = restrictNEQVisitor;
+            }
+            case NOT_EQUALS -> {
+                conditionVisitor = restrictNEQVisitor;
+                flippedConditionVisitor = restrictNEQVisitor;
+                oppositeConditionVisitor = restrictEQVisitor;
+                oppositeFlippedConditionVisitor = restrictEQVisitor;
+            }
+            case GREATER -> {
+                    conditionVisitor = restrictGTVisitor;
+                    flippedConditionVisitor = restrictLTVisitor;
+                    oppositeConditionVisitor = restrictLTEVisitor;
+                    oppositeFlippedConditionVisitor = restrictGTEVisitor;
+            }
+            case GREATER_EQUALS -> {
+                    conditionVisitor = restrictGTEVisitor;
+                    flippedConditionVisitor = restrictLTEVisitor;
+                    oppositeConditionVisitor = restrictLTVisitor;
+                    oppositeFlippedConditionVisitor = restrictGTVisitor;
+            }
+            case LESS -> {
+                    conditionVisitor = restrictLTVisitor;
+                    flippedConditionVisitor = restrictGTVisitor;
+                    oppositeConditionVisitor = restrictGTEVisitor;
+                    oppositeFlippedConditionVisitor = restrictLTEVisitor;
+            }
+            case LESS_EQUALS -> {
+                    conditionVisitor = restrictLTEVisitor;
+                    flippedConditionVisitor = restrictGTEVisitor;
+                    oppositeConditionVisitor = restrictGTVisitor;
+                    oppositeFlippedConditionVisitor = restrictLTEVisitor;
+            }
+            default -> {
+                return null;
+            }
+        }
+
         VariablesState trueState = state.copy();
         VariablesState falseState = state.copy();
+
         PossibleValues leftTrueRestrictedValues = leftValues.acceptAbstractOp(conditionVisitor, rightValues);
         PossibleValues rightTrueRestrictedValues = rightValues.acceptAbstractOp(flippedConditionVisitor, leftValues);
         PossibleValues leftFalseRestrictedValues = leftValues.acceptAbstractOp(oppositeConditionVisitor, rightValues);
         PossibleValues rightFalseRestrictedValues = rightValues.acceptAbstractOp(oppositeFlippedConditionVisitor, leftValues);
         if (leftTrueRestrictedValues.isEmpty() || rightTrueRestrictedValues.isEmpty()) trueState.setDomainEmpty();
         if (leftFalseRestrictedValues.isEmpty() || rightFalseRestrictedValues.isEmpty()) falseState.setDomainEmpty();
-        // TODO: restrict for array length
         if (leftExpr instanceof NameExpr leftVar) {
             restrictNameExpr(leftVar, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
+        } else if (leftExpr instanceof FieldAccessExpr leftField) {
+            restrictFieldExpr(leftField, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
         }
         if (rightExpr instanceof NameExpr rightVar) {
             restrictNameExpr(rightVar, rightTrueRestrictedValues, rightFalseRestrictedValues, trueState, falseState);
+        } else if (rightExpr instanceof FieldAccessExpr rightField) {
+            restrictFieldExpr(rightField, rightTrueRestrictedValues, rightFalseRestrictedValues, trueState, falseState);
         }
-        return new ConditionStates(trueState, falseState);
+        return new ConditionStates(trueState, falseState, errors);
     }
 
+    /**
+     * Restrict the domain of a variable/parameter
+     */
     private void restrictNameExpr(NameExpr nameExpr,
                                   PossibleValues trueRestrictedValues, PossibleValues falseRestrictedValues,
                                   VariablesState trueState, VariablesState falseState) {
@@ -183,19 +195,55 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         }
     }
 
+    /**
+     * Restrict the domain of a field in a variable/parameter
+     */
+    private void restrictFieldExpr(FieldAccessExpr fieldExpr,
+                                  PossibleValues trueRestrictedValues, PossibleValues falseRestrictedValues,
+                                  VariablesState trueState, VariablesState falseState) {
+        Expression scopeExpr = fieldExpr.getScope();
+        if (scopeExpr instanceof NameExpr scopeNameExpr) {
+            ResolvedValueDeclaration scopeDec = scopeNameExpr.resolve();
+
+            Node target = null;
+            if (scopeDec instanceof JavaParserVariableDeclaration scopeVarDec) {
+                target = scopeVarDec.getVariableDeclarator();
+            } else if (scopeDec instanceof JavaParserParameterDeclaration scopeParamDec) {
+                target = scopeParamDec.getWrappedNode();
+            }
+
+            if (target != null && fieldExpr.getNameAsString().equalsIgnoreCase("length")) {
+                updateArrayLengthWithRestriction(target, trueRestrictedValues, trueState);
+                updateArrayLengthWithRestriction(target, falseRestrictedValues, falseState);
+            }
+        }
+    }
+
+    /**
+     * Update the length of an array with restriction
+     */
+    private void updateArrayLengthWithRestriction(Node arrayNode, PossibleValues restrictedLength, VariablesState state) {
+        Function<PossibleValues, PossibleValues> updateFunc = x -> {
+            if (x instanceof ArrayValue a) return a.withLength(restrictedLength);
+            return x;
+        };
+        if (arrayNode instanceof VariableDeclarator d) state.updateVariable(d, updateFunc);
+        else if (arrayNode instanceof Parameter p) state.updateVariable(p, updateFunc);
+    }
+
     @Override
     public ConditionStates visit(UnaryExpr n, ExpressionAnalysisState arg) {
         if (n.getOperator() == UnaryExpr.Operator.LOGICAL_COMPLEMENT) {
             ConditionStates condStates = n.getExpression().accept(this, arg);
-            return new ConditionStates(condStates.getFalseState(), condStates.getTrueState());
+            return new ConditionStates(condStates.getFalseState(), condStates.getTrueState(), arg.getErrors());
         }
-        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy(), arg.getErrors());
     }
 
     @Override
     public ConditionStates visit(NameExpr n, ExpressionAnalysisState arg) {
         // TODO: handle when boolean type is added
-        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy(), arg.getErrors());
     }
 
     @Override
@@ -206,22 +254,22 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
     @Override
     public ConditionStates visit(BooleanLiteralExpr n, ExpressionAnalysisState arg) {
         if (n.getValue()) {
-            return new ConditionStates(arg.getVariablesState().copy(), VariablesState.createEmpty());
+            return new ConditionStates(arg.getVariablesState().copy(), VariablesState.createEmpty(), arg.getErrors());
         } else {
-            return new ConditionStates(VariablesState.createEmpty(), arg.getVariablesState().copy());
+            return new ConditionStates(VariablesState.createEmpty(), arg.getVariablesState().copy(), arg.getErrors());
         }
     }
 
     @Override
     public ConditionStates visit(InstanceOfExpr n, ExpressionAnalysisState arg) {
         // TODO: handle instanceOf when object subtypes are added
-        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy(), arg.getErrors());
     }
 
     @Override
     public ConditionStates visit(AssignExpr n, ExpressionAnalysisState arg) {
         // TODO: handle assign when boolean is added
-        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy(), arg.getErrors());
     }
 
 

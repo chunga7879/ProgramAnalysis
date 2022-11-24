@@ -173,6 +173,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, exprAnalysisState);
         VariablesState trueVarState = conditionStates.getTrueState();
         VariablesState falseVarState = conditionStates.getFalseState();
+        AnalysisLogger.log(n, "IF: ", varState);
+        AnalysisLogger.logErrors(n, conditionStates.getErrors());
 
         // IF case
         AnalysisLogger.log(n, "IF TRUE: " + trueVarState.toFormattedString());
