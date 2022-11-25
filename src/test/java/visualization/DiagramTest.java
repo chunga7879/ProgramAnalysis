@@ -1,6 +1,5 @@
 package visualization;
 
-import jdk.jshell.Diag;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,5 +31,39 @@ public class DiagramTest {
         diagram.addNode(error);
         diagram.endDiagram();
         diagram.createDiagramPNG(outputLocation + "SimpleErrorDiagram.png");
+    }
+
+    @Test
+    public void createIfConditional() {
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
+        DiagramNode ifCondition = new DiagramNode("x > 10", Error.NONE, "");
+        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
+        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        diagram.startDiagram();
+        diagram.addNode(methodCall);
+        diagram.addIfThenNode(ifCondition);
+        diagram.addNode(statement);
+        diagram.addIfElseNode();
+        diagram.addNode(potentialError);
+        diagram.addEndIfNode();
+        diagram.endDiagram();
+        diagram.createDiagramPNG(outputLocation + "IfConditional.png");
+    }
+
+    @Test
+    public void createWhileLoop() {
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
+        DiagramNode whileCondition = new DiagramNode("x > 10", Error.NONE, "");
+        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
+        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        diagram.startDiagram();
+        diagram.addNode(methodCall);
+        diagram.addWhileLoopConditionalNode(whileCondition);
+        diagram.addNode(statement);
+        diagram.addNode(potentialError);
+        diagram.addEndWhileLoopNode();
+        diagram.addNode(statement);
+        diagram.endDiagram();
+        diagram.createDiagramPNG(outputLocation + "WhileLoop.png");
     }
 }

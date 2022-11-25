@@ -3,7 +3,6 @@ package visualization;
 import net.sourceforge.plantuml.SourceStringReader;
 
 import java.io.*;
-import java.util.List;
 
 public class Diagram {
     private StringBuilder diagramString;
@@ -39,13 +38,38 @@ public class Diagram {
         diagramString.append(":" + statement + ";\n");
     }
 
-    public void addIfNode(String conditional, List<String> trueBranch, List<String> falseBranch) {
-        diagramString.append("if (" + conditional + ") then (true)\n");
-        for (String statement : trueBranch) {
-            addStatementNode(statement);
-        }
-        diagramString.append("else (false)\n");
+    /**
+     * Adds a node to the diagram for a if conditional's condition
+     * @param node Node that represents the diagram node. The node's statement should just be the conditional.
+     */
+    public void addIfThenNode(DiagramNode node) {
+        String conditional = "if (" + node.statement() + ") then (true)\n";
+//        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
+//        addNode(conditionalNode);
+        diagramString.append(conditional);
+    }
 
+    public void addIfElseNode() {
+        diagramString.append("else (false)\n");
+    }
+
+    public void addEndIfNode() {
+        diagramString.append("endif\n");
+    }
+
+    /**
+     * Adds a node to the diagram for a while loop's condition
+     * @param node Node that represents the diagram node. The statement of the node should just be the conditional of the while loop.
+     */
+    public void addWhileLoopConditionalNode(DiagramNode node) {
+        String conditional = "while (" + node.statement() + ")\n";
+//        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
+//        addNode(conditionalNode);
+        diagramString.append(conditional);
+    }
+
+    public void addEndWhileLoopNode() {
+        diagramString.append("endwhile\n");
     }
 
     /**
@@ -70,6 +94,7 @@ public class Diagram {
      * @param pngName Location where to store PNG created
      */
     public void createDiagramPNG(String pngName) {
+        System.out.println("Creating diagram:\n" + getDiagramString());
         try {
             OutputStream png = new FileOutputStream(pngName);
             SourceStringReader sourceStringReader = new SourceStringReader(getDiagramString());

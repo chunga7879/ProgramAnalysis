@@ -1,11 +1,15 @@
 package analysis.model;
 
+import visualization.Diagram;
+
 /**
  * State of the analysis
  */
 public class AnalysisState {
     private VariablesState variablesState;
-    // TODO: add visualization object
+
+    public Diagram diagram;
+
     public AnalysisState(VariablesState variablesState) {
         this.variablesState = variablesState;
     }
