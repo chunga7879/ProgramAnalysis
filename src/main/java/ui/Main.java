@@ -33,8 +33,10 @@ public class Main {
             System.out.println("Finished compiling");
             try {
                 System.out.println("Starting analysis...");
-                compilationUnit.accept(new AnalysisVisitor(method), new AnalysisState(new VariablesState()));
+                AnalysisState analysisState = new AnalysisState(new VariablesState());
+                compilationUnit.accept(new AnalysisVisitor(method), analysisState);
                 System.out.println("Finished analysis");
+                // TODO: compilationUnit.accept(new VisualizationVisitor(), new VisualizationState(analysisState.getErrorMap()));
             } catch (Exception e) {
                 System.err.println("Analysis error: " + e.getMessage());
             }
