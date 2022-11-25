@@ -147,6 +147,7 @@ Plan for last user study #2 [here](https://docs.google.com/document/d/1bEJiU5YBf
 - Distinguish between Errors that will potentially or definitely occur to address feedback that it is confusing to see errors that may not occur. 
 
 ## Plans for Final Video
+- A rough outline for the script and its contents has been drafted up. Found [here](https://docs.google.com/document/d/1_i1WkU7xVa-NEVM6DOT7XU9KYu2pJdwbfmatTz3TAoo/edit).
 
 ## Planned Timeline
 | What | Who | When |
