@@ -33,6 +33,7 @@ public class AnalysisState {
     }
 
     public void addErrors(Node node, List<AnalysisError> errors) {
+        if (errors == null || errors.isEmpty()) return;
         addErrors(node, new HashSet<>(errors));
     }
 
