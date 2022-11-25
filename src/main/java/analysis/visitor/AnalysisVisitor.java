@@ -18,6 +18,7 @@ import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import logger.AnalysisLogger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -161,7 +162,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
     public EndState visit(ForStmt n, AnalysisState arg) {
         VariablesState varState = arg.getVariablesState();
         ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+
+        // Gather all initializations to add them to diagram
+        List<String> initializations = new ArrayList<>();
         for (Expression e : n.getInitialization()) {
+            initializations.add(e.toString().replaceAll("\"", ""));
             e.accept(expressionVisitor, exprAnalysisState);
         }
         AnalysisLogger.log(n, "FOR INITIALIZE: " + varState.toFormattedString());
@@ -188,6 +193,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
             ExpressionAnalysisState loopExprAnalysisState = new ExpressionAnalysisState(currentState);
             if (n.getCompare().isPresent()) {
+                // Add for loop node with initializations and loop condition
+                arg.diagram.addForStartNode(initializations, n.getCompare().toString());
                 ConditionStates condStates = n.getCompare().get().accept(conditionVisitor, loopExprAnalysisState);
                 if (!condStates.getFalseState().isDomainEmpty()) {
                     exitState.merge(mergeVisitor, condStates.getFalseState());
@@ -195,15 +202,21 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
                 if (condStates.getTrueState().isDomainEmpty()) break;
                 currentState.copyValuesFrom(condStates.getTrueState());
                 AnalysisLogger.log(n, "FOR [" + i + "] CONDITION: ", currentState);
+            } else {
+                // If no condition, the node should just be the empty string.
+                arg.diagram.addForStartNode(initializations, "");
             }
 
             AnalysisLogger.log(n, "FOR [" + i + "] ITERATION START STATE: ", currentState);
             AnalysisState analysisState = new AnalysisState(currentState);
             EndState bodyEndState = n.getBody().accept(loopAnalysisVisitor, analysisState);
             // TODO: add early breaks from bodyEndState to exitState
+            List<String> updates = new ArrayList<>();
             for (Expression e : n.getUpdate()) {
+                updates.add(e.toString().replaceAll("\"", ""));
                 e.accept(loopExprVisitor, loopExprAnalysisState);
             }
+            arg.diagram.addForEndNode(updates);
             AnalysisLogger.logEnd(n, "FOR [" + i + "] ITERATION STATE: ", currentState);
 
             VariablesState prevState = mergeState.copy();

@@ -3,6 +3,7 @@ package visualization;
 import net.sourceforge.plantuml.SourceStringReader;
 
 import java.io.*;
+import java.util.List;
 
 public class Diagram {
     private StringBuilder diagramString;
@@ -84,6 +85,31 @@ public class Diagram {
         String conditional = "repeat while (" + node.statement() + ") is (true)\n";
         diagramString.append(conditional);
         diagramString.append("->false;\n");
+    }
+
+    /**
+     * Adds start node for a for loop
+     * @param initialization Initialization of for loop variable; ex. i = 1
+     * @param condition Condition of for loop execution; ex. i < 10
+     */
+    public void addForStartNode(List<String> initialization, String condition) {
+        for (String str : initialization) {
+            addStatementNode(str);
+        }
+        // TODO: May have an error in conditional
+        DiagramNode conditional = new DiagramNode(condition, Error.NONE, "");
+        addWhileConditionalStartNode(conditional);
+    }
+
+    /**
+     * Adds end node for a for loop
+     * @param update How the conditional variable in the for loop is updated each iteration; ex. i++
+     */
+    public void addForEndNode(List<String> update) {
+        for (String str : update) {
+            addStatementNode(str);
+        }
+        addWhileEndNode();
     }
 
     /**

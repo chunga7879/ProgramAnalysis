@@ -3,6 +3,9 @@ package visualization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DiagramTest {
     final private String outputLocation = "src/test/java/visualization/outputs/";
     Diagram diagram;
@@ -82,5 +85,25 @@ public class DiagramTest {
         diagram.addNode(statement);
         diagram.addEndDiagramNode();
         diagram.createDiagramPNG(outputLocation + "DoWhileLoop.png");
+    }
+
+    @Test
+    public void createForLoop() {
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
+        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
+        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        diagram.addStartDiagramNode();
+        diagram.addNode(methodCall);
+        List<String> initialization = new ArrayList<>();
+        initialization.add("int i = 1");
+        diagram.addForStartNode(initialization, "int i < 10");
+        diagram.addNode(statement);
+        diagram.addNode(potentialError);
+        List<String> update = new ArrayList<>();
+        initialization.add("i++");
+        diagram.addForEndNode(update);
+        diagram.addNode(statement);
+        diagram.addEndDiagramNode();
+        diagram.createDiagramPNG(outputLocation + "ForLoop.png");
     }
 }
