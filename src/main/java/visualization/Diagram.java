@@ -11,12 +11,12 @@ public class Diagram {
         diagramString = new StringBuilder();
     }
 
-    public void startDiagram() {
+    public void addStartDiagramNode() {
         diagramString.append("@startuml\n");
         diagramString.append("start\n");
     }
 
-    public void endDiagram() {
+    public void addEndDiagramNode() {
         diagramString.append("stop\n");
         diagramString.append("@enduml");
     }
@@ -42,7 +42,7 @@ public class Diagram {
      * Adds a node to the diagram for a if conditional's condition
      * @param node Node that represents the diagram node. The node's statement should just be the conditional.
      */
-    public void addIfThenNode(DiagramNode node) {
+    public void addIfThenStartNode(DiagramNode node) {
         String conditional = "if (" + node.statement() + ") then (true)\n";
 //        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
 //        addNode(conditionalNode);
@@ -53,7 +53,7 @@ public class Diagram {
         diagramString.append("else (false)\n");
     }
 
-    public void addEndIfNode() {
+    public void addIfEndNode() {
         diagramString.append("endif\n");
     }
 
@@ -61,15 +61,29 @@ public class Diagram {
      * Adds a node to the diagram for a while loop's condition
      * @param node Node that represents the diagram node. The statement of the node should just be the conditional of the while loop.
      */
-    public void addWhileLoopConditionalNode(DiagramNode node) {
-        String conditional = "while (" + node.statement() + ")\n";
+    public void addWhileConditionalStartNode(DiagramNode node) {
+        String conditional = "while (" + node.statement() + ") is (true)\n";
 //        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
 //        addNode(conditionalNode);
         diagramString.append(conditional);
     }
 
-    public void addEndWhileLoopNode() {
-        diagramString.append("endwhile\n");
+    public void addWhileEndNode() {
+        diagramString.append("endwhile (false)\n");
+    }
+
+    public void addDoWhileStartNode() {
+        diagramString.append("repeat\n");
+    }
+
+    /**
+     * This adds the conditional for a do-while loop and also ends the loop in the diagram.
+     * @param node Conditional on which the loop is running on
+     */
+    public void addDoWhileConditionalEndNode(DiagramNode node) {
+        String conditional = "repeat while (" + node.statement() + ") is (true)\n";
+        diagramString.append(conditional);
+        diagramString.append("->false;\n");
     }
 
     /**

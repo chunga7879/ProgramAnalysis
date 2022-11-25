@@ -14,9 +14,9 @@ public class DiagramTest {
     @Test
     public void createSimpleDiagram() {
         DiagramNode node = new DiagramNode("int b = 1", Error.NONE, "");
-        diagram.startDiagram();
+        diagram.addStartDiagramNode();
         diagram.addNode(node);
-        diagram.endDiagram();
+        diagram.addEndDiagramNode();
         diagram.createDiagramPNG(outputLocation + "SimpleDiagram.png");
     }
 
@@ -25,11 +25,11 @@ public class DiagramTest {
         DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
         DiagramNode potentialError = new DiagramNode("int b = c.toString()", Error.POTENTIAL, "NullPointerException : c.toString()");
         DiagramNode error = new DiagramNode("int a = 2/0;", Error.DEFINITE, "ArithmeticException : 2/0");
-        diagram.startDiagram();
+        diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addNode(potentialError);
         diagram.addNode(error);
-        diagram.endDiagram();
+        diagram.addEndDiagramNode();
         diagram.createDiagramPNG(outputLocation + "SimpleErrorDiagram.png");
     }
 
@@ -39,14 +39,14 @@ public class DiagramTest {
         DiagramNode ifCondition = new DiagramNode("x > 10", Error.NONE, "");
         DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
         DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
-        diagram.startDiagram();
+        diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
-        diagram.addIfThenNode(ifCondition);
+        diagram.addIfThenStartNode(ifCondition);
         diagram.addNode(statement);
         diagram.addIfElseNode();
         diagram.addNode(potentialError);
-        diagram.addEndIfNode();
-        diagram.endDiagram();
+        diagram.addIfEndNode();
+        diagram.addEndDiagramNode();
         diagram.createDiagramPNG(outputLocation + "IfConditional.png");
     }
 
@@ -56,14 +56,31 @@ public class DiagramTest {
         DiagramNode whileCondition = new DiagramNode("x > 10", Error.NONE, "");
         DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
         DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
-        diagram.startDiagram();
+        diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
-        diagram.addWhileLoopConditionalNode(whileCondition);
+        diagram.addWhileConditionalStartNode(whileCondition);
         diagram.addNode(statement);
         diagram.addNode(potentialError);
-        diagram.addEndWhileLoopNode();
+        diagram.addWhileEndNode();
         diagram.addNode(statement);
-        diagram.endDiagram();
+        diagram.addEndDiagramNode();
         diagram.createDiagramPNG(outputLocation + "WhileLoop.png");
+    }
+
+    @Test
+    public void createDoWhileLoop() {
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
+        DiagramNode doWhileCondition = new DiagramNode("x > 10", Error.NONE, "");
+        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
+        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        diagram.addStartDiagramNode();
+        diagram.addNode(methodCall);
+        diagram.addDoWhileStartNode();
+        diagram.addNode(statement);
+        diagram.addNode(potentialError);
+        diagram.addDoWhileConditionalEndNode(doWhileCondition);
+        diagram.addNode(statement);
+        diagram.addEndDiagramNode();
+        diagram.createDiagramPNG(outputLocation + "DoWhileLoop.png");
     }
 }

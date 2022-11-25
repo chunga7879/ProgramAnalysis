@@ -53,9 +53,9 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         );
         if (declarations.isEmpty()) throw new RuntimeException("Method not found");
         MethodDeclaration dec = declarations.get(0);
-        arg.diagram.startDiagram();
+        arg.diagram.addStartDiagramNode();
         dec.accept(this, arg);
-        arg.diagram.endDiagram();
+        arg.diagram.addEndDiagramNode();
         return null;
     }
 
