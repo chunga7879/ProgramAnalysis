@@ -25,6 +25,7 @@ public class AnalysisState {
     }
 
     public void addErrors(Node node, Set<AnalysisError> errors) {
+        if (errors == null || errors.isEmpty()) return;
         if (errorMap.containsKey(node)) {
             errorMap.get(node).addAll(errors);
         } else {
