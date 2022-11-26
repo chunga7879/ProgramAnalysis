@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 public class IntegerRangeTest {
     private MergeVisitor mergeVisitor;
     private AddVisitor addVisitor;
-    private DivideVisitor divideVisitor;
-    private MultiplyVisitor multiplyVisitor;
     private SubtractVisitor subtractVisitor;
     private RestrictGreaterThanVisitor restrictGTVisitor;
     private RestrictLessThanOrEqualVisitor restrictLTEVisitor;
@@ -17,9 +15,7 @@ public class IntegerRangeTest {
     @BeforeEach
     public void runBefore() {
         mergeVisitor = new MergeVisitor();
-        divideVisitor = new DivideVisitor();
         addVisitor = new AddVisitor();
-        multiplyVisitor = new MultiplyVisitor();
         subtractVisitor = new SubtractVisitor();
         restrictGTVisitor = new RestrictGreaterThanVisitor();
         restrictLTEVisitor = new RestrictLessThanOrEqualVisitor();
@@ -31,14 +27,6 @@ public class IntegerRangeTest {
 
     public PossibleValues add(PossibleValues a, PossibleValues b) {
         return a.acceptAbstractOp(addVisitor, b);
-    }
-
-    public PossibleValues divide(PossibleValues a, PossibleValues b) {
-        return a.acceptAbstractOp(divideVisitor, b);
-    }
-
-    public PossibleValues multiply(PossibleValues a, PossibleValues b) {
-        return a.acceptAbstractOp(multiplyVisitor, b);
     }
 
     public PossibleValues subtract(PossibleValues a, PossibleValues b) {
@@ -77,24 +65,6 @@ public class IntegerRangeTest {
         Assertions.assertEquals(190, xy.getMax());
         Assertions.assertEquals(10, xz.getMin());
         Assertions.assertEquals(299, xz.getMax());
-    }
-
-    @Test
-    public void divideTest() {
-        // TODO: implement
-    }
-
-    @Test
-    public void multiplyTest() {
-        PossibleValues x = new IntegerRange(-10, 100);
-        PossibleValues y = new IntegerRange(-25, -10);
-        PossibleValues z = new IntegerRange(30, 99);
-        IntegerRange xy = (IntegerRange)multiply(x, y);
-        IntegerRange xz = (IntegerRange)multiply(x, z);
-        Assertions.assertEquals(-10 * -25, xy.getMin());
-        Assertions.assertEquals(100 * -10, xy.getMax());
-        Assertions.assertEquals(-10 * 30, xz.getMin());
-        Assertions.assertEquals(100 * 99, xz.getMax());
     }
 
     @Test

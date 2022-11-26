@@ -11,9 +11,19 @@ import utils.MathUtil;
 public class MultiplyVisitor extends OperationVisitorWithDefault {
     @Override
     public PossibleValues visit(IntegerValue a, IntegerValue b) {
-        return new IntegerRange(
-                MathUtil.multiplyToLimit(a.getMin(), b.getMin()),
-                MathUtil.multiplyToLimit(a.getMax(), b.getMax())
-        );
+        int aMin = a.getMin();
+        int aMax = a.getMax();
+        int bMin = b.getMin();
+        int bMax = b.getMax();
+
+        int product1 = MathUtil.multiplyToLimit(aMin, bMin);
+        int product2 = MathUtil.multiplyToLimit(aMin, bMax);
+        int product3 = MathUtil.multiplyToLimit(aMax, bMin);
+        int product4 = MathUtil.multiplyToLimit(aMax, bMax);
+
+        int newMin = Math.min(Math.min(product1, product2), Math.min(product3, product4));
+        int newMax = Math.max(Math.max(product1, product2), Math.max(product3, product4));
+
+        return new IntegerRange(newMin, newMax);
     }
 }

@@ -5,7 +5,6 @@ import analysis.values.visitor.OperationVisitor;
 public abstract class IntegerValue extends PrimitiveValue {
     public abstract int getMin();
     public abstract int getMax();
-    public abstract boolean inRange(int n);
 
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {

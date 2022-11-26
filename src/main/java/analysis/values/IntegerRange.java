@@ -49,16 +49,6 @@ public class IntegerRange extends IntegerValue {
         return "[" + min + "," + max + "]";
     }
 
-    /**
-     * Check if n is in the integer range
-     * @param n the integer to check
-     * @return true if n is in the integer range; false otherwise
-     */
-    @Override
-    public boolean inRange(int n) {
-        return n >= min  && n <= max;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
