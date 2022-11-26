@@ -18,6 +18,7 @@ import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import logger.AnalysisLogger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -206,6 +207,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             EndState bodyEndState = n.getBody().accept(loopAnalysisVisitor, analysisState);
             arg.addErrors(analysisState);
             // TODO: add early breaks from bodyEndState to exitState
+            List<String> updates = new ArrayList<>();
             for (Expression e : n.getUpdate()) {
                 ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
                 e.accept(loopExprVisitor, updateAnalysisState);
