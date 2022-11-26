@@ -194,8 +194,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(UnaryExpr n, ExpressionAnalysisState arg) {
-        PossibleValues values = n.getExpression().accept(this, arg);
-        if (values instanceof IntegerValue intValue) {
+        PossibleValues preValue = n.getExpression().accept(this, arg);
+        if (preValue instanceof IntegerValue intValue) {
             PossibleValues postValue;
             switch (n.getOperator()) {
                 case PREFIX_INCREMENT, POSTFIX_INCREMENT -> {
@@ -220,16 +220,16 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                     postValue = IntegerRange.ANY_VALUE;
                 }
                 default -> {
-                    postValue = values.isEmpty() ? new EmptyValue() : new AnyValue();
+                    postValue = preValue.isEmpty() ? new EmptyValue() : new AnyValue();
                 }
             }
             return switch (n.getOperator()) {
-                case POSTFIX_INCREMENT, POSTFIX_DECREMENT -> values;
+                case POSTFIX_INCREMENT, POSTFIX_DECREMENT -> preValue;
                 default -> postValue;
             };
         }
         // TODO: booleans
-        return values.isEmpty() ? new EmptyValue() : new AnyValue();
+        return preValue.isEmpty() ? new EmptyValue() : new AnyValue();
     }
 
     // region ----Not required----
