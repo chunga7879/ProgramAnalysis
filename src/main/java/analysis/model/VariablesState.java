@@ -1,5 +1,6 @@
 package analysis.model;
 
+import analysis.values.AnyValue;
 import analysis.values.EmptyValue;
 import analysis.values.PossibleValues;
 import analysis.values.visitor.IntersectVisitor;
@@ -11,6 +12,16 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * State of the variables known by the analysis
+ * <ul>
+ *     <li>All variables start out as ANY VALUE and may be specified as a result of the analysis</li>
+ *     <ul><li>Variables not in the variable map are considered ANY VALUE</li></ul>
+ *     <li>If any variable domain becomes EMPTY, the entire domain becomes EMPTY</li>
+ *     <ul><li>EMPTY means that the current path is not taken by any execution of the analysis.
+ *     This is different from having an empty variable map.</li></ul>
+ * </ul>
+ */
 public class VariablesState {
     private final Map<Node, PossibleValues> variableMap;
     private boolean isDomainEmpty;
@@ -53,7 +64,8 @@ public class VariablesState {
     }
 
     private PossibleValues getVariableHelper(Node node) {
-        if (isDomainEmpty || !variableMap.containsKey(node)) return new EmptyValue();
+        if (isDomainEmpty) return new EmptyValue();
+        if (!variableMap.containsKey(node)) return new AnyValue();
         return variableMap.get(node);
     }
 
