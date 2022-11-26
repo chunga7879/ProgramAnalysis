@@ -121,7 +121,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             // Check annotation against return
             MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
             if (dec != null) {
-                Set<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(value, dec.getAnnotations());
+                Set<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(
+                        value,
+                        dec.getAnnotations(),
+                        n.getExpression().get().toString()
+                );
                 arg.addErrors(n, errors);
                 AnalysisLogger.logErrors(n, errors);
             }

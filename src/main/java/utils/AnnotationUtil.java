@@ -2,7 +2,6 @@ package utils;
 
 import analysis.model.AnalysisError;
 import analysis.values.NullValue;
-import analysis.values.ObjectValue;
 import analysis.values.PossibleValues;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 
@@ -28,7 +27,11 @@ public final class AnnotationUtil {
      * Check the return value against a list of annotations
      * @return Set of Errors from when the checks fail
      */
-    public static Set<AnalysisError> checkReturnValueWithAnnotation(PossibleValues values, List<AnnotationExpr> annotations) {
+    public static Set<AnalysisError> checkReturnValueWithAnnotation(
+            PossibleValues value,
+            List<AnnotationExpr> annotations,
+            String nodeName
+    ) {
         Set<AnalysisError> errors = new HashSet<>();
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = new HashMap<>();
         annotations.forEach(annotation -> {
@@ -46,15 +49,13 @@ public final class AnnotationUtil {
                 annotationMap.get(type).add(annotation);
             }
         });
-        if (values instanceof ObjectValue objValue) {
-            if (annotationMap.containsKey(AnnotationType.NotNull) && objValue.canBeNull()) {
-                boolean isDefinite = objValue == NullValue.VALUE;
-                errors.add(createReturnError("@NotNull", "null", isDefinite));
-            }
-            if (annotationMap.containsKey(AnnotationType.Null) && objValue != NullValue.VALUE) {
-                boolean isDefinite = !objValue.canBeNull();
-                errors.add(createReturnError("@Null", "not null", isDefinite));
-            }
+        if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
+            boolean isDefinite = value == NullValue.VALUE;
+            errors.add(createReturnError("@NotNull", "null", nodeName, isDefinite));
+        }
+        if (annotationMap.containsKey(AnnotationType.Null) && value != NullValue.VALUE) {
+            boolean isDefinite = !value.canBeNull();
+            errors.add(createReturnError("@Null", "not null", nodeName, isDefinite));
         }
         // TODO: Integer, Array
         return errors;
@@ -63,8 +64,8 @@ public final class AnnotationUtil {
     /**
      * Create a AnalysisError for the return annotation error
      */
-    private static AnalysisError createReturnError(String annotation, String badCondition, boolean isDefinite) {
-        String message = annotation + " return is " + (isDefinite ? "always " : "sometimes ") + badCondition;
+    private static AnalysisError createReturnError(String annotation, String badCondition, String nodeName, boolean isDefinite) {
+        String message = annotation + " return is " + (isDefinite ? "always " : "sometimes ") + badCondition + ": " + nodeName;
         return new AnalysisError(message, isDefinite);
     }
 }
