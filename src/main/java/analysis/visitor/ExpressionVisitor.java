@@ -1,5 +1,6 @@
 package analysis.visitor;
 
+import analysis.model.AnalysisError;
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
@@ -105,9 +106,15 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(BinaryExpr n, ExpressionAnalysisState arg) {
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
-        divideVisitor.setExpressionAnalysisState(arg);
         return switch (n.getOperator()) {
-            case DIVIDE -> leftValue.acceptAbstractOp(divideVisitor, rightValue);
+            case DIVIDE -> {
+                PairValue<PossibleValues, AnalysisError> result = leftValue.acceptAbstractOp(divideVisitor, rightValue);
+                AnalysisError error = result.getB();
+                if (error != null) {
+                    arg.addError(error);
+                }
+                yield result.getA();
+            }
             case PLUS -> leftValue.acceptAbstractOp(addVisitor, rightValue);
             case MINUS -> leftValue.acceptAbstractOp(subtractVisitor, rightValue);
             case MULTIPLY -> leftValue.acceptAbstractOp(multiplyVisitor, rightValue);

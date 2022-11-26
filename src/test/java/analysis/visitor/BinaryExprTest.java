@@ -46,7 +46,7 @@ public class BinaryExprTest {
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(2, 40));
         varState.setVariable(y, new IntegerRange(-4, 20));
-        binaryExpr.accept(new AnalysisVisitor("x"), analysisState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange quotient = (IntegerRange) varState.getVariable(x);
         // TODO: fix variable assignment
         Assertions.assertEquals(40 / -4, quotient.getMin());
@@ -78,7 +78,7 @@ public class BinaryExprTest {
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(-100, 50));
         varState.setVariable(y, new IntegerRange(-10, 20));
-        binaryExpr.accept(new AnalysisVisitor("x"), analysisState);
+        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange quotient = (IntegerRange) varState.getVariable(x);
         // TODO: fix variable assignment
         Assertions.assertEquals(-100 / 20, quotient.getMin());
@@ -110,7 +110,7 @@ public class BinaryExprTest {
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(-100, -50));
         varState.setVariable(y, new IntegerRange(-10, 20));
-        binaryExpr.accept(new AnalysisVisitor("x"), analysisState);
+        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange quotient = (IntegerRange) varState.getVariable(x);
         // TODO: fix variable assignment
         Assertions.assertEquals(-100 / 20, quotient.getMin());
@@ -140,7 +140,7 @@ public class BinaryExprTest {
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(1, 2));
         varState.setVariable(y, new IntegerRange(0, 1));
-        binaryExpr.accept(new AnalysisVisitor("x"), analysisState);
+        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange quotient = (IntegerRange) varState.getVariable(x);
         // TODO: fix variable assignment
         Assertions.assertEquals(1 / 1, quotient.getMin());
@@ -170,7 +170,7 @@ public class BinaryExprTest {
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(1, 2));
         varState.setVariable(y, new IntegerRange(-1, 0));
-        binaryExpr.accept(new AnalysisVisitor("x"), analysisState);
+        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange quotient = (IntegerRange) varState.getVariable(x);
         // TODO: fix variable assignment
         Assertions.assertEquals(2 / -1, quotient.getMin());
@@ -203,7 +203,7 @@ public class BinaryExprTest {
         PossibleValues range2 = new IntegerRange(0, 0);
         varState.setVariable(x, range1);
         varState.setVariable(y, range2);
-        binaryExpr.accept(new AnalysisVisitor("x"), analysisState);
+        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
         EmptyValue quotient = (EmptyValue) varState.getVariable(x);
         // TODO: fix variable assignment
         Assertions.assertEquals(quotient, new EmptyValue());

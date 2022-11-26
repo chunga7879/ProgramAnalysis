@@ -1,20 +1,17 @@
 package analysis.values.visitor;
 
 import analysis.model.AnalysisError;
+import analysis.model.AnalysisState;
 import analysis.model.ExpressionAnalysisState;
-import analysis.values.EmptyValue;
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
-import analysis.values.PossibleValues;
+import analysis.values.*;
 import utils.MathUtil;
 
 /**
  * Visitor getting possible values for division operation: a / b
  */
-public class DivideVisitor extends OperationVisitorWithDefault {
-    ExpressionAnalysisState expressionAnalysisState;
+public class DivideVisitor extends AbstractOperationVisitor {
     @Override
-    public PossibleValues visit(IntegerValue a, IntegerValue b) {
+    public PairValue<PossibleValues, AnalysisError> visit(IntegerValue a, IntegerValue b) {
         int aMin = a.getMin();
         int aMax = a.getMax();
         int bMin = b.getMin();
@@ -23,13 +20,13 @@ public class DivideVisitor extends OperationVisitorWithDefault {
         // 0 is the denominator
         if (bMin == 0 && bMax == 0) {
             // TODO: make error definite
-            expressionAnalysisState.addError(new AnalysisError("ArithmeticException: " + a + " / " + b));
-            return new EmptyValue();
+            return new PairValue<>(new EmptyValue(), new AnalysisError("ArithmeticException: " + a + " / " + b));
         }
 
+        AnalysisError error = null;
         // 0 is a possible value for the denominator
         if (bMin <= 0 && bMax >= 0) {
-            expressionAnalysisState.addError(new AnalysisError("ArithmeticException: " + a + " / " + b));
+            error = new AnalysisError("ArithmeticException: " + a + " / " + b);
             // if the minimum denominator is 0, we shift the range from [0, n] to [1, n]
             if (bMin == 0) {
                 bMin = 1;
@@ -47,10 +44,6 @@ public class DivideVisitor extends OperationVisitorWithDefault {
         int newMin = Math.min(Math.min(quotient1, quotient2), Math.min(quotient3, quotient4));
         int newMax = Math.max(Math.max(quotient1, quotient2), Math.max(quotient3, quotient4));
 
-        return new IntegerRange(newMin, newMax);
-    }
-
-    public void setExpressionAnalysisState(ExpressionAnalysisState expressionAnalysisState) {
-        this.expressionAnalysisState = expressionAnalysisState;
+        return new PairValue<>(new IntegerRange(newMin, newMax), error);
     }
 }
