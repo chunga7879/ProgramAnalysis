@@ -9,6 +9,7 @@ import java.util.*;
  */
 public class AnalysisState {
     private VariablesState variablesState;
+
     private Map<Node, Set<AnalysisError>> errorMap;
 
     public AnalysisState(VariablesState variablesState) {
