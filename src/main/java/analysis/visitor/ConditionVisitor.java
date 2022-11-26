@@ -15,9 +15,7 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
-import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+import utils.VariableUtil;
 
 public class ConditionVisitor implements GenericVisitor<ConditionStates, ExpressionAnalysisState> {
     private ExpressionVisitor expressionVisitor;
@@ -155,29 +153,9 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         PossibleValues rightFalseRestrictedValues = rightValues.acceptAbstractOp(oppositeFlippedConditionVisitor, leftValues);
         if (leftTrueRestrictedValues.isEmpty() || rightTrueRestrictedValues.isEmpty()) trueState.setDomainEmpty();
         if (leftFalseRestrictedValues.isEmpty() || rightFalseRestrictedValues.isEmpty()) falseState.setDomainEmpty();
-        if (leftExpr instanceof NameExpr leftVar) {
-            restrictNameExpr(leftVar, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
-        }
-        if (rightExpr instanceof NameExpr rightVar) {
-            restrictNameExpr(rightVar, rightTrueRestrictedValues, rightFalseRestrictedValues, trueState, falseState);
-        }
+        VariableUtil.setVariableFromExpression(leftExpr, leftTrueRestrictedValues, trueState, leftFalseRestrictedValues, falseState);
+        VariableUtil.setVariableFromExpression(rightExpr, rightTrueRestrictedValues, trueState, rightFalseRestrictedValues, falseState);
         return new ConditionStates(trueState, falseState);
-    }
-
-    /**
-     * Restrict the domain of a variable/parameter
-     */
-    private void restrictNameExpr(NameExpr nameExpr,
-                                  PossibleValues trueRestrictedValues, PossibleValues falseRestrictedValues,
-                                  VariablesState trueState, VariablesState falseState) {
-        ResolvedValueDeclaration valDec = nameExpr.resolve();
-        if (valDec instanceof JavaParserVariableDeclaration jpVarDec) {
-            trueState.setVariable(jpVarDec.getVariableDeclarator(), trueRestrictedValues);
-            falseState.setVariable(jpVarDec.getVariableDeclarator(), falseRestrictedValues);
-        } else if (valDec instanceof JavaParserParameterDeclaration jpVarDec) {
-            trueState.setVariable(jpVarDec.getWrappedNode(), trueRestrictedValues);
-            falseState.setVariable(jpVarDec.getWrappedNode(), falseRestrictedValues);
-        }
     }
 
     @Override
