@@ -19,6 +19,15 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 
+/**
+ * Visitor to compute conditional TRUE state and FALSE state
+ * <ul>
+ *     <li>Compute TRUE variable state for when the condition is true</li>
+ *     <li>Compute FALSE variable state for when the condition is false</li>
+ * </ul>
+ * Note: This visitor should not affect ExpressionAnalysisState.variableState
+ *       even if there's assignment inside the condition
+ */
 public class ConditionVisitor implements GenericVisitor<ConditionStates, ExpressionAnalysisState> {
     private ExpressionVisitor expressionVisitor;
     private MergeVisitor mergeVisitor;
@@ -69,26 +78,39 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
 
     private ConditionStates handleBooleanOperators(Expression leftExpr, Expression rightExpr,
                                                    BinaryExpr.Operator operator, ExpressionAnalysisState arg) {
-        // TODO: handle visiting assignments
         // TODO: re-compute domains when values get updated
-        ConditionStates leftStates = leftExpr.accept(this, arg);
-        ConditionStates rightStates = rightExpr.accept(this, arg);
-        VariablesState state = arg.getVariablesState();
+        VariablesState stateCopy = arg.getVariablesState().copy();
         switch (operator) {
             case AND -> {
+                ExpressionAnalysisState leftAnalysisState = new ExpressionAnalysisState(stateCopy);
+                ConditionStates leftStates = leftExpr.accept(this, leftAnalysisState);
+                // Since it's AND, only analyze right when left is true
+                ExpressionAnalysisState rightAnalysisState = new ExpressionAnalysisState(leftStates.getTrueState());
+                ConditionStates rightStates = rightExpr.accept(this, rightAnalysisState);
+                arg.addErrors(leftAnalysisState);
+                arg.addErrors(rightAnalysisState);
+
                 return new ConditionStates(
                         leftStates.getTrueState().intersectCopy(intersectVisitor, rightStates.getTrueState()),
                         leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState())
                 );
             }
             case OR -> {
+                ExpressionAnalysisState leftAnalysisState = new ExpressionAnalysisState(stateCopy);
+                ConditionStates leftStates = leftExpr.accept(this, leftAnalysisState);
+                // Since it's OR, only analyze right when left is false
+                ExpressionAnalysisState rightAnalysisState = new ExpressionAnalysisState(leftStates.getFalseState());
+                ConditionStates rightStates = rightExpr.accept(this, rightAnalysisState);
+                arg.addErrors(leftAnalysisState);
+                arg.addErrors(rightAnalysisState);
+
                 return new ConditionStates(
                         leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()),
                         leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState())
                 );
             }
             default -> {
-                return new ConditionStates(state.copy(), state.copy());
+                return new ConditionStates(stateCopy, stateCopy);
             }
         }
     }

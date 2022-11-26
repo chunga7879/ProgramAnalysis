@@ -117,11 +117,6 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     }
 
     @Override
-    public PossibleValues visit(EnclosedExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
-    }
-
-    @Override
     public PossibleValues visit(FieldAccessExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
     }
@@ -202,6 +197,11 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     @Override
     public PossibleValues visit(UnaryExpr n, ExpressionAnalysisState arg) {
         return new AnyValue();
+    }
+
+    @Override
+    public PossibleValues visit(EnclosedExpr n, ExpressionAnalysisState arg) {
+        return n.getInner().accept(this, arg);
     }
 
     // region ----Not required----

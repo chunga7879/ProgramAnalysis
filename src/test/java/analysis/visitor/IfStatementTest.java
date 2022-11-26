@@ -5,6 +5,8 @@ import analysis.model.VariablesState;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
@@ -167,5 +169,72 @@ public class IfStatementTest {
         IntegerRange yVal = (IntegerRange) varState.getVariable(y);
         Assertions.assertEquals(-5, yVal.getMin());
         Assertions.assertEquals(300, yVal.getMax());
+    }
+
+    @Test
+    public void ifRestrictMultipleSameVariableTest() {
+        String code = """
+                public class Main {
+                    void test(int x) {
+                        int a = 5;
+                        int b = 0;
+                        if (x < 10 && x >= 5) {
+                            a = x;
+                        } else {
+                            b = x;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        BlockStmt block = getBlockStatements(compiled).get(0);
+        Parameter x = getParameter(compiled, "x");
+        VariableDeclarator a = getVariable(compiled, "a");
+        VariableDeclarator b = getVariable(compiled, "b");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(0, 20));
+        block.accept(new AnalysisVisitor(""), analysisState);
+        Assertions.assertEquals(new IntegerRange(0, 20), varState.getVariable(x));
+        Assertions.assertEquals(new IntegerRange(5, 9), varState.getVariable(a));
+        Assertions.assertEquals(new IntegerRange(0, 20), varState.getVariable(b));
+    }
+
+    @Test
+    public void assignmentInIfTest() {
+        String code = """
+                public class Main {
+                    void test(int x, int y) {
+                        int a = 5;
+                        int b = 5;
+                        int c = 5;
+                        int d = 5;
+                        if ((x = x + 1) == 10 && (y = y + 1) == 10) {
+                            a = x;
+                            b = y;
+                        } else {
+                            c = x;
+                            d = y;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        BlockStmt block = getBlockStatements(compiled).get(0);
+        Parameter x = getParameter(compiled, "x");
+        Parameter y = getParameter(compiled, "y");
+        VariableDeclarator a = getVariable(compiled, "a");
+        VariableDeclarator b = getVariable(compiled, "b");
+        VariableDeclarator c = getVariable(compiled, "c");
+        VariableDeclarator d = getVariable(compiled, "d");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(0, 20));
+        varState.setVariable(y, new IntegerRange(0, 20));
+        block.accept(new AnalysisVisitor(""), analysisState);
+        Assertions.assertEquals(new IntegerRange(1, 21), varState.getVariable(a));
+        Assertions.assertEquals(new IntegerRange(1, 21), varState.getVariable(b));
+        Assertions.assertEquals(new IntegerRange(1, 21), varState.getVariable(c));
+        Assertions.assertEquals(new IntegerRange(0, 21), varState.getVariable(d));
     }
 }
