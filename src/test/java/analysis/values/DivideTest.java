@@ -33,20 +33,21 @@ public class DivideTest {
         Assertions.assertEquals(10 / 2, xy.getMax());
     }
 
-    /**
-     * a.min > 0, a.max > 0, b.min < 0, b.max > 0
-     *
-     * min = a.max / b.min
-     * max = a.max / b.max
-     */
-    @Test
-    public void divideTest2() {
-        PossibleValues x = new IntegerRange(2, 40);
-        PossibleValues y = new IntegerRange(-4, 20);
-        IntegerRange xy = (IntegerRange)divide(x, y);
-        Assertions.assertEquals(40 / -4, xy.getMin());
-        Assertions.assertEquals(40 / 20, xy.getMax());
-    }
+    // TODO: remove
+//    /**
+//     * a.min > 0, a.max > 0, b.min < 0, b.max > 0
+//     *
+//     * min = a.max / b.min
+//     * max = a.max / b.max
+//     */
+//    @Test
+//    public void divideTest2() {
+//        PossibleValues x = new IntegerRange(2, 40);
+//        PossibleValues y = new IntegerRange(-4, 20);
+//        IntegerRange xy = (IntegerRange)divide(x, y);
+//        Assertions.assertEquals(40 / -4, xy.getMin());
+//        Assertions.assertEquals(40 / 20, xy.getMax());
+//    }
 
     /**
      * a.min > 0, a.max > 0, b.min < 0, b.max < 0
@@ -78,20 +79,21 @@ public class DivideTest {
         Assertions.assertEquals(50 / 10, xy.getMax());
     }
 
-    /**
-     * a.min < 0, a.max > 0, b.min < 0, b.max > 0
-     *
-     * min = min(a.min / b.max, a.max / b.min)
-     * max = max(a.min / b.min, a.max / b.max)
-     */
-    @Test
-    public void divideTest5() {
-        PossibleValues x = new IntegerRange(-100, 50);
-        PossibleValues y = new IntegerRange(-10, 20);
-        IntegerRange xy = (IntegerRange)divide(x, y);
-        Assertions.assertEquals(-100 / 20, xy.getMin());
-        Assertions.assertEquals(-100 / -10, xy.getMax());
-    }
+    // TODO: remove
+//    /**
+//     * a.min < 0, a.max > 0, b.min < 0, b.max > 0
+//     *
+//     * min = min(a.min / b.max, a.max / b.min)
+//     * max = max(a.min / b.min, a.max / b.max)
+//     */
+//    @Test
+//    public void divideTest5() {
+//        PossibleValues x = new IntegerRange(-100, 50);
+//        PossibleValues y = new IntegerRange(-10, 20);
+//        IntegerRange xy = (IntegerRange)divide(x, y);
+//        Assertions.assertEquals(-100 / 20, xy.getMin());
+//        Assertions.assertEquals(-100 / -10, xy.getMax());
+//    }
 
     /**
      * a.min < 0, a.max > 0, b.min < 0, b.max < 0
@@ -123,20 +125,21 @@ public class DivideTest {
         Assertions.assertEquals(-5 / 20, xy.getMax());
     }
 
-    /**
-     * a.min < 0, a.max < 0, b.min < 0, b.max > 0
-     *
-     * min = a.min / b.max
-     * max = a.min / b.min
-     */
-    @Test
-    public void divideTest8() {
-        PossibleValues x = new IntegerRange(-100, -50);
-        PossibleValues y = new IntegerRange(-10, 20);
-        IntegerRange xy = (IntegerRange)divide(x, y);
-        Assertions.assertEquals(-100 / 20, xy.getMin());
-        Assertions.assertEquals(-100 / -10, xy.getMax());
-    }
+    // TODO: remove
+//    /**
+//     * a.min < 0, a.max < 0, b.min < 0, b.max > 0
+//     *
+//     * min = a.min / b.max
+//     * max = a.min / b.min
+//     */
+//    @Test
+//    public void divideTest8() {
+//        PossibleValues x = new IntegerRange(-100, -50);
+//        PossibleValues y = new IntegerRange(-10, 20);
+//        IntegerRange xy = (IntegerRange)divide(x, y);
+//        Assertions.assertEquals(-100 / 20, xy.getMin());
+//        Assertions.assertEquals(-100 / -10, xy.getMax());
+//    }
 
     /**
      * a.min < 0, a.max < 0, b.min < 0, b.max < 0
@@ -148,32 +151,6 @@ public class DivideTest {
     public void divideTest9() {
         PossibleValues x = new IntegerRange(-10, -5);
         PossibleValues y = new IntegerRange(-20, -4);
-        IntegerRange xy = (IntegerRange)divide(x, y);
-        Assertions.assertEquals(-5 / -20, xy.getMin());
-        Assertions.assertEquals(-10 / -4, xy.getMax());
-    }
-
-    /**
-     * a.min > 0, a.max > 0, b.min == 0, b.max > 0
-     *
-     */
-    @Test
-    public void divideTest10() {
-        PossibleValues x = new IntegerRange(1, 2);
-        PossibleValues y = new IntegerRange(0, 1);
-        IntegerRange xy = (IntegerRange)divide(x, y);
-        Assertions.assertEquals(-5 / -20, xy.getMin());
-        Assertions.assertEquals(-10 / -4, xy.getMax());
-    }
-
-    /**
-     * a.min > 0, a.max > 0, b.min < 0, b.max == 0
-     *
-     */
-    @Test
-    public void divideTest11() {
-        PossibleValues x = new IntegerRange(1, 2);
-        PossibleValues y = new IntegerRange(-1, 0);
         IntegerRange xy = (IntegerRange)divide(x, y);
         Assertions.assertEquals(-5 / -20, xy.getMin());
         Assertions.assertEquals(-10 / -4, xy.getMax());

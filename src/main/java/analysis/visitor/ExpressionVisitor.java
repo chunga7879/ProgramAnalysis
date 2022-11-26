@@ -105,6 +105,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(BinaryExpr n, ExpressionAnalysisState arg) {
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
+        divideVisitor.setExpressionAnalysisState(arg);
         return switch (n.getOperator()) {
             case DIVIDE -> leftValue.acceptAbstractOp(divideVisitor, rightValue);
             case PLUS -> leftValue.acceptAbstractOp(addVisitor, rightValue);
