@@ -46,4 +46,10 @@ public class DivideVisitor extends AbstractOperationVisitor {
 
         return new PairValue<>(new IntegerRange(newMin, newMax), error);
     }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(IntegerValue a, AnyValue b) {
+        return new PairValue<>(new AnyValue(), new AnalysisError("ArithmeticException: " + a + " / " + b));
+    }
+
 }

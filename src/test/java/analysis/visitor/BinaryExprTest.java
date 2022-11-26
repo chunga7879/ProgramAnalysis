@@ -7,6 +7,7 @@ import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.BinaryExpr;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
@@ -29,161 +30,161 @@ public class BinaryExprTest {
      * max = a.max / b.max
      */
     @Test
-    public void divideByZeroInRange1() {
+    public void divideByZeroInRange() {
         String code = """
                 public class Main {
                     int test(int x, int y) {
-                        int x = x / y;
-                        return x;
+                        int z = x / y;
+                        return z;
                     }
                 }
                 """;
         CompilationUnit compiled = compile(code);
-        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
         Parameter x = getParameter(compiled, "x");
         Parameter y = getParameter(compiled, "y");
+        VariableDeclarator z = getVariable(compiled, "z");
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(2, 40));
         varState.setVariable(y, new IntegerRange(-4, 20));
         compiled.accept(new AnalysisVisitor("test"), analysisState);
-        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
+        IntegerRange quotient = (IntegerRange) varState.getVariable(z);
         // TODO: fix variable assignment
         Assertions.assertEquals(40 / -4, quotient.getMin());
         Assertions.assertEquals(40 / 20, quotient.getMax());
         Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
-    /**
-     * a.min < 0, a.max > 0, b.min < 0, b.max > 0
-     *
-     * min = min(a.min / b.max, a.max / b.min)
-     * max = max(a.min / b.min, a.max / b.max)
-     */
-    @Test
-    public void divideByZeroInRange2() {
-        String code = """
-                public class Main {
-                    int test(int x, int y) {
-                        int x = x / y;
-                        return x;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
-        Parameter x = getParameter(compiled, "x");
-        Parameter y = getParameter(compiled, "y");
-        VariablesState varState = new VariablesState();
-        AnalysisState analysisState = new AnalysisState(varState);
-        varState.setVariable(x, new IntegerRange(-100, 50));
-        varState.setVariable(y, new IntegerRange(-10, 20));
-        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
-        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
-        // TODO: fix variable assignment
-        Assertions.assertEquals(-100 / 20, quotient.getMin());
-        Assertions.assertEquals(-100 / -10, quotient.getMax());
-        Assertions.assertEquals(1, analysisState.getErrorMap().size());
-    }
+//    /**
+//     * a.min < 0, a.max > 0, b.min < 0, b.max > 0
+//     *
+//     * min = min(a.min / b.max, a.max / b.min)
+//     * max = max(a.min / b.min, a.max / b.max)
+//     */
+//    @Test
+//    public void divideByZeroInRange2() {
+//        String code = """
+//                public class Main {
+//                    int test(int x, int y) {
+//                        int x = x / y;
+//                        return x;
+//                    }
+//                }
+//                """;
+//        CompilationUnit compiled = compile(code);
+//        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
+//        Parameter x = getParameter(compiled, "x");
+//        Parameter y = getParameter(compiled, "y");
+//        VariablesState varState = new VariablesState();
+//        AnalysisState analysisState = new AnalysisState(varState);
+//        varState.setVariable(x, new IntegerRange(-100, 50));
+//        varState.setVariable(y, new IntegerRange(-10, 20));
+//        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
+//        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
+//        // TODO: fix variable assignment
+//        Assertions.assertEquals(-100 / 20, quotient.getMin());
+//        Assertions.assertEquals(-100 / -10, quotient.getMax());
+//        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+//    }
 
-    /**
-     * a.min < 0, a.max < 0, b.min < 0, b.max > 0
-     *
-     * min = a.min / b.max
-     * max = a.min / b.min
-     */
-    @Test
-    public void divideZeroInRange3() {
-        String code = """
-                public class Main {
-                    int test(int x, int y) {
-                        int x = x / y;
-                        return x;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
-        Parameter x = getParameter(compiled, "x");
-        Parameter y = getParameter(compiled, "y");
-        VariablesState varState = new VariablesState();
-        AnalysisState analysisState = new AnalysisState(varState);
-        varState.setVariable(x, new IntegerRange(-100, -50));
-        varState.setVariable(y, new IntegerRange(-10, 20));
-        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
-        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
-        // TODO: fix variable assignment
-        Assertions.assertEquals(-100 / 20, quotient.getMin());
-        Assertions.assertEquals(-100 / -10, quotient.getMax());
-        Assertions.assertEquals(1, analysisState.getErrorMap().size());
-    }
+//    /**
+//     * a.min < 0, a.max < 0, b.min < 0, b.max > 0
+//     *
+//     * min = a.min / b.max
+//     * max = a.min / b.min
+//     */
+//    @Test
+//    public void divideZeroInRange3() {
+//        String code = """
+//                public class Main {
+//                    int test(int x, int y) {
+//                        int x = x / y;
+//                        return x;
+//                    }
+//                }
+//                """;
+//        CompilationUnit compiled = compile(code);
+//        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
+//        Parameter x = getParameter(compiled, "x");
+//        Parameter y = getParameter(compiled, "y");
+//        VariablesState varState = new VariablesState();
+//        AnalysisState analysisState = new AnalysisState(varState);
+//        varState.setVariable(x, new IntegerRange(-100, -50));
+//        varState.setVariable(y, new IntegerRange(-10, 20));
+//        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
+//        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
+//        // TODO: fix variable assignment
+//        Assertions.assertEquals(-100 / 20, quotient.getMin());
+//        Assertions.assertEquals(-100 / -10, quotient.getMax());
+//        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+//    }
 
-    /**
-     * a.min > 0, a.max > 0, b.min == 0, b.max > 0
-     *
-     */
-    @Test
-    public void divideByZeroInRangeMin() {
-        String code = """
-                public class Main {
-                    int test(int x, int y) {
-                        int x = x / y;
-                        return x;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
-        Parameter x = getParameter(compiled, "x");
-        Parameter y = getParameter(compiled, "y");
-        VariablesState varState = new VariablesState();
-        AnalysisState analysisState = new AnalysisState(varState);
-        varState.setVariable(x, new IntegerRange(1, 2));
-        varState.setVariable(y, new IntegerRange(0, 1));
-        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
-        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
-        // TODO: fix variable assignment
-        Assertions.assertEquals(1 / 1, quotient.getMin());
-        Assertions.assertEquals(2 / 1, quotient.getMax());
-        Assertions.assertEquals(1, analysisState.getErrorMap().size());
-    }
+//    /**
+//     * a.min > 0, a.max > 0, b.min == 0, b.max > 0
+//     *
+//     */
+//    @Test
+//    public void divideByZeroInRangeMin() {
+//        String code = """
+//                public class Main {
+//                    int test(int x, int y) {
+//                        int x = x / y;
+//                        return x;
+//                    }
+//                }
+//                """;
+//        CompilationUnit compiled = compile(code);
+//        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
+//        Parameter x = getParameter(compiled, "x");
+//        Parameter y = getParameter(compiled, "y");
+//        VariablesState varState = new VariablesState();
+//        AnalysisState analysisState = new AnalysisState(varState);
+//        varState.setVariable(x, new IntegerRange(1, 2));
+//        varState.setVariable(y, new IntegerRange(0, 1));
+//        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
+//        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
+//        // TODO: fix variable assignment
+//        Assertions.assertEquals(1 / 1, quotient.getMin());
+//        Assertions.assertEquals(2 / 1, quotient.getMax());
+//        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+//    }
 
-    /**
-     * a.min > 0, a.max > 0, b.min < 0, b.max == 0
-     *
-     */
-    @Test
-    public void divideByZeroInRangeMax() {
-        String code = """
-                public class Main {
-                    int test(int x, int y) {
-                        int x = x / y;
-                        return x;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
-        Parameter x = getParameter(compiled, "x");
-        Parameter y = getParameter(compiled, "y");
-        VariablesState varState = new VariablesState();
-        AnalysisState analysisState = new AnalysisState(varState);
-        varState.setVariable(x, new IntegerRange(1, 2));
-        varState.setVariable(y, new IntegerRange(-1, 0));
-        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
-        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
-        // TODO: fix variable assignment
-        Assertions.assertEquals(2 / -1, quotient.getMin());
-        Assertions.assertEquals(1 / -1, quotient.getMax());
-        Assertions.assertEquals(1, analysisState.getErrorMap().size());
-    }
+//    /**
+//     * a.min > 0, a.max > 0, b.min < 0, b.max == 0
+//     *
+//     */
+//    @Test
+//    public void divideByZeroInRangeMax() {
+//        String code = """
+//                public class Main {
+//                    int test(int x, int y) {
+//                        int x = x / y;
+//                        return x;
+//                    }
+//                }
+//                """;
+//        CompilationUnit compiled = compile(code);
+//        BinaryExpr binaryExpr = getBinaryExpressions(compiled).get(0);
+//        Parameter x = getParameter(compiled, "x");
+//        Parameter y = getParameter(compiled, "y");
+//        VariablesState varState = new VariablesState();
+//        AnalysisState analysisState = new AnalysisState(varState);
+//        varState.setVariable(x, new IntegerRange(1, 2));
+//        varState.setVariable(y, new IntegerRange(-1, 0));
+//        binaryExpr.accept(new AnalysisVisitor("test"), analysisState);
+//        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
+//        // TODO: fix variable assignment
+//        Assertions.assertEquals(2 / -1, quotient.getMin());
+//        Assertions.assertEquals(1 / -1, quotient.getMax());
+//        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+//    }
 
     /**
      * a.min > 0, a.max > 0, b.min == 0, b.max == 0
      *
      */
     @Test
-    public void divideByZero() {
+    public void divideByZeroRange() {
         String code = """
                 public class Main {
                     int test(int x, int y) {
@@ -208,5 +209,45 @@ public class BinaryExprTest {
         // TODO: fix variable assignment
         Assertions.assertEquals(quotient, new EmptyValue());
         Assertions.assertEquals(1, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void divideByZeroExact() {
+        String code = """
+                public class Main {
+                    int test() {
+                        int x = 1 / 0;
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator x = getVariable(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(new EmptyValue(), varState.getVariable(x));
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void divideExact() {
+        String code = """
+                public class Main {
+                    int test() {
+                        int x = 10 / 5;
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator x = getVariable(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        IntegerRange quotient = (IntegerRange) varState.getVariable(x);
+        Assertions.assertEquals(10 / 5, quotient.getMin());
+        Assertions.assertEquals(10 / 5, quotient.getMax());
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 }
