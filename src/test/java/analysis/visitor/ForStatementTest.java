@@ -25,7 +25,7 @@ public class ForStatementTest {
         String code = """
                 public class Main {
                     void testForLoopFixed(int a, int b) {
-                        for (int i = 0; i < b; i = i + 1) {
+                        for (int i = 0; i < b; i++) {
                             a = a + i;
                         }
                     }
@@ -54,7 +54,7 @@ public class ForStatementTest {
         String code = """
                 public class Main {
                     void testForLoopFixed(int a, int b) {
-                        for (int i = 0; i < b; i = i + 1) {
+                        for (int i = 0; i < b; i++) {
                             a = a + i;
                         }
                     }
@@ -83,7 +83,7 @@ public class ForStatementTest {
         String code = """
                 public class Main {
                     void testForLoopFixed(int a) {
-                        for (int i = 0; ; i = i + 1) {
+                        for (int i = 0; ; i++) {
                             a = a + i;
                         }
                     }
