@@ -5,7 +5,7 @@ import analysis.model.VariablesState;
 import com.github.javaparser.Range;
 import com.github.javaparser.ast.Node;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Logger for viewing the state of the analysis
@@ -28,7 +28,7 @@ public final class AnalysisLogger {
     /**
      * Log the state of the arg and errors at a node
      */
-    public static void log(Node n, VariablesState arg, List<AnalysisError> errors) {
+    public static void log(Node n, VariablesState arg, Collection<AnalysisError> errors) {
         if (!doLog) return;
         log(n, arg.toFormattedString());
         logErrors(n, errors);
@@ -92,7 +92,7 @@ public final class AnalysisLogger {
     /**
      * Log errors at node
      */
-    public static void logErrors(Node n, List<AnalysisError> errors) {
+    public static void logErrors(Node n, Collection<AnalysisError> errors) {
         if (errors != null && !errors.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             sb.append("Errors: ");

@@ -2,6 +2,7 @@ package analysis.visitor;
 
 import analysis.model.*;
 import analysis.values.AnyValue;
+import analysis.values.PossibleValues;
 import analysis.values.visitor.AddApproximateVisitor;
 import analysis.values.visitor.IntersectVisitor;
 import analysis.values.visitor.MergeVisitor;
@@ -21,6 +22,7 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
+import utils.AnnotationUtil;
 import utils.JavadocUtil;
 
 import java.util.List;
@@ -113,9 +115,16 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         VariablesState varState = arg.getVariablesState();
         if (n.getExpression().isPresent()) {
             ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
-            n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
+            PossibleValues value = n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
             AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
-            // TODO: check annotation against return (add to EndState and compute at visit MethodDeclaration)
+
+            // Check annotation against return
+            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+            if (dec != null) {
+                Set<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(value, dec.getAnnotations());
+                arg.addErrors(n, errors);
+                AnalysisLogger.logErrors(n, errors);
+            }
         }
         varState.setDomainEmpty();
         return null;
@@ -269,6 +278,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             }
 
             AnalysisLogger.log(n, "RUNTIME THROW " + throwType.asReferenceType().getQualifiedName() + ((!inSignature && !inJavadocs) ? " (Not in signature/Javadoc)" : ""));
+            arg.addError(n, new AnalysisError("Runtime Exception not in signature/Javadoc: " + throwType));
         } else {
             AnalysisLogger.log(n, "THROW " + throwType.asReferenceType().getQualifiedName());
         }
