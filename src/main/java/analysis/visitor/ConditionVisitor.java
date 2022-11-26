@@ -17,9 +17,7 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
-import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
-import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+import utils.VariableUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -161,6 +159,8 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         PossibleValues rightFalseRestrictedValues = rightValues.acceptAbstractOp(oppositeFlippedConditionVisitor, leftValues);
         if (leftTrueRestrictedValues.isEmpty() || rightTrueRestrictedValues.isEmpty()) trueState.setDomainEmpty();
         if (leftFalseRestrictedValues.isEmpty() || rightFalseRestrictedValues.isEmpty()) falseState.setDomainEmpty();
+        VariableUtil.setVariableFromExpression(leftExpr, leftTrueRestrictedValues, trueState, leftFalseRestrictedValues, falseState);
+        VariableUtil.setVariableFromExpression(rightExpr, rightTrueRestrictedValues, trueState, rightFalseRestrictedValues, falseState);
         if (leftExpr instanceof NameExpr leftVar) {
             restrictNameExpr(leftVar, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
         } else if (leftExpr instanceof FieldAccessExpr leftField) {

@@ -48,7 +48,7 @@ public class IntegerRange extends IntegerValue {
 
     @Override
     public String toFormattedString() {
-        return "[" + min + "," + max + "]";
+        return "[" + (min == max ? min : (min + "," + max)) + "]";
     }
 
     @Override
