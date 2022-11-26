@@ -140,3 +140,34 @@ Plan for last user study #2 [here](https://docs.google.com/document/d/1bEJiU5YBf
 | Research - Visualization | Chunga, Katherine | ✔️ |
 | First User Study | Chunga, Emiru | ✔️ |
 
+# Milestone 5
+## Final User Study
+- Planned on 11/26~11/27 (Sun)
+### Changes to Language Design
+- Distinguish between Errors that will potentially or definitely occur to address feedback that it is confusing to see errors that may not occur. 
+
+## Plans for Final Video
+- A rough outline for the script and its contents has been drafted up. Found [here](https://docs.google.com/document/d/1_i1WkU7xVa-NEVM6DOT7XU9KYu2pJdwbfmatTz3TAoo/edit).
+
+## Planned Timeline
+| What | Who | When |
+|------|-----|------|
+| Analysis | Devon, Emiru, Shiven | 11/15~11/26 (Sat) |
+| Visualization | Chunga, Katherine | 11/15~11/26 (Sat) |
+| Final User Study | Chunga, Emiru | 11/26~11/27 (Sun) |
+| Video - Script | Katherine | 11/24~11/27 (Sun) |
+| Video - Voiceover | Shiven | 11/26~11/27 (Sun) |
+| Video - Editing | Katherine | 11/27~11/28 (Mon) |
+| Final testing / Bug fixing | Everyone | 11/26~11/30 (Wed) |
+
+## Progresss Timeline
+| What | Who | Status |
+|------|-----|------|
+| Sketch/Design examples/Scenario | Katherine, Shiven | ✔️ |
+| Research - Analysis | Shiven, Emiru, Devon | ✔️ |
+| Research - Visualization | Chunga, Katherine | ✔️ |
+| First User Study | Chunga, Emiru | ✔️ |
+
+
+
+
