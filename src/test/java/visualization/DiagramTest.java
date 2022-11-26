@@ -61,10 +61,10 @@ public class DiagramTest {
         DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
-        diagram.addWhileConditionalStartNode(whileCondition);
+        diagram.addWhileForEachConditionalStartNode(whileCondition);
         diagram.addNode(statement);
         diagram.addNode(potentialError);
-        diagram.addWhileEndNode();
+        diagram.addWhileForEachEndNode();
         diagram.addNode(statement);
         diagram.addEndDiagramNode();
         diagram.createDiagramPNG(outputLocation + "WhileLoop.png");

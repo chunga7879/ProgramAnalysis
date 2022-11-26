@@ -62,14 +62,14 @@ public class Diagram {
      * Adds a node to the diagram for a while loop's condition
      * @param node Node that represents the diagram node. The statement of the node should just be the conditional of the while loop.
      */
-    public void addWhileConditionalStartNode(DiagramNode node) {
+    public void addWhileForEachConditionalStartNode(DiagramNode node) {
         String conditional = "while (" + node.statement() + ") is (true)\n";
 //        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
 //        addNode(conditionalNode);
         diagramString.append(conditional);
     }
 
-    public void addWhileEndNode() {
+    public void addWhileForEachEndNode() {
         diagramString.append("endwhile (false)\n");
     }
 
@@ -98,7 +98,7 @@ public class Diagram {
         }
         // TODO: May have an error in conditional
         DiagramNode conditional = new DiagramNode(condition, Error.NONE, "");
-        addWhileConditionalStartNode(conditional);
+        addWhileForEachConditionalStartNode(conditional);
     }
 
     public void addSwitchConditionalStartNode(String condition) {
@@ -136,7 +136,7 @@ public class Diagram {
         for (String str : update) {
             addStatementNode(str);
         }
-        addWhileEndNode();
+        addWhileForEachEndNode();
     }
 
     /**
