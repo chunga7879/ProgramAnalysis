@@ -70,10 +70,17 @@ public class VariablesState {
         return variableMap.get(node);
     }
 
+    /**
+     * Update variable with a function
+     * (If EMPTY value, do nothing)
+     */
     public void updateVariable(VariableDeclarator declaratorNode, Function<PossibleValues, PossibleValues> updateFunc) {
         updateVariableHelper(declaratorNode, updateFunc);
     }
 
+    /**
+     * @see VariablesState#updateVariable(VariableDeclarator, Function)
+     */
     public void updateVariable(Parameter parameter, Function<PossibleValues, PossibleValues> updateFunc) {
         updateVariableHelper(parameter, updateFunc);
     }
