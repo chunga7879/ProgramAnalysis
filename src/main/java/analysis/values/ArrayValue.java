@@ -58,15 +58,21 @@ public class ArrayValue extends ObjectWithNotNullValue {
     /**
      * Return this array with different length
      */
-    public PossibleValues withLength(PossibleValues val) {
-        if (val instanceof IntegerValue intVal) {
-            return new ArrayValue(intVal, this.canBeNull());
-        } else if (val.isEmpty()) {
-            return new EmptyValue();
-        }
-        return new ArrayValue(DEFAULT_LENGTH, this.canBeNull());
+    public PossibleValues withLength(PossibleValues length) {
+        return create(length, this.canBeNull());
     }
 
+    /**
+     * Create an array with length
+     */
+    public static PossibleValues create(PossibleValues length, boolean canBeNull) {
+        if (length instanceof IntegerValue intVal) {
+            return new ArrayValue(intVal, canBeNull);
+        } else if (length.isEmpty()) {
+            return new EmptyValue();
+        }
+        return new ArrayValue(DEFAULT_LENGTH, canBeNull);
+    }
 
     @Override
     public boolean equals(Object o) {

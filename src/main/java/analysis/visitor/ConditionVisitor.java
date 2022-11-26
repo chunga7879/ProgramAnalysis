@@ -1,10 +1,8 @@
 package analysis.visitor;
 
-import analysis.model.AnalysisError;
 import analysis.model.ConditionStates;
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.ArrayValue;
 import analysis.values.PossibleValues;
 import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
@@ -18,10 +16,6 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import utils.VariableUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
 
 public class ConditionVisitor implements GenericVisitor<ConditionStates, ExpressionAnalysisState> {
     private ExpressionVisitor expressionVisitor;
@@ -161,69 +155,7 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         if (leftFalseRestrictedValues.isEmpty() || rightFalseRestrictedValues.isEmpty()) falseState.setDomainEmpty();
         VariableUtil.setVariableFromExpression(leftExpr, leftTrueRestrictedValues, trueState, leftFalseRestrictedValues, falseState);
         VariableUtil.setVariableFromExpression(rightExpr, rightTrueRestrictedValues, trueState, rightFalseRestrictedValues, falseState);
-        if (leftExpr instanceof NameExpr leftVar) {
-            restrictNameExpr(leftVar, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
-        } else if (leftExpr instanceof FieldAccessExpr leftField) {
-            restrictFieldExpr(leftField, leftTrueRestrictedValues, leftFalseRestrictedValues, trueState, falseState);
-        }
-        if (rightExpr instanceof NameExpr rightVar) {
-            restrictNameExpr(rightVar, rightTrueRestrictedValues, rightFalseRestrictedValues, trueState, falseState);
-        } else if (rightExpr instanceof FieldAccessExpr rightField) {
-            restrictFieldExpr(rightField, rightTrueRestrictedValues, rightFalseRestrictedValues, trueState, falseState);
-        }
         return new ConditionStates(trueState, falseState);
-    }
-
-    /**
-     * Restrict the domain of a variable/parameter
-     */
-    private void restrictNameExpr(NameExpr nameExpr,
-                                  PossibleValues trueRestrictedValues, PossibleValues falseRestrictedValues,
-                                  VariablesState trueState, VariablesState falseState) {
-        ResolvedValueDeclaration valDec = nameExpr.resolve();
-        if (valDec instanceof JavaParserVariableDeclaration jpVarDec) {
-            trueState.setVariable(jpVarDec.getVariableDeclarator(), trueRestrictedValues);
-            falseState.setVariable(jpVarDec.getVariableDeclarator(), falseRestrictedValues);
-        } else if (valDec instanceof JavaParserParameterDeclaration jpVarDec) {
-            trueState.setVariable(jpVarDec.getWrappedNode(), trueRestrictedValues);
-            falseState.setVariable(jpVarDec.getWrappedNode(), falseRestrictedValues);
-        }
-    }
-
-    /**
-     * Restrict the domain of a field in a variable/parameter
-     */
-    private void restrictFieldExpr(FieldAccessExpr fieldExpr,
-                                  PossibleValues trueRestrictedValues, PossibleValues falseRestrictedValues,
-                                  VariablesState trueState, VariablesState falseState) {
-        Expression scopeExpr = fieldExpr.getScope();
-        if (scopeExpr instanceof NameExpr scopeNameExpr) {
-            ResolvedValueDeclaration scopeDec = scopeNameExpr.resolve();
-
-            Node target = null;
-            if (scopeDec instanceof JavaParserVariableDeclaration scopeVarDec) {
-                target = scopeVarDec.getVariableDeclarator();
-            } else if (scopeDec instanceof JavaParserParameterDeclaration scopeParamDec) {
-                target = scopeParamDec.getWrappedNode();
-            }
-
-            if (target != null && fieldExpr.getNameAsString().equalsIgnoreCase("length")) {
-                updateArrayLengthWithRestriction(target, trueRestrictedValues, trueState);
-                updateArrayLengthWithRestriction(target, falseRestrictedValues, falseState);
-            }
-        }
-    }
-
-    /**
-     * Update the length of an array with restriction
-     */
-    private void updateArrayLengthWithRestriction(Node arrayNode, PossibleValues restrictedLength, VariablesState state) {
-        Function<PossibleValues, PossibleValues> updateFunc = x -> {
-            if (x instanceof ArrayValue a) return a.withLength(restrictedLength);
-            return x;
-        };
-        if (arrayNode instanceof VariableDeclarator d) state.updateVariable(d, updateFunc);
-        else if (arrayNode instanceof Parameter p) state.updateVariable(p, updateFunc);
     }
 
     @Override

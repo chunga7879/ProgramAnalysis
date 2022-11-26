@@ -2,9 +2,7 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.ArrayValue;
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
+import analysis.values.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -87,7 +85,7 @@ public class ArrayVisitorTest {
         IntegerValue bValue = (IntegerValue) varState.getVariable(b);
         IntegerValue cValue = (IntegerValue) varState.getVariable(c);
         IntegerValue dValue = (IntegerValue) varState.getVariable(d);
-        IntegerValue lengthValue = (IntegerValue) varState.getVariable(length);
+        Assertions.assertEquals(new IntegerRange(5, 10), varState.getVariable(length));
         Assertions.assertEquals(new IntegerRange(5, 10), aValue.getLength());
         Assertions.assertFalse(aValue.canBeNull());
         Assertions.assertEquals(IntegerRange.ANY_VALUE, bValue);
@@ -101,33 +99,11 @@ public class ArrayVisitorTest {
                 public class Main {
                     void main(int x) {
                         String[] a;
+                        long[] b = null;
                         if (x > 0) a = new String[5];
-                        else a = new String[40];
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        Parameter x = getParameter(compiled, "x");
-        VariableDeclarator a = getVariable(compiled, "a");
-        VariablesState varState = new VariablesState();
-        AnalysisState analysisState = new AnalysisState(varState);
-        varState.setVariable(x, new IntegerRange(-20, 30));
-        BlockStmt block = getBlockStatements(compiled).get(0);
-        block.accept(new AnalysisVisitor(""), analysisState);
-        ArrayValue aValue = (ArrayValue) varState.getVariable(a);
-        Assertions.assertEquals(new IntegerRange(5, 40), aValue.getLength());
-        Assertions.assertFalse(aValue.canBeNull());
-    }
-
-    @Test
-    public void ArrayLengthTest() {
-        String code = """
-                public class Main {
-                    void main(int x) {
-                        boolean[] a = new boolean[x];
-                        int b = 10;
-                        if (a.length > 10 && 20 > a.length) {
-                          b = a.length;
+                        else {
+                            a = new String[40];
+                            b = new long[3];
                         }
                     }
                 }
@@ -138,13 +114,49 @@ public class ArrayVisitorTest {
         VariableDeclarator b = getVariable(compiled, "b");
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
-        varState.setVariable(x, new IntegerRange(0, 30));
+        varState.setVariable(x, new IntegerRange(-20, 30));
         BlockStmt block = getBlockStatements(compiled).get(0);
         block.accept(new AnalysisVisitor(""), analysisState);
         ArrayValue aValue = (ArrayValue) varState.getVariable(a);
-        IntegerValue bValue = (IntegerValue) varState.getVariable(b);
-        Assertions.assertEquals(new IntegerRange(0, 30), aValue.getLength());
+        Assertions.assertEquals(new IntegerRange(5, 40), aValue.getLength());
         Assertions.assertFalse(aValue.canBeNull());
-        Assertions.assertEquals(new IntegerRange(10, 19), bValue);
+        ArrayValue bValue = (ArrayValue) varState.getVariable(b);
+        Assertions.assertEquals(new IntegerRange(3, 3), bValue.getLength());
+        Assertions.assertTrue(bValue.canBeNull());
+    }
+
+    @Test
+    public void ArrayLengthTest() {
+        String code = """
+                public class Main {
+                    void main(int x, int y) {
+                        boolean[] arr1 = new boolean[x];
+                        byte[] arr2 = new byte[y];
+                        int i = 10;
+                        if (arr1.length > 10 && 20 > arr1.length) {
+                          i = arr1.length;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        Parameter y = getParameter(compiled, "y");
+        VariableDeclarator arr1 = getVariable(compiled, "arr1");
+        VariableDeclarator arr2 = getVariable(compiled, "arr2");
+        VariableDeclarator i = getVariable(compiled, "i");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(0, 30));
+        varState.setVariable(y, new AnyValue());
+        BlockStmt block = getBlockStatements(compiled).get(0);
+        block.accept(new AnalysisVisitor(""), analysisState);
+        ArrayValue arr1Value = (ArrayValue) varState.getVariable(arr1);
+        Assertions.assertEquals(new IntegerRange(0, 30), arr1Value.getLength());
+        Assertions.assertFalse(arr1Value.canBeNull());
+        ArrayValue arr2Value = (ArrayValue) varState.getVariable(arr2);
+        Assertions.assertEquals(ArrayValue.DEFAULT_LENGTH, arr2Value.getLength());
+        Assertions.assertFalse(arr2Value.canBeNull());
+        Assertions.assertEquals(new IntegerRange(10, 19), varState.getVariable(i));
     }
 }
