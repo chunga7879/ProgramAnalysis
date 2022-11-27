@@ -207,7 +207,6 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             EndState bodyEndState = n.getBody().accept(loopAnalysisVisitor, analysisState);
             arg.addErrors(analysisState);
             // TODO: add early breaks from bodyEndState to exitState
-            List<String> updates = new ArrayList<>();
             for (Expression e : n.getUpdate()) {
                 ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
                 e.accept(loopExprVisitor, updateAnalysisState);

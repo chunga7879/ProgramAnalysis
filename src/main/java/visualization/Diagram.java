@@ -102,24 +102,27 @@ public class Diagram {
     }
 
     public void addSwitchConditionalStartNode(String condition) {
-        DiagramNode conditionNode = new DiagramNode(condition, Error.NONE, "");
-        addNode(conditionNode);
+//        DiagramNode conditionNode = new DiagramNode(condition, Error.NONE, "");
+//        addNode(conditionNode);
+        diagramString.append("switch (" + condition + ")\n");
     }
 
     public void addSwitchCaseNode(String switchCase, boolean firstCase) {
-        if (firstCase) {
-            diagramString.append("if (" + switchCase + ") then (matched)\n");
-        } else {
-            diagramString.append("elseif (" + switchCase + ") then (matched)\n");
-        }
+//        if (firstCase) {
+//            diagramString.append("if (" + switchCase + ") then (matched)\n");
+//        } else {
+//            diagramString.append("elseif (" + switchCase + ") then (matched)\n");
+//        }
+        diagramString.append("case ( " + switchCase + " )\n");
     }
 
     public void addSwitchDefaultNode() {
-        diagramString.append("else (default)\n");
+        diagramString.append("case ( default )\n");
     }
 
     public void addSwitchEndNode() {
-        addIfEndNode();
+//        addIfEndNode();
+        diagramString.append("endswitch\n");
     }
 
     public void addThrowStatementNode(DiagramNode node) {
