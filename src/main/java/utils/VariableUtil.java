@@ -23,13 +23,13 @@ public final class VariableUtil {
      */
     public static void setVariableFromExpression(Expression variableExpression, PossibleValues value, VariablesState variablesState) {
         if (variableExpression instanceof NameExpr nameVariableExpression) {
-            ResolvedValueDeclaration dec = nameVariableExpression.resolve();
+            ResolvedValueDeclaration dec = ResolverUtil.resolveOrNull(nameVariableExpression);
             setVariableFromDeclaration(dec, value, variablesState);
         } else if (variableExpression instanceof FieldAccessExpr fieldAccessExpression) {
             Expression scopeExpr = fieldAccessExpression.getScope();
             if (scopeExpr instanceof NameExpr scopeNameExpr) {
-                ResolvedValueDeclaration scopeDec = scopeNameExpr.resolve();
-                if (scopeDec.getType().isArray() && fieldAccessExpression.getNameAsString().equalsIgnoreCase("length")) {
+                ResolvedValueDeclaration scopeDec = ResolverUtil.resolveOrNull(scopeNameExpr);
+                if (scopeDec != null && scopeDec.getType().isArray() && fieldAccessExpression.getNameAsString().equalsIgnoreCase("length")) {
                     updateArrayLength(scopeDec, value, variablesState);
                 }
             }
@@ -45,14 +45,15 @@ public final class VariableUtil {
             PossibleValues value2, VariablesState variablesState2
     ) {
         if (variableExpression instanceof NameExpr nameVariableExpression) {
-            ResolvedValueDeclaration dec = nameVariableExpression.resolve();
+            ResolvedValueDeclaration dec = ResolverUtil.resolveOrNull(nameVariableExpression);
+            if (dec == null) return;
             setVariableFromDeclaration(dec, value1, variablesState1);
             setVariableFromDeclaration(dec, value2, variablesState2);
         } else if (variableExpression instanceof FieldAccessExpr fieldAccessExpression) {
             Expression scopeExpr = fieldAccessExpression.getScope();
             if (scopeExpr instanceof NameExpr scopeNameExpr) {
-                ResolvedValueDeclaration scopeDec = scopeNameExpr.resolve();
-                if (scopeDec.getType().isArray() && fieldAccessExpression.getNameAsString().equalsIgnoreCase("length")) {
+                ResolvedValueDeclaration scopeDec = ResolverUtil.resolveOrNull(scopeNameExpr);
+                if (scopeDec != null && scopeDec.getType().isArray() && fieldAccessExpression.getNameAsString().equalsIgnoreCase("length")) {
                     updateArrayLength(scopeDec, value1, variablesState1);
                     updateArrayLength(scopeDec, value2, variablesState2);
                 }
@@ -76,6 +77,7 @@ public final class VariableUtil {
      * Update the length of an array
      */
     public static void updateArrayLength(ResolvedValueDeclaration dec, PossibleValues length, VariablesState state) {
+        if (dec == null) return;
         Function<PossibleValues, PossibleValues> updateFunc = x -> {
             if (length.isEmpty()) return new EmptyValue();
             if (x instanceof ArrayValue a) return a.withLength(length);
