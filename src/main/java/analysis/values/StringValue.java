@@ -3,7 +3,7 @@ package analysis.values;
 import analysis.values.visitor.OperationVisitor;
 
 public class StringValue extends ObjectWithNotNullValue {
-    public static final StringValue ANY_VALUE = new StringValue(0, Integer.MAX_VALUE);
+    public static final StringValue ANY_VALUE = new StringValue(0, Integer.MAX_VALUE, true);
 
     private final int min;
     private final int max;
@@ -15,7 +15,13 @@ public class StringValue extends ObjectWithNotNullValue {
     }
 
     public StringValue(int min, int max) {
+        this(min, max, false);
+    }
+
+    public StringValue(int min, int max, boolean canBeNull) {
+        super(canBeNull);
         assert min <= max;
+        assert min >= 0;
         this.min = min;
         this.max = max;
     }
@@ -62,7 +68,7 @@ public class StringValue extends ObjectWithNotNullValue {
 
     @Override
     public ObjectWithNotNullValue copy() {
-        return new StringValue(this.min, this.max);
+        return new StringValue(this.min, this.max, this.canBeNull());
     }
 
     @Override
