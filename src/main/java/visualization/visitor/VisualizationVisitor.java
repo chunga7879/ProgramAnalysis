@@ -124,6 +124,32 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(IfStmt n, VisualizationState arg) {
+
+        DiagramNode ifCondition;
+        StringBuilder errorDescription = new StringBuilder();
+        // Not sure to check this error
+        if (arg.getErrorMap().get(n).isEmpty()) {
+            ifCondition = new DiagramNode(n.getCondition().toString(), Error.NONE, errorDescription.toString());
+        } else {
+            for (AnalysisError er : arg.getErrorMap().get(n)) {
+                // TODO: NEED TO seperate potential and definite error
+                errorDescription.append(er.getMessage()).append("\n");
+            }
+            ifCondition = new DiagramNode(n.getCondition().toString(), Error.POTENTIAL, errorDescription.toString());
+        }
+        arg.diagram.addIfThenStartNode(ifCondition);
+
+        // IF case
+        n.getThenStmt().accept(this, arg);
+
+        arg.diagram.addIfElseNode();
+
+        // ELSE case
+        if (n.getElseStmt().isPresent()) {
+            n.getElseStmt().get().accept(this, arg);
+        }
+
+        arg.diagram.addIfEndNode();
         return null;
     }
 
