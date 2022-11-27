@@ -134,9 +134,9 @@ public class DiagramTest {
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addSwitchConditionalStartNode("switch (x)");
-        diagram.addSwitchCaseNode("case 10:", true);
+        diagram.addSwitchCaseNode("case 10:");
         diagram.addNode(potentialError);
-        diagram.addSwitchCaseNode("case 5:", false);
+        diagram.addSwitchCaseNode("case 5:");
         diagram.addNode(statement);
         diagram.addSwitchDefaultNode();
         diagram.addNode(statement);
