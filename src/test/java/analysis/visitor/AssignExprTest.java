@@ -22,7 +22,7 @@ public class AssignExprTest {
     public void runBefore() {
         variablesState = new VisitorTestUtils.NonEmptyVariablesState();
         analysisState = new AnalysisState(variablesState);
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
