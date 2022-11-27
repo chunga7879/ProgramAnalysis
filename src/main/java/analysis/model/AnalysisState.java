@@ -9,6 +9,7 @@ import java.util.*;
  */
 public class AnalysisState {
     private VariablesState variablesState;
+
     private Map<Node, Set<AnalysisError>> errorMap;
 
     public AnalysisState(VariablesState variablesState) {
@@ -30,6 +31,15 @@ public class AnalysisState {
             errorMap.get(node).addAll(errors);
         } else {
             errorMap.put(node, new HashSet<>(errors));
+        }
+    }
+
+    public void addError(Node node, AnalysisError error) {
+        if (error == null) return;
+        if (errorMap.containsKey(node)) {
+            errorMap.get(node).add(error);
+        } else {
+            errorMap.put(node, new HashSet<>() {{ add(error); }});
         }
     }
 

@@ -33,6 +33,20 @@ public abstract class PossibleValues implements ValueVisitable {
         return visitor.visit(a, this);
     }
 
+    public <T> T acceptOp(OperationVisitor<T> visitor, CharValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, BooleanValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, ArrayValue a) {
+        return visitor.visit(a, this);
+    }
+
     /**
      * Is the domain empty?
      */
@@ -59,4 +73,12 @@ public abstract class PossibleValues implements ValueVisitable {
 
     @Override
     public abstract int hashCode();
+
+    public int minStringLength() {
+        return 0;
+    }
+
+    public int maxStringLength() {
+        return Integer.MAX_VALUE;
+    }
 }

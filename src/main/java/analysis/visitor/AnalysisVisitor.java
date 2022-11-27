@@ -1,11 +1,8 @@
 package analysis.visitor;
 
 import analysis.model.*;
-import analysis.values.AnyValue;
-import analysis.values.visitor.AddApproximateVisitor;
-import analysis.values.visitor.IntersectVisitor;
-import analysis.values.visitor.MergeVisitor;
-import analysis.values.visitor.SubtractApproximateVisitor;
+import analysis.values.*;
+import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -16,11 +13,20 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import com.github.javaparser.javadoc.Javadoc;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
+import utils.ValueUtil;
+import utils.AnnotationUtil;
+import utils.JavadocUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> {
     private final String targetMethod;
@@ -63,7 +69,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         Optional<BlockStmt> body = n.getBody();
         for (Parameter p : n.getParameters()) {
             // TODO: handle annotations for parameters
-            varState.setVariable(p, new AnyValue());
+            PossibleValues val = ValueUtil.getValueForType(p.getType().resolve(), p.getAnnotations(), arg.getVariablesState(), expressionVisitor);
+            varState.setVariable(p, val);
         }
         AnalysisLogger.log(n.getName(), varState);
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);
@@ -71,10 +78,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(BlockStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         for (Statement s : n.getStatements()) {
-            s.accept(this, arg);
+            endState.add(s.accept(this, arg));
         }
-        return null;
+        return endState;
     }
 
     @Override
@@ -99,54 +107,84 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(BreakStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        endState.addBreakState(arg.getVariablesState().copy());
+        AnalysisLogger.logFormat(n, "BREAK: %s", arg.getVariablesState());
+        arg.getVariablesState().setDomainEmpty();
+        return endState;
     }
 
     @Override
     public EndState visit(ReturnStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        VariablesState varState = arg.getVariablesState();
+        if (n.getExpression().isPresent()) {
+            ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+            PossibleValues value = n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
+            AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+
+            // Check annotation against return
+            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+            if (dec != null) {
+                Set<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(
+                        value,
+                        dec.getAnnotations(),
+                        n.getExpression().get().toString()
+                );
+                arg.addErrors(n, errors);
+                AnalysisLogger.logErrors(n, errors);
+            }
+        }
+        varState.setDomainEmpty();
+        return endState;
     }
 
     @Override
     public EndState visit(IfStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         VariablesState varState = arg.getVariablesState();
         ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
         ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, exprAnalysisState);
         VariablesState trueVarState = conditionStates.getTrueState();
         VariablesState falseVarState = conditionStates.getFalseState();
-        AnalysisLogger.log(n, "IF: ", varState);
+        AnalysisLogger.logFormat(n, "IF: ", varState);
         AnalysisLogger.logErrors(n, exprAnalysisState.getErrors());
         arg.addErrors(n, exprAnalysisState.getErrors());
 
         // IF case
         AnalysisLogger.log(n, "IF TRUE: " + trueVarState.toFormattedString());
         AnalysisState trueAnalysisState = new AnalysisState(trueVarState);
-        n.getThenStmt().accept(this, trueAnalysisState);
+        endState.add(n.getThenStmt().accept(this, trueAnalysisState));
 
         // ELSE case
         AnalysisLogger.log(n, "IF FALSE: " + falseVarState.toFormattedString());
         AnalysisState falseAnalysisState = new AnalysisState(falseVarState);
         if (n.getElseStmt().isPresent()) {
-            n.getElseStmt().get().accept(this, falseAnalysisState);
+            endState.add(n.getElseStmt().get().accept(this, falseAnalysisState));
         }
 
         // Merge together
         VariablesState mergedState = new VariablesState();
+        mergedState.setDomainEmpty();
         if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
         if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
         varState.copyValuesFrom(mergedState);
-        AnalysisLogger.logEnd(n, "IF MERGED: ", varState);
-        return null;
+        AnalysisLogger.logEndFormat(n, "IF MERGED: %s", varState);
+        return endState;
     }
 
     @Override
     public EndState visit(WhileStmt n, AnalysisState arg) {
-        return null;
+        return handleLoop(n, "WHILE", arg, n.getCondition(), n.getBody(), null);
     }
 
     @Override
     public EndState visit(ContinueStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        endState.addContinueState(arg.getVariablesState().copy());
+        AnalysisLogger.logFormat(n, "CONTINUE: %s", arg.getVariablesState());
+        arg.getVariablesState().setDomainEmpty();
+        return endState;
     }
 
     @Override
@@ -168,6 +206,22 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             arg.addErrors(e, exprAnalysisState.getErrors());
         }
         AnalysisLogger.log(n, "FOR INITIALIZE: " + varState.toFormattedString());
+
+        return handleLoop(n, "FOR", arg, n.getCompare().orElse(null), n.getBody(), n.getUpdate());
+    }
+
+    /**
+     * Handle a loop statement
+     * @param loopNode Node containing the loop
+     * @param loopName Name of the loop
+     * @param state    AnalysisState at the loop
+     * @param compare  Condition to continue loop
+     * @param body     Body inside the loop
+     * @param update   Updater (i.e. for loop)
+     */
+    private EndState handleLoop(Node loopNode, String loopName, AnalysisState state, Expression compare, Statement body, NodeList<Expression> update) {
+        EndState endState = new EndState();
+        VariablesState varState = state.getVariablesState();
         VariablesState mergeState = varState.copy(); // State tracking the values in all iterations
         VariablesState currentState = mergeState.copy(); // State tracking the values in each iteration
         VariablesState exitState = new VariablesState(); // State tracking the values when the loop exits
@@ -180,56 +234,109 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         int i = 0;
         boolean isApprox = false;
         do {
-            AnalysisLogger.log(n, "FOR [" + i + "] MERGE STATE: ", mergeState);
+            AnalysisLogger.logFormat(loopNode, "%s [%s] MERGE STATE: %s", loopName, i, mergeState);
             if (i > 1000 && !isApprox) {
                 // If # of loop runs is too long, start to approximate changes
                 isApprox = true;
-                AnalysisLogger.log(n, "FOR [" + i + "] TOO MANY ITERATIONS");
-                loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new SubtractApproximateVisitor());
+                AnalysisLogger.logFormat(loopNode, "%s [%s] TOO MANY ITERATIONS", loopName, i);
+                loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new DivideVisitor(),
+                        new MultiplyVisitor(), new SubtractApproximateVisitor());
                 loopAnalysisVisitor = new AnalysisVisitor(targetMethod, loopExprVisitor);
             }
 
-            if (n.getCompare().isPresent()) {
+            // Check condition
+            if (compare != null) {
                 ExpressionAnalysisState compareAnalysisState = new ExpressionAnalysisState(currentState);
-                ConditionStates condStates = n.getCompare().get().accept(conditionVisitor, compareAnalysisState);
-                arg.addErrors(n.getCompare().get(), compareAnalysisState.getErrors());
+                ConditionStates condStates = compare.accept(conditionVisitor, compareAnalysisState);
+                state.addErrors(compare, compareAnalysisState.getErrors());
                 if (!condStates.getFalseState().isDomainEmpty()) {
                     exitState.merge(mergeVisitor, condStates.getFalseState());
+                    AnalysisLogger.logFormat(loopNode, "%s [%s] EXIT STATE: %s", loopName, i, exitState);
                 }
                 if (condStates.getTrueState().isDomainEmpty()) break;
                 currentState.copyValuesFrom(condStates.getTrueState());
-                AnalysisLogger.log(n, "FOR [" + i + "] CONDITION: ", currentState);
+                AnalysisLogger.logFormat(loopNode, "%s [%s] CONDITION: %s", loopName, i, currentState);
             }
 
-            AnalysisLogger.log(n, "FOR [" + i + "] ITERATION START STATE: ", currentState);
+            AnalysisLogger.logFormat(loopNode, "%s [%s] ITERATION START STATE: %s", loopName, i, currentState);
             AnalysisState analysisState = new AnalysisState(currentState);
-            EndState bodyEndState = n.getBody().accept(loopAnalysisVisitor, analysisState);
-            arg.addErrors(analysisState);
-            // TODO: add early breaks from bodyEndState to exitState
-            for (Expression e : n.getUpdate()) {
-                ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
-                e.accept(loopExprVisitor, updateAnalysisState);
-                arg.addErrors(e, updateAnalysisState.getErrors());
+            EndState bodyEndState = body.accept(loopAnalysisVisitor, analysisState);
+            state.addErrors(analysisState);
+
+            // Merge continue states to current state
+            Set<VariablesState> continueStates = bodyEndState.popContinueStates();
+            for (VariablesState continueState : continueStates) {
+                currentState.merge(mergeVisitor, continueState);
             }
-            AnalysisLogger.logEnd(n, "FOR [" + i + "] ITERATION STATE: ", currentState);
+            endState.add(bodyEndState);
+
+            // Update in FOR loops
+            if (update != null) {
+                for (Expression e : update) {
+                    ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
+                    e.accept(loopExprVisitor, updateAnalysisState);
+                    state.addErrors(e, updateAnalysisState.getErrors());
+                }
+            }
+            AnalysisLogger.logEndFormat(loopNode, "%s [%s] ITERATION STATE: %s", loopName, i, currentState);
 
             VariablesState prevState = mergeState.copy();
             mergeState.merge(mergeVisitor, currentState);
             if (Objects.equals(mergeState, prevState)) {
-                AnalysisLogger.logEnd(n, "FOR [" + i + "] UNCHANGED: ", mergeState);
+                AnalysisLogger.logEndFormat(loopNode, "%s [%s] UNCHANGED: %s", loopName, i, mergeState);
                 break;
             }
             i++;
         } while (true);
-        AnalysisLogger.logEnd(n, "FOR EXIT STATE: ", exitState);
-        if (exitState.isDomainEmpty()) AnalysisLogger.logEnd(n, "FOR LOOP IS INFINITE");
-        arg.getVariablesState().copyValuesFrom(exitState);
-        return null;
+
+        // Merge break states with exit state
+        Set<VariablesState> breakStates = endState.popBreakStates();
+        for (VariablesState breakState : breakStates) {
+            exitState.merge(mergeVisitor, breakState);
+        }
+
+        AnalysisLogger.logEndFormat(loopNode, "%s EXIT STATE: %s", loopName, exitState);
+        if (exitState.isDomainEmpty()) AnalysisLogger.logEndFormat(loopNode, "%s LOOP IS INFINITE", loopName);
+        varState.copyValuesFrom(exitState);
+
+        return endState;
     }
 
     @Override
     public EndState visit(ThrowStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        VariablesState varState = arg.getVariablesState();
+        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+        n.getExpression().accept(expressionVisitor, exprAnalysisState);
+        AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+
+        if (varState.isDomainEmpty()) return null;
+        ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
+
+        // TODO: add exception to EndState and move computation to visit MethodDeclaration
+        ResolvedType throwType = n.getExpression().calculateResolvedType();
+        if (throwType.isReferenceType() && runtimeExceptionType.isAssignableBy(throwType)) {
+            // Check if the thrown RuntimeException is in the throws signature or the @throws annotation in Javadocs
+            boolean inSignature = false;
+            boolean inJavadocs = false;
+            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+            if (dec != null) {
+                inSignature = dec.getThrownExceptions().stream().map(Type::resolve).anyMatch(x -> runtimeExceptionType.isAssignableBy(x) && x.isAssignableBy(throwType));
+
+                Javadoc javadoc = dec.getJavadoc().orElse(null);
+                if (javadoc != null) {
+                    Set<ResolvedType> throwsTags = JavadocUtil.getThrows(dec);
+                    inJavadocs = throwsTags.stream().anyMatch(x -> x.isAssignableBy(throwType));
+                }
+            }
+
+            AnalysisLogger.log(n, "RUNTIME THROW " + throwType.asReferenceType().getQualifiedName() + ((!inSignature && !inJavadocs) ? " (Not in signature/Javadoc)" : ""));
+            arg.addError(n, new AnalysisError("Runtime Exception not in signature/Javadoc: " + throwType));
+        } else {
+            AnalysisLogger.log(n, "THROW " + throwType.asReferenceType().getQualifiedName());
+        }
+        varState.setDomainEmpty();
+        return endState;
     }
 
     @Override

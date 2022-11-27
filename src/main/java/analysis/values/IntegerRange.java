@@ -2,13 +2,21 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
+/**
+ * Represents an integer range between min and max (inclusive)
+ */
 public class IntegerRange extends IntegerValue {
+    public static final IntegerRange ANY_VALUE = new IntegerRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
     private final int min;
     private final int max;
 
     public IntegerRange(int min, int max) {
         this.min = min;
         this.max = max;
+    }
+
+    public IntegerRange(int val) {
+        this(val, val);
     }
 
     @Override
@@ -42,8 +50,13 @@ public class IntegerRange extends IntegerValue {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, CharValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
     public String toFormattedString() {
-        return "[" + min + "," + max + "]";
+        return "[" + (min == max ? min : (min + "," + max)) + "]";
     }
 
     @Override

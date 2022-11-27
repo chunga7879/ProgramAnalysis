@@ -3,6 +3,8 @@ package analysis.values;
 import analysis.values.visitor.OperationVisitor;
 
 public class AnyValue extends PossibleValues {
+    public static final AnyValue VALUE = new AnyValue();
+
     @Override
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
         return visitor.visitAbstract(this, b);
