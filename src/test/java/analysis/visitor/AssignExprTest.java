@@ -2,6 +2,7 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.EmptyValue;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -21,7 +22,7 @@ public class AssignExprTest {
     public void runBefore() {
         variablesState = new VisitorTestUtils.NonEmptyVariablesState();
         analysisState = new AnalysisState(variablesState);
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
@@ -62,6 +63,24 @@ public class AssignExprTest {
         Assertions.assertEquals(10 / 5, quotient.getMin());
         Assertions.assertEquals(10 / 5, quotient.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void divideByZeroAssignmentTest() {
+        String code = """
+                public class Main {
+                    int test() {
+                        int x = 10;
+                        x /= 0;
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator x = getVariable(compiled, "x");
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(x));
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test

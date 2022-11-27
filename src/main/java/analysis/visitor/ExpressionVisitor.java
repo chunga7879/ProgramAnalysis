@@ -74,10 +74,25 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
-        Expression target = n.getTarget();
-        PossibleValues value = n.getValue().accept(this, arg);
-        VariableUtil.setVariableFromExpression(n.getTarget(), value, arg.getVariablesState());
-        return value;
+        PossibleValues left = n.getTarget().accept(this, arg);
+        PossibleValues right = n.getValue().accept(this, arg);
+        PossibleValues result;
+        switch (n.getOperator()) {
+            case DIVIDE -> {
+                PairValue<PossibleValues, AnalysisError> quotient = left.acceptAbstractOp(divideVisitor, right);
+                AnalysisError error = quotient.getB();
+                if (error != null) {
+                    arg.addError(error);
+                }
+                result = quotient.getA();
+            }
+            case PLUS ->  result = left.acceptAbstractOp(addVisitor, right);
+            case MINUS -> result = left.acceptAbstractOp(subtractVisitor, right);
+            case MULTIPLY -> result = left.acceptAbstractOp(multiplyVisitor, right);
+            default ->  result = right;
+        }
+        VariableUtil.setVariableFromExpression(n.getTarget(), result, arg.getVariablesState());
+        return result;
     }
 
     @Override
