@@ -72,6 +72,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     @Override
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
         Expression target = n.getTarget();
+        target.accept(this, arg);
         PossibleValues value = n.getValue().accept(this, arg);
         VariableUtil.setVariableFromExpression(n.getTarget(), value, arg.getVariablesState());
         return value;
