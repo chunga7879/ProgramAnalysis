@@ -22,7 +22,7 @@ public class CastExprTest {
     public void runBefore() {
         variablesState = new NonEmptyVariablesState();
         analysisState = new AnalysisState(variablesState);
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test

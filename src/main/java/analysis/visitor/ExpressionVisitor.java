@@ -197,9 +197,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
         // check cast both ways
         if (!(exprType.isAssignableBy(castType) || castType.isAssignableBy(exprType))) {
-            AnalysisError error = new AnalysisError("ClassCastException: " + n.getExpression() +
-                    " is not a subtype of " + n.getType());
-            arg.addError(error);
+            arg.addError(new AnalysisError(ClassCastException.class, n, true));
             return new EmptyValue();
         }
 
