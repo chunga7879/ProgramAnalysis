@@ -3,7 +3,10 @@ package utils;
 import analysis.model.AnalysisError;
 import analysis.values.NullValue;
 import analysis.values.PossibleValues;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MemberValuePair;
 
 import java.util.*;
 
@@ -25,6 +28,7 @@ public final class AnnotationUtil {
         NegativeOrZero,
         PositiveOrZero,
         Size,
+        NotEmpty,
     }
 
     /**
@@ -53,7 +57,7 @@ public final class AnnotationUtil {
     /**
      * Create annotation map from list of AnnotationExpr
      */
-    private static Map<AnnotationType, Set<AnnotationExpr>> getAnnotationMap(List<AnnotationExpr> annotations) {
+    public static Map<AnnotationType, Set<AnnotationExpr>> getAnnotationMap(List<AnnotationExpr> annotations) {
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = new HashMap<>();
         annotations.forEach(annotation -> {
             String annotationName = annotation.getNameAsString().toLowerCase();
@@ -67,6 +71,7 @@ public final class AnnotationUtil {
                 case "positive" -> AnnotationType.Positive;
                 case "positiveorzero" -> AnnotationType.PositiveOrZero;
                 case "size" -> AnnotationType.Size;
+                case "notempty" -> AnnotationType.NotEmpty;
                 default -> AnnotationType.None;
             };
             if (type != AnnotationType.None) {
@@ -75,6 +80,39 @@ public final class AnnotationUtil {
             }
         });
         return annotationMap;
+    }
+
+    /**
+     * Get parameter value expression of an Annotation
+     * (e.g. `@Size(min = 10)` & `min` -> 10)
+     */
+    public static List<Expression> getAnnotationParameterValue(Set<AnnotationExpr> annotations, String paramName) {
+        return annotations.stream()
+                .map(x -> {
+                    if (!x.isNormalAnnotationExpr()) return null;
+                    NodeList<MemberValuePair> pairs = x.asNormalAnnotationExpr().getPairs();
+                    MemberValuePair valuePair = pairs.stream().filter(p -> p.getNameAsString().equalsIgnoreCase(paramName)).findAny().orElse(null);
+                    return valuePair != null ? valuePair.getValue() : null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * Get parameter value expression map of an Annotation
+     * (e.g. `@Size(min = 10, max = 12)` -> (`min` -> 10, `max` -> 12))
+     */
+    public static Map<String, List<Expression>> getAnnotationParameterMap(Set<AnnotationExpr> annotations) {
+        Map<String, List<Expression>> annotationParamMap = new HashMap<>();
+        annotations.forEach(x -> {
+            if (!x.isNormalAnnotationExpr()) return;
+            NodeList<MemberValuePair> pairs = x.asNormalAnnotationExpr().getPairs();
+            pairs.forEach(p -> {
+                annotationParamMap.putIfAbsent(p.getNameAsString(), new ArrayList<>());
+                annotationParamMap.get(p.getNameAsString()).add(p.getValue());
+            });
+        });
+        return annotationParamMap;
     }
 
     /**
