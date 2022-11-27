@@ -81,7 +81,6 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     @Override
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
         PossibleValues left = n.getTarget().accept(this, arg);
-        target.accept(this, arg);
         PossibleValues right = n.getValue().accept(this, arg);
         PossibleValues result;
         switch (n.getOperator()) {
@@ -89,7 +88,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 PairValue<PossibleValues, AnalysisError> quotient = left.acceptAbstractOp(divideVisitor, right);
                 AnalysisError error = quotient.getB();
                 if (error != null) {
-                    arg.addError(error);
+                    arg.addError(error.atNode(n));
                 }
                 result = quotient.getA();
             }
