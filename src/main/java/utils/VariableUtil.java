@@ -75,7 +75,7 @@ public final class VariableUtil {
     /**
      * Update the length of an array
      */
-    private static void updateArrayLength(ResolvedValueDeclaration dec, PossibleValues length, VariablesState state) {
+    public static void updateArrayLength(ResolvedValueDeclaration dec, PossibleValues length, VariablesState state) {
         Function<PossibleValues, PossibleValues> updateFunc = x -> {
             if (length.isEmpty()) return new EmptyValue();
             if (x instanceof ArrayValue a) return a.withLength(length);

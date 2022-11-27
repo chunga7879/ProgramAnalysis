@@ -17,7 +17,7 @@ import static analysis.visitor.VisitorTestUtils.*;
 public class ArrayVisitorTest {
     @BeforeEach
     public void runBefore() {
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
@@ -51,27 +51,26 @@ public class ArrayVisitorTest {
         Assertions.assertFalse(aValue.canBeNull());
         Assertions.assertEquals(ArrayValue.DEFAULT_LENGTH, cValue.getLength());
         Assertions.assertFalse(aValue.canBeNull());
-        // TODO: restrict variable after exception
-        // Assertions.assertEquals(new IntegerRange(0, 10), lengthValue);
-        Assertions.assertEquals(new IntegerRange(-10, 10), lengthValue);
+        Assertions.assertEquals(new IntegerRange(0, 10), lengthValue);
     }
 
     @Test
     public void ArrayIndexTest() {
         String code = """
                 public class Main {
-                    void main(int length) {
+                    void main(int length, int index) {
                         int[] a = new int[length];
-                        int b = a[length + 1];
-                        int c = a[length - 1];
+                        int b = a[index];
+                        int c = a[index - 1];
                         int d = a.length;
-                        if (a[length + 1] > 2) {
+                        if (a[index] > 2) {
                         }
                     }
                 }
                 """;
         CompilationUnit compiled = compile(code);
         Parameter length = getParameter(compiled, "length");
+        Parameter index = getParameter(compiled, "index");
         VariableDeclarator a = getVariable(compiled, "a");
         VariableDeclarator b = getVariable(compiled, "b");
         VariableDeclarator c = getVariable(compiled, "c");
@@ -79,6 +78,7 @@ public class ArrayVisitorTest {
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(length, new IntegerRange(5, 10));
+        varState.setVariable(index, new IntegerRange(6, 10));
         BlockStmt block = getBlockStatements(compiled).get(0);
         block.accept(new AnalysisVisitor(""), analysisState);
         ArrayValue aValue = (ArrayValue) varState.getVariable(a);
@@ -86,11 +86,12 @@ public class ArrayVisitorTest {
         IntegerValue cValue = (IntegerValue) varState.getVariable(c);
         IntegerValue dValue = (IntegerValue) varState.getVariable(d);
         Assertions.assertEquals(new IntegerRange(5, 10), varState.getVariable(length));
-        Assertions.assertEquals(new IntegerRange(5, 10), aValue.getLength());
+        Assertions.assertEquals(new IntegerRange(6, 9), varState.getVariable(index));
+        Assertions.assertEquals(new IntegerRange(7, 10), aValue.getLength());
         Assertions.assertFalse(aValue.canBeNull());
         Assertions.assertEquals(IntegerRange.ANY_VALUE, bValue);
         Assertions.assertEquals(IntegerRange.ANY_VALUE, cValue);
-        Assertions.assertEquals(new IntegerRange(5, 10), dValue);
+        Assertions.assertEquals(new IntegerRange(7, 10), dValue);
     }
 
     @Test
