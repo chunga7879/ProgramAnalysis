@@ -74,6 +74,7 @@ public class StringValue extends ObjectWithNotNullValue {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
         StringValue that = (StringValue) o;
 
@@ -83,7 +84,8 @@ public class StringValue extends ObjectWithNotNullValue {
 
     @Override
     public int hashCode() {
-        int result = min;
+        int result = super.hashCode();
+        result = 31 * result + min;
         result = 31 * result + max;
         return result;
     }
