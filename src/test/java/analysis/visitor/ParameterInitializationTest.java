@@ -11,13 +11,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static analysis.visitor.VisitorTestUtils.compile;
-import static analysis.visitor.VisitorTestUtils.getParameter;
+import static analysis.visitor.VisitorTestUtils.*;
 
 public class ParameterInitializationTest {
     @BeforeEach
     public void runBefore() {
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
