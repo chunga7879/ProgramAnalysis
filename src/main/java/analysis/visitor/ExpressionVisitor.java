@@ -92,10 +92,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 }
                 result = quotient.getA();
             }
-            case PLUS ->  result = left.acceptAbstractOp(addVisitor, right);
+            case PLUS -> result = left.acceptAbstractOp(addVisitor, right);
             case MINUS -> result = left.acceptAbstractOp(subtractVisitor, right);
             case MULTIPLY -> result = left.acceptAbstractOp(multiplyVisitor, right);
-            default ->  result = right;
+            default -> result = right;
         }
         VariableUtil.setVariableFromExpression(n.getTarget(), result, arg.getVariablesState());
         return result;
@@ -290,7 +290,15 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(ObjectCreationExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        switch (n.getType().resolve().asReferenceType().getQualifiedName()) {
+            case "java.lang.Integer":
+            case "java.lang.Boolean":
+            case "java.lang.Character":
+                assert n.getArguments().size() == 1;
+                return new BoxedPrimitive((PrimitiveValue) n.getArguments().get(0).accept(this, arg));
+            default:
+                return new AnyValue();
+        }
     }
 
     @Override

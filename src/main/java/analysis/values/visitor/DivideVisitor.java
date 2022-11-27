@@ -28,7 +28,7 @@ public class DivideVisitor extends AbstractOperationVisitor {
             // if the minimum denominator is 0, we shift the range from [0, n] to [1, n]
             if (bMin == 0) {
                 bMin = 1;
-            // if the maximum denominator is 0, we shift the range from [-n, 0] to [-n, -1]
+                // if the maximum denominator is 0, we shift the range from [-n, 0] to [-n, -1]
             } else if (bMax == 0) {
                 bMax = -1;
             }
@@ -50,4 +50,9 @@ public class DivideVisitor extends AbstractOperationVisitor {
         return new PairValue<>(new AnyValue(), new AnalysisError(ArithmeticException.class, false));
     }
 
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, BoxedPrimitive b) {
+        PairValue<PossibleValues, AnalysisError> p = a.unbox().acceptAbstractOp(this, b.unbox());
+        return new PairValue<>(new BoxedPrimitive((PrimitiveValue) p.getA()), p.getB());
+    }
 }

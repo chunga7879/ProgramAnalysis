@@ -66,4 +66,9 @@ public class AddVisitor extends OperationVisitorWithDefault {
     public PossibleValues visit(IntegerValue a, CharValue b) {
         return this.visit(b, a);
     }
+
+    @Override
+    public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
+        return new BoxedPrimitive((PrimitiveValue) a.unbox().acceptAbstractOp(this, b.unbox()));
+    }
 }
