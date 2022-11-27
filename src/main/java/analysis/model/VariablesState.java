@@ -11,6 +11,7 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * State of the variables known by the analysis
@@ -67,6 +68,28 @@ public class VariablesState {
         if (isDomainEmpty) return new EmptyValue();
         if (!variableMap.containsKey(node)) return new AnyValue();
         return variableMap.get(node);
+    }
+
+    /**
+     * Update variable with a function
+     * (If EMPTY value, do nothing)
+     */
+    public void updateVariable(VariableDeclarator declaratorNode, Function<PossibleValues, PossibleValues> updateFunc) {
+        updateVariableHelper(declaratorNode, updateFunc);
+    }
+
+    /**
+     * @see VariablesState#updateVariable(VariableDeclarator, Function)
+     */
+    public void updateVariable(Parameter parameter, Function<PossibleValues, PossibleValues> updateFunc) {
+        updateVariableHelper(parameter, updateFunc);
+    }
+
+    private void updateVariableHelper(Node node, Function<PossibleValues, PossibleValues> updateFunc) {
+        PossibleValues val = getVariableHelper(node);
+        if (val.isEmpty()) return;
+        PossibleValues updatedVal = updateFunc.apply(val);
+        setVariableHelper(node, updatedVal);
     }
 
     /**
@@ -178,8 +201,14 @@ public class VariablesState {
         this.isDomainEmpty = other.isDomainEmpty;
     }
 
+    @Override
+    public String toString() {
+        return toFormattedString();
+    }
+
     public String toFormattedString() {
         if (this.isDomainEmpty()) return "empty domain";
+        if (this.variableMap.isEmpty()) return "no variables";
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (Map.Entry<Node, PossibleValues> entry : this.variableMap.entrySet()) {
