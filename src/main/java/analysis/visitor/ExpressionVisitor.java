@@ -126,7 +126,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(StringLiteralExpr n, ExpressionAnalysisState arg) {
-        return new StringValue();
+        return new StringValue(n.asString());
     }
 
     @Override
@@ -141,7 +141,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(CharLiteralExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return new CharValue(n.asChar());
     }
 
     @Override
@@ -151,7 +151,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(BooleanLiteralExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return new BooleanValue(n.getValue());
     }
 
     @Override

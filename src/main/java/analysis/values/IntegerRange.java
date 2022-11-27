@@ -47,6 +47,11 @@ public class IntegerRange extends IntegerValue {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, CharValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
     public String toFormattedString() {
         return "[" + (min == max ? min : (min + "," + max)) + "]";
     }

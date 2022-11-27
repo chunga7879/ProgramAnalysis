@@ -77,4 +77,15 @@ public class NullValue extends ObjectValue {
     public int hashCode() {
         return 31 * getClass().hashCode();
     }
+
+    @Override
+    public int minStringLength() {
+        // "null".length()
+        return 4;
+    }
+
+    @Override
+    public int maxStringLength() {
+        return this.minStringLength();
+    }
 }

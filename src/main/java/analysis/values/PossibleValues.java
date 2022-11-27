@@ -6,6 +6,7 @@ public abstract class PossibleValues implements ValueVisitable {
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
         return visitor.visitAbstract(this, b);
     }
+
     public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
         return visitor.visit(a, this);
     }
@@ -21,6 +22,7 @@ public abstract class PossibleValues implements ValueVisitable {
     public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
         return visitor.visit(a, this);
     }
+
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
     }
@@ -30,6 +32,15 @@ public abstract class PossibleValues implements ValueVisitable {
     }
 
     public <T> T acceptOp(OperationVisitor<T> visitor, NullValue a) {
+        return visitor.visit(a, this);
+    }
+
+    public <T> T acceptOp(OperationVisitor<T> visitor, CharValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, BooleanValue a) {
         return visitor.visit(a, this);
     }
 
@@ -59,4 +70,12 @@ public abstract class PossibleValues implements ValueVisitable {
 
     @Override
     public abstract int hashCode();
+
+    public int minStringLength() {
+        return 0;
+    }
+
+    public int maxStringLength() {
+        return Integer.MAX_VALUE;
+    }
 }

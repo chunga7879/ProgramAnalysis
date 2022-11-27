@@ -15,9 +15,19 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     }
 
     @Override
+    public PossibleValues visit(CharValue a, CharValue b) {
+        return new IntegerRange(
+                Math.min(a.getMin(), b.getMin()),
+                Math.max(a.getMax(), b.getMax())
+        );
+    }
+
+    @Override
     public PossibleValues visit(StringValue a, StringValue b) {
-        // TODO: implement merge
-        return new StringValue();
+        return new StringValue(
+                Math.min(a.minStringLength(), b.minStringLength()),
+                Math.max(a.maxStringLength(), b.maxStringLength())
+        );
     }
 
     @Override
@@ -38,5 +48,10 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     @Override
     public PossibleValues visit(ObjectValue a, NullValue b) {
         return a.withNullable();
+    }
+
+    @Override
+    public PossibleValues visit(BooleanValue a, BooleanValue b) {
+        return new BooleanValue(a.canBeTrue() || b.canBeTrue(), a.canBeFalse() || b.canBeFalse());
     }
 }
