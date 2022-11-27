@@ -17,6 +17,14 @@ public class BoxedPrimitive extends ObjectWithNotNullValue {
         this.v = v;
     }
 
+    public static PossibleValues create(PossibleValues inner, boolean canBeNull) {
+        if (inner.isEmpty()) return new EmptyValue();
+        if (inner instanceof PrimitiveValue primitiveInner) {
+            return new BoxedPrimitive(primitiveInner, canBeNull);
+        }
+        return new AnyValue();
+    }
+
     public PrimitiveValue unbox() {
         return this.v;
     }
@@ -34,6 +42,11 @@ public class BoxedPrimitive extends ObjectWithNotNullValue {
     @Override
     public ObjectWithNotNullValue copy() {
         return new BoxedPrimitive(this.v);
+    }
+
+    @Override
+    public String toFormattedString() {
+        return "{" + (this.canBeNull() ? "null, " : "" ) + this.v.toFormattedString() + "}";
     }
 
     @Override

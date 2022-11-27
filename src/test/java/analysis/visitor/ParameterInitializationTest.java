@@ -2,10 +2,7 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.ArrayValue;
-import analysis.values.IntegerRange;
-import analysis.values.NullValue;
-import analysis.values.StringValue;
+import analysis.values.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import logger.AnalysisLogger;
@@ -13,12 +10,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static analysis.visitor.VisitorTestUtils.*;
+import static analysis.visitor.VisitorTestUtils.compile;
+import static analysis.visitor.VisitorTestUtils.getParameter;
 
 public class ParameterInitializationTest {
     @BeforeEach
     public void runBefore() {
-        AnalysisLogger.setLog(false);
+        AnalysisLogger.setLog(true);
     }
 
     @Test
@@ -84,6 +82,87 @@ public class ParameterInitializationTest {
         Assertions.assertEquals(new IntegerRange(Integer.MIN_VALUE, 10), varState.getVariable(c));
         Assertions.assertEquals(new IntegerRange(-100, 219), varState.getVariable(d));
         Assertions.assertEquals(new IntegerRange(33, Integer.MAX_VALUE), varState.getVariable(e));
+    }
+
+    @Test
+    public void integerWrapperParameterTest() {
+        String code = """
+                public class Main {
+                    void test(
+                                            Integer a,
+                        @NotNull @Negative  Integer b,
+                        @PositiveOrZero     Integer c,
+                        @Null @Positive     Integer d,
+                        @Min(value = -10) @Max(value = 20) Integer e
+                    ) {
+                        System.out.println("hello");
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter a = getParameter(compiled, "a");
+        Parameter b = getParameter(compiled, "b");
+        Parameter c = getParameter(compiled, "c");
+        Parameter d = getParameter(compiled, "d");
+        Parameter e = getParameter(compiled, "e");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(new BoxedPrimitive(IntegerRange.ANY_VALUE, true), varState.getVariable(a));
+        Assertions.assertEquals(new BoxedPrimitive(new IntegerRange(Integer.MIN_VALUE, -1), false), varState.getVariable(b));
+        Assertions.assertEquals(new BoxedPrimitive(new IntegerRange(0, Integer.MAX_VALUE), true), varState.getVariable(c));
+        Assertions.assertEquals(NullValue.VALUE, varState.getVariable(d));
+        Assertions.assertEquals(new BoxedPrimitive(new IntegerRange(-10, 20), true), varState.getVariable(e));
+    }
+
+    @Test
+    public void booleanParameterTest() {
+        String code = """
+                public class Main {
+                    void test(
+                        boolean a,
+                        @NotNull Boolean b,
+                        @Null Boolean c
+                    ) {
+                        System.out.println("hello");
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter a = getParameter(compiled, "a");
+        Parameter b = getParameter(compiled, "b");
+        Parameter c = getParameter(compiled, "c");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(BooleanValue.ANY_VALUE, varState.getVariable(a));
+        Assertions.assertEquals(new BoxedPrimitive(BooleanValue.ANY_VALUE, false), varState.getVariable(b));
+        Assertions.assertEquals(NullValue.VALUE, varState.getVariable(c));
+    }
+
+    @Test
+    public void charParameterTest() {
+        String code = """
+                public class Main {
+                    void test(
+                        char a,
+                        @NotNull Character b,
+                        @Null Character c
+                    ) {
+                        System.out.println("hello");
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter a = getParameter(compiled, "a");
+        Parameter b = getParameter(compiled, "b");
+        Parameter c = getParameter(compiled, "c");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(CharValue.ANY_VALUE, varState.getVariable(a));
+        Assertions.assertEquals(new BoxedPrimitive(CharValue.ANY_VALUE, false), varState.getVariable(b));
+        Assertions.assertEquals(NullValue.VALUE, varState.getVariable(c));
     }
 
     @Test

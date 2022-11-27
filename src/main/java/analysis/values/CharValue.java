@@ -3,12 +3,18 @@ package analysis.values;
 import analysis.values.visitor.OperationVisitor;
 
 public class CharValue extends PrimitiveValue {
+    public static final CharValue ANY_VALUE = new CharValue(Character.MIN_VALUE, Character.MAX_VALUE);
     private final int min;
     private final int max;
 
     public CharValue(char c) {
         this.min = c;
         this.max = c;
+    }
+
+    public CharValue(char min, char max) {
+        this.min = min;
+        this.max = max;
     }
 
     public int getMin() {
