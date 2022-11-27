@@ -67,11 +67,14 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         VariablesState varState = arg.getVariablesState();
         Optional<BlockStmt> body = n.getBody();
         for (Parameter p : n.getParameters()) {
-            // TODO: handle annotations for parameters
             PossibleValues val = ValueUtil.getValueForType(p.getType().resolve(), p.getAnnotations(), arg.getVariablesState(), expressionVisitor);
+            if (val.isEmpty()) {
+                arg.addError(n, new AnalysisError("Annotations make domain empty: " + p));
+            }
             varState.setVariable(p, val);
         }
         AnalysisLogger.log(n.getName(), varState);
+        if (arg.getErrorMap().containsKey(n)) AnalysisLogger.logErrors(n, arg.getErrorMap().get(n));
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);
     }
 

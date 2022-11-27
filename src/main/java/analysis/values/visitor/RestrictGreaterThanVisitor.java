@@ -3,6 +3,8 @@ package analysis.values.visitor;
 import analysis.values.*;
 
 public class RestrictGreaterThanVisitor extends RestrictionVisitor {
+    public static final RestrictGreaterThanVisitor INSTANCE = new RestrictGreaterThanVisitor();
+
     @Override
     public PossibleValues visit(IntegerValue a, IntegerValue b) {
         if (a.getMax() <= b.getMin()) return new EmptyValue();
