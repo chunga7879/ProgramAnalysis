@@ -46,4 +46,19 @@ public abstract class ObjectWithNotNullValue extends ObjectValue {
     public boolean canBeNull() {
         return canBeNull;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ObjectWithNotNullValue that = (ObjectWithNotNullValue) o;
+
+        return canBeNull == that.canBeNull;
+    }
+
+    @Override
+    public int hashCode() {
+        return (canBeNull ? 1 : 0);
+    }
 }
