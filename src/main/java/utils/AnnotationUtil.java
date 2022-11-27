@@ -20,6 +20,10 @@ public final class AnnotationUtil {
         NotNull,
         Min,
         Max,
+        Negative,
+        Positive,
+        NegativeOrZero,
+        PositiveOrZero,
         Size,
     }
 
@@ -33,22 +37,7 @@ public final class AnnotationUtil {
             String nodeName
     ) {
         Set<AnalysisError> errors = new HashSet<>();
-        Map<AnnotationType, Set<AnnotationExpr>> annotationMap = new HashMap<>();
-        annotations.forEach(annotation -> {
-            String annotationName = annotation.getNameAsString().toLowerCase();
-            AnnotationType type = switch(annotationName) {
-                case "null" -> AnnotationType.Null;
-                case "notnull" -> AnnotationType.NotNull;
-                case "min" -> AnnotationType.Min;
-                case "max" -> AnnotationType.Max;
-                case "size" -> AnnotationType.Size;
-                default -> AnnotationType.None;
-            };
-            if (type != AnnotationType.None) {
-                annotationMap.putIfAbsent(type, new HashSet<>());
-                annotationMap.get(type).add(annotation);
-            }
-        });
+        Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
         if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
             boolean isDefinite = value == NullValue.VALUE;
             errors.add(createReturnError("@NotNull", "null", nodeName, isDefinite));
@@ -59,6 +48,33 @@ public final class AnnotationUtil {
         }
         // TODO: Integer, Array
         return errors;
+    }
+
+    /**
+     * Create annotation map from list of AnnotationExpr
+     */
+    private static Map<AnnotationType, Set<AnnotationExpr>> getAnnotationMap(List<AnnotationExpr> annotations) {
+        Map<AnnotationType, Set<AnnotationExpr>> annotationMap = new HashMap<>();
+        annotations.forEach(annotation -> {
+            String annotationName = annotation.getNameAsString().toLowerCase();
+            AnnotationType type = switch(annotationName) {
+                case "null" -> AnnotationType.Null;
+                case "notnull" -> AnnotationType.NotNull;
+                case "min" -> AnnotationType.Min;
+                case "max" -> AnnotationType.Max;
+                case "negative" -> AnnotationType.Negative;
+                case "negativeorzero" -> AnnotationType.NegativeOrZero;
+                case "positive" -> AnnotationType.Positive;
+                case "positiveorzero" -> AnnotationType.PositiveOrZero;
+                case "size" -> AnnotationType.Size;
+                default -> AnnotationType.None;
+            };
+            if (type != AnnotationType.None) {
+                annotationMap.putIfAbsent(type, new HashSet<>());
+                annotationMap.get(type).add(annotation);
+            }
+        });
+        return annotationMap;
     }
 
     /**
