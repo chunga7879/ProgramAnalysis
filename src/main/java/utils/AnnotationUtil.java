@@ -1,8 +1,7 @@
 package utils;
 
 import analysis.model.AnalysisError;
-import analysis.values.NullValue;
-import analysis.values.PossibleValues;
+import analysis.values.*;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 
 import java.util.*;
@@ -50,6 +49,64 @@ public final class AnnotationUtil {
         return errors;
     }
 
+    public static Set<AnalysisError> checkArgumentWithAnnotation(
+            PossibleValues value,
+            List<AnnotationExpr> annotations
+    ) {
+        Set<AnalysisError> errors = new HashSet<>();
+        Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
+        if (annotationMap.containsKey(AnnotationType.Null) && value.canBeNull()) {
+            boolean isDefinite = value == NullValue.VALUE;
+        }
+        if (annotationMap.containsKey(AnnotationType.Positive) && !checkPositiveAnnotation(value)) {
+            errors.add(createArgumentError("@Positive", "not positive", false));
+        }
+        if (annotationMap.containsKey(AnnotationType.PositiveOrZero) && !checkPositiveOrZeroAnnotation(value)) {
+            errors.add(createArgumentError("@PositiveOrZero", "not positive or zero", false));
+        }
+        if (annotationMap.containsKey(AnnotationType.Negative) && !checkNegativeAnnotation(value)) {
+            errors.add(createArgumentError("@Negative", "not negative", false));
+        }
+        if (annotationMap.containsKey(AnnotationType.NegativeOrZero) && !checkNegativeOrZeroAnnotation(value)) {
+            errors.add(createArgumentError("@NegativeOrZero", "not negative or zero", false));
+        }
+        return errors;
+    }
+
+    private static boolean checkPositiveAnnotation(PossibleValues v) {
+        if (v instanceof AnyValue) {
+            // indefinite error
+            return false;
+        }
+
+        if (v instanceof IntegerValue iv) {
+            if (iv.getMax() <= 0) {
+                // definite error
+                return false;
+            }
+            if (iv.getMin() <= 0) {
+                // indefinite error
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean checkPositiveOrZeroAnnotation(PossibleValues v) {
+        // TODO: implement
+        return true;
+    }
+
+    private static boolean checkNegativeAnnotation(PossibleValues v) {
+        // TODO: implement
+        return true;
+    }
+
+    private static boolean checkNegativeOrZeroAnnotation(PossibleValues v) {
+        // TODO: implement
+        return true;
+    }
+
     /**
      * Create annotation map from list of AnnotationExpr
      */
@@ -82,6 +139,11 @@ public final class AnnotationUtil {
      */
     private static AnalysisError createReturnError(String annotation, String badCondition, String nodeName, boolean isDefinite) {
         String message = annotation + " return is " + (isDefinite ? "always " : "sometimes ") + badCondition + ": " + nodeName;
+        return new AnalysisError(message, isDefinite);
+    }
+
+    private static AnalysisError createArgumentError(String annotation, String badCondition, boolean isDefinite) {
+        String message = annotation + "";
         return new AnalysisError(message, isDefinite);
     }
 }
