@@ -77,7 +77,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
         DiagramNode diagramNode;
         StringBuilder errorDescription = new StringBuilder();
-        if (!arg.getErrorMap().get(n).isEmpty()) {
+        if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
             for (AnalysisError er : arg.getErrorMap().get(n)) {
                 errorDescription.append(er.getMessage()).append("\n");
             }
@@ -109,14 +109,14 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
     public EndState visit(ReturnStmt n, VisualizationState arg) {
         DiagramNode expression;
         StringBuilder errorDescription = new StringBuilder();
-        if (!arg.getErrorMap().get(n).isEmpty()) {
+        if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
             for (AnalysisError er : arg.getErrorMap().get(n)) {
                 errorDescription.append(er.getMessage()).append("\n");
             }
             // TODO: differentiate potential and definite error
-            expression = new DiagramNode("return" + n.getExpression(), Error.POTENTIAL, errorDescription.toString());
+            expression = new DiagramNode("return" + n.getExpression().get(), Error.POTENTIAL, errorDescription.toString());
         } else {
-            expression = new DiagramNode("return " + n.getExpression(), Error.NONE, errorDescription.toString());
+            expression = new DiagramNode("return " + n.getExpression().get(), Error.NONE, errorDescription.toString());
         }
         arg.diagram.addNode(expression);
         return null;
@@ -128,7 +128,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         DiagramNode ifCondition;
         StringBuilder errorDescription = new StringBuilder();
         // Not sure to check this error
-        if (arg.getErrorMap().get(n).isEmpty()) {
+        if (arg.getErrorMap().isEmpty() || !arg.getErrorMap().containsKey(n)) {
             ifCondition = new DiagramNode(n.getCondition().toString(), Error.NONE, errorDescription.toString());
         } else {
             for (AnalysisError er : arg.getErrorMap().get(n)) {

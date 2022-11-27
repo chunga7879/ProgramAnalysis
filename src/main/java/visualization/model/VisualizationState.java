@@ -25,4 +25,8 @@ public class VisualizationState {
     public Map<Node, Set<AnalysisError>> getErrorMap() {
         return errorMap;
     }
+
+    public Diagram getDiagram() {
+        return diagram;
+    }
 }
