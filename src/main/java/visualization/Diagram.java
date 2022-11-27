@@ -108,9 +108,9 @@ public class Diagram {
 
     public void addSwitchCaseNode(String switchCase, boolean firstCase) {
         if (firstCase) {
-            diagramString.append("if (" + switchCase + ")\n");
+            diagramString.append("if (" + switchCase + ") then (matched)\n");
         } else {
-            diagramString.append("elseif (" + switchCase + ")\n");
+            diagramString.append("elseif (" + switchCase + ") then (matched)\n");
         }
     }
 
