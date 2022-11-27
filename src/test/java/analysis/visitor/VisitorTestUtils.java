@@ -4,7 +4,6 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.stmt.ForStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
@@ -37,9 +36,5 @@ public final class VisitorTestUtils {
 
     public static List<ForStmt> getForStatements(CompilationUnit compilationUnit) {
         return compilationUnit.findAll(ForStmt.class);
-    }
-
-    public static List<BinaryExpr> getBinaryExpressions(CompilationUnit compilationUnit) {
-        return compilationUnit.findAll(BinaryExpr.class);
     }
 }
