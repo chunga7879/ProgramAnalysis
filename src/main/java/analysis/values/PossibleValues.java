@@ -33,6 +33,11 @@ public abstract class PossibleValues implements ValueVisitable {
         return visitor.visit(a, this);
     }
 
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, ArrayValue a) {
+        return visitor.visit(a, this);
+    }
+
     /**
      * Is the domain empty?
      */
