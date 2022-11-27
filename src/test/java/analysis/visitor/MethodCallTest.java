@@ -1,5 +1,6 @@
 package analysis.visitor;
 
+import analysis.model.AnalysisError;
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.NullValue;
@@ -11,8 +12,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static analysis.visitor.VisitorTestUtils.compile;
-import static analysis.visitor.VisitorTestUtils.getVariable;
+import java.util.Set;
+
+import static analysis.visitor.VisitorTestUtils.*;
 
 public class MethodCallTest {
     private VariablesState variablesState;
@@ -44,7 +46,7 @@ public class MethodCallTest {
     }
 
     @Test
-    public void nullPointerExceptionTestWithoutError() {
+    public void nullPointerExceptionTestWithoutError1() {
         String code = """
                 public class Main {
                     void test() {
@@ -57,7 +59,38 @@ public class MethodCallTest {
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         VariableDeclarator s = getVariable(compiled, "s");
         StringValue val = (StringValue) variablesState.getVariable(s);
+        Assertions.assertEquals(new StringValue("str"), val);
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void nullPointerExceptionTestWithoutError2() {
+        String code = """
+                public class Main {
+                    void test() {
+                        Integer i = new Integer(1);
+                        int x = i.intValue();
+                    }
+                }
+                """;
+        // TODO: Fix me after adding support for objects
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void nullPointerExceptionTestWithPossibleError() {
+        String code = """
+                public class Main {
+                    void test(String s) {
+                        int x = s.length();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -102,6 +135,30 @@ public class MethodCallTest {
         Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
+    @Test
+    public void throwsMultipleExceptionsTest() {
+        String code = """
+                public class Main {
+                    /**
+                     * @throws NullPointerException
+                     * @throws ArithmeticException
+                     */
+                    void foo() throws NullPointerException, ArithmeticException {
+                        // ...
+                    }
+                    
+                    void test() {
+                        foo();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        for (Set<AnalysisError> errors: analysisState.getErrorMap().values()) {
+            Assertions.assertEquals(2, errors.size());
+        }
+    }
+
     // region ---- annotation tests
     @Test
     public void notNullAnnotationTestWithError() {
@@ -113,6 +170,24 @@ public class MethodCallTest {
                                 
                     void test() {
                         foo(null);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void notNullAnnotationTestWithPossibleError() {
+        String code = """
+                public class Main {
+                    void foo(@NotNull String bar) {
+                        // ...
+                    }
+                                
+                    void test(String s) {
+                        foo(s);
                     }
                 }
                 """;

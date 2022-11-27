@@ -264,8 +264,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             Expression object = scope.get();
             PossibleValues objectValue = object.accept(this, arg);
 
-            if (objectValue.canBeNull()) {
-                arg.addError(new AnalysisError("NullPointerException: " + methodName, objectValue == NullValue.VALUE));
+            if (objectValue instanceof NullValue || objectValue instanceof AnyValue) {
+                arg.addError(new AnalysisError("NullPointerException: " + n, objectValue == NullValue.VALUE));
             }
         }
 
@@ -280,7 +280,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             ResolvedParameterDeclaration paramDec = dec.getParam(i);
             if (paramDec instanceof JavaParserParameterDeclaration javaParamDec) {
                 List<AnnotationExpr> annotations = javaParamDec.getWrappedNode().getAnnotations().stream().toList();
-                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations);
+                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations, n.toString());
                 if (errors.size() != 0) {
                     arg.addErrors(errors);
                 }

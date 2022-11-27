@@ -51,28 +51,29 @@ public final class AnnotationUtil {
 
     public static List<AnalysisError> checkArgumentWithAnnotation(
             PossibleValues value,
-            List<AnnotationExpr> annotations
+            List<AnnotationExpr> annotations,
+            String nodeName
     ) {
         List<AnalysisError> errors = new ArrayList<>();
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
-        if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
-            errors.add(createArgumentError("@NotNull", "null", value == NullValue.VALUE));
+        if (annotationMap.containsKey(AnnotationType.NotNull) && (value instanceof NullValue || value instanceof AnyValue)) {
+            errors.add(createArgumentError("@NotNull", "null", nodeName, value == NullValue.VALUE));
         }
         PairValue<Boolean, Boolean> check = checkPositiveAnnotation(value);
         if (annotationMap.containsKey(AnnotationType.Positive) && !check.getA()) {
-            errors.add(createArgumentError("@Positive", "not positive", !check.getB()));
+            errors.add(createArgumentError("@Positive", "zero or negative", nodeName, check.getB()));
         }
         check = checkPositiveOrZeroAnnotation(value);
         if (annotationMap.containsKey(AnnotationType.PositiveOrZero) && !check.getA()) {
-            errors.add(createArgumentError("@PositiveOrZero", "not positive or zero", !check.getB()));
+            errors.add(createArgumentError("@PositiveOrZero", "negative", nodeName, check.getB()));
         }
         check = checkNegativeAnnotation(value);
         if (annotationMap.containsKey(AnnotationType.Negative) && !checkNegativeAnnotation(value).getA()) {
-            errors.add(createArgumentError("@Negative", "not negative", !check.getB()));
+            errors.add(createArgumentError("@Negative", "zero or positive", nodeName, check.getB()));
         }
         check = checkNegativeOrZeroAnnotation(value);
         if (annotationMap.containsKey(AnnotationType.NegativeOrZero) && !checkNegativeOrZeroAnnotation(value).getA()) {
-            errors.add(createArgumentError("@NegativeOrZero", "not negative or zero", !check.getB()));
+            errors.add(createArgumentError("@NegativeOrZero", "positive", nodeName, check.getB()));
         }
         return errors;
     }
@@ -189,10 +190,11 @@ public final class AnnotationUtil {
     }
 
     /**
-     * Create an AnalysisError for the argurment annotation error
+     * Create an AnalysisError for the argument annotation error
      */
-    private static AnalysisError createArgumentError(String annotation, String badCondition, boolean isDefinite) {
-        String message = annotation + " argument is " + (isDefinite ? "always " : "sometimes ") + badCondition;
+    private static AnalysisError createArgumentError(String annotation, String badCondition, String nodeName, boolean isDefinite) {
+        String message = "argument annotated with " + annotation + " is "  + (isDefinite ? "always " : "sometimes ")
+                + badCondition + ": " + nodeName;
         return new AnalysisError(message, isDefinite);
     }
 }
