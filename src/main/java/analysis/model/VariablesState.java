@@ -65,7 +65,7 @@ public class VariablesState {
     }
 
     private PossibleValues getVariableHelper(Node node) {
-        if (isDomainEmpty) return new EmptyValue();
+        if (this.isDomainEmpty()) return new EmptyValue();
         if (!variableMap.containsKey(node)) return new AnyValue();
         return variableMap.get(node);
     }
@@ -160,7 +160,7 @@ public class VariablesState {
      * @param other Other state to intersect
      */
     public void intersect(IntersectVisitor intersectVisitor, VariablesState other) {
-        if (this.isDomainEmpty() || other.isDomainEmpty) {
+        if (this.isDomainEmpty() || other.isDomainEmpty()) {
             clear();
             this.setDomainEmpty();
         } else {
