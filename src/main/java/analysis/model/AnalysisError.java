@@ -1,5 +1,7 @@
 package analysis.model;
 
+import com.github.javaparser.ast.Node;
+
 import java.util.Objects;
 
 /**
@@ -14,8 +16,17 @@ public class AnalysisError {
         this.isDefinite = isDefinite;
     }
 
+    @Deprecated
     public AnalysisError(String message) {
         this(message, false);
+    }
+
+    public AnalysisError(Class<? extends RuntimeException> exception, boolean isDefinite) {
+        this(exception.getSimpleName(), isDefinite);
+    }
+
+    public AnalysisError(Class<? extends RuntimeException> exception, Node n, boolean isDefinite) {
+        this(exception.getSimpleName() + ": " + n.toString(), isDefinite);
     }
 
     public String getMessage() {
@@ -24,6 +35,10 @@ public class AnalysisError {
 
     public boolean isDefinite() {
         return isDefinite;
+    }
+
+    public AnalysisError atNode(Node node) {
+        return new AnalysisError(this.message + ": " + node, this.isDefinite);
     }
 
     @Override

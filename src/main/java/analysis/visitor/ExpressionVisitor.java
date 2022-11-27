@@ -5,11 +5,6 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
-import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -25,8 +20,11 @@ import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 import utils.MathUtil;
+import utils.ResolverUtil;
 import utils.ValueUtil;
 import utils.VariableUtil;
+
+import java.util.Objects;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -34,6 +32,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     private final DivideVisitor divideVisitor;
     private final SubtractVisitor subtractVisitor;
     private final MultiplyVisitor multiplyVisitor;
+    private RestrictGreaterThanVisitor restrictGTVisitor;
+    private RestrictGreaterThanOrEqualVisitor restrictGTEVisitor;
+    private RestrictLessThanVisitor restrictLTVisitor;
+    private RestrictLessThanOrEqualVisitor restrictLTEVisitor;
 
     public ExpressionVisitor() {
         this(new MergeVisitor(), new AddVisitor(), new DivideVisitor(), new MultiplyVisitor(), new SubtractVisitor());
@@ -51,6 +53,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         this.divideVisitor = divideVisitor;
         this.multiplyVisitor = multiplyVisitor;
         this.subtractVisitor = subtractVisitor;
+        this.restrictGTVisitor = new RestrictGreaterThanVisitor();
+        this.restrictGTEVisitor = new RestrictGreaterThanOrEqualVisitor();
+        this.restrictLTVisitor = new RestrictLessThanVisitor();
+        this.restrictLTEVisitor = new RestrictLessThanOrEqualVisitor();
     }
 
     @Override
@@ -74,10 +80,25 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
-        Expression target = n.getTarget();
-        PossibleValues value = n.getValue().accept(this, arg);
-        VariableUtil.setVariableFromExpression(n.getTarget(), value, arg.getVariablesState());
-        return value;
+        PossibleValues left = n.getTarget().accept(this, arg);
+        PossibleValues right = n.getValue().accept(this, arg);
+        PossibleValues result;
+        switch (n.getOperator()) {
+            case DIVIDE -> {
+                PairValue<PossibleValues, AnalysisError> quotient = left.acceptAbstractOp(divideVisitor, right);
+                AnalysisError error = quotient.getB();
+                if (error != null) {
+                    arg.addError(error.atNode(n));
+                }
+                result = quotient.getA();
+            }
+            case PLUS -> result = left.acceptAbstractOp(addVisitor, right);
+            case MINUS -> result = left.acceptAbstractOp(subtractVisitor, right);
+            case MULTIPLY -> result = left.acceptAbstractOp(multiplyVisitor, right);
+            default -> result = right;
+        }
+        VariableUtil.setVariableFromExpression(n.getTarget(), result, arg.getVariablesState());
+        return result;
     }
 
     @Override
@@ -87,7 +108,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
         // Check null
         if (arrayNameValue.canBeNull()) {
-            arg.addError(new AnalysisError("NullPointerException: " + n.getName()));
+            arg.addError(new AnalysisError(NullPointerException.class, n.getName(), arrayNameValue == NullValue.VALUE));
         }
 
         // Check valid index
@@ -97,13 +118,20 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         } else {
             length = ArrayValue.DEFAULT_LENGTH;
         }
-        // TODO: Use boolean operators
-        PossibleValues lessThanZeroIndex = indexValue.acceptAbstractOp(new RestrictLessThanVisitor(), new IntegerRange(0));
-        PossibleValues greaterOrEqualLengthIndex = indexValue.acceptAbstractOp(new RestrictGreaterThanOrEqualVisitor(), length);
-        if (!lessThanZeroIndex.isEmpty() || !greaterOrEqualLengthIndex.isEmpty()) {
-            arg.addError(new AnalysisError("ArrayIndexOutOfBoundsException: " + n));
-            // TODO: Restrict value of index variable (if it was) after this point
+
+        PossibleValues validIndex = indexValue.acceptAbstractOp(restrictGTEVisitor, new IntegerRange(0));
+        validIndex = validIndex.acceptAbstractOp(restrictLTVisitor, length);
+        PossibleValues validLength = length.acceptAbstractOp(restrictGTVisitor, validIndex);
+        if (!Objects.equals(indexValue, validIndex)) {
+            arg.addError(new AnalysisError(ArrayIndexOutOfBoundsException.class, n, validIndex.isEmpty()));
         }
+
+        if (n.getName().isNameExpr()) {
+            // Update array length
+            VariableUtil.updateArrayLength(n.getName().asNameExpr().resolve(), validLength, arg.getVariablesState());
+        }
+        // Update length variable
+        VariableUtil.setVariableFromExpression(n.getIndex(), validIndex, arg.getVariablesState());
 
         // Return proper value
         ResolvedType type = n.getName().calculateResolvedType();
@@ -121,16 +149,13 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             Expression e = arrayCreationLevel.getDimension().get();
             PossibleValues dimensionValue = e.accept(this, arg);
             if (dimensionValue instanceof IntegerValue intDimensionValue) {
-                // TODO: Use boolean operators
-                PossibleValues lessThanZeroSize = intDimensionValue.acceptAbstractOp(new RestrictLessThanVisitor(), new IntegerRange(0));
-                if (!lessThanZeroSize.isEmpty()) {
-                    arg.addError(new AnalysisError("NegativeArraySizeException: " + n));
-                    // TODO: Restrict value of size after this point
+                PossibleValues validSize = intDimensionValue.acceptAbstractOp(restrictGTEVisitor, new IntegerRange(0));
+                if (!Objects.equals(validSize, intDimensionValue)) {
+                    arg.addError(new AnalysisError(NegativeArraySizeException.class, n, validSize.isEmpty()));
                 }
-                PossibleValues greaterOrEqualZeroSize = intDimensionValue.acceptAbstractOp(new RestrictGreaterThanOrEqualVisitor(), new IntegerRange(0));
-                if (greaterOrEqualZeroSize instanceof IntegerValue validSize) {
-                    return new ArrayValue(validSize);
-                }
+                // Update possible values of size variable
+                VariableUtil.setVariableFromExpression(e, validSize, arg.getVariablesState());
+                return ArrayValue.create(validSize, false);
             }
         }
         if (n.getInitializer().isPresent()) {
@@ -154,7 +179,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 PairValue<PossibleValues, AnalysisError> result = leftValue.acceptAbstractOp(divideVisitor, rightValue);
                 AnalysisError error = result.getB();
                 if (error != null) {
-                    arg.addError(error);
+                    arg.addError(error.atNode(n));
                 }
                 yield result.getA();
             }
@@ -182,20 +207,26 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(EnclosedExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return n.getInner().accept(this, arg);
     }
 
     @Override
     public PossibleValues visit(FieldAccessExpr n, ExpressionAnalysisState arg) {
         PossibleValues scopeValue = n.getScope().accept(this, arg);
         ResolvedValueDeclaration valDec = n.resolve();
+        if (scopeValue.canBeNull()) {
+            arg.addError(new AnalysisError(NullPointerException.class, n.getScope(), Objects.equals(scopeValue, NullValue.VALUE)));
+            if (scopeValue instanceof ObjectValue objValue) {
+                VariableUtil.setVariableFromExpression(n.getScope(), objValue.withNotNullable(), arg.getVariablesState());
+            }
+        }
         if (scopeValue instanceof ArrayValue arrayValue) {
             if (valDec.getName().equals("length")) {
                 return arrayValue.getLength();
             }
         }
         // TODO: handle field access default value (+ annotations)
-        return new AnyValue();
+        return ValueUtil.getValueForType(valDec.getType());
     }
 
     @Override
@@ -245,7 +276,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(NameExpr n, ExpressionAnalysisState arg) {
-        ResolvedValueDeclaration dec = n.resolve();
+        ResolvedValueDeclaration dec = ResolverUtil.resolveOrNull(n);
+        if (dec == null) return AnyValue.VALUE;
         VariablesState state = arg.getVariablesState();
         if (dec instanceof JavaParserVariableDeclaration jpVarDec) {
             return state.getVariable(jpVarDec.getVariableDeclarator());
@@ -253,7 +285,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
             return state.getVariable(jpParamDec.getWrappedNode());
         }
-        return new AnyValue();
+        return AnyValue.VALUE;
     }
 
     @Override

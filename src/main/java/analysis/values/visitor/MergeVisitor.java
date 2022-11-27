@@ -26,7 +26,8 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     public PossibleValues visit(StringValue a, StringValue b) {
         return new StringValue(
                 Math.min(a.minStringLength(), b.minStringLength()),
-                Math.max(a.maxStringLength(), b.maxStringLength())
+                Math.max(a.maxStringLength(), b.maxStringLength()),
+                canBeNull(a, b)
         );
     }
 

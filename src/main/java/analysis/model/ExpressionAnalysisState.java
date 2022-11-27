@@ -42,4 +42,11 @@ public class ExpressionAnalysisState {
     public void addError(AnalysisError error) {
         this.errors.add(error);
     }
+
+    /**
+     * Add an error to the state
+     */
+    public void addErrors(ExpressionAnalysisState state) {
+        this.errors.addAll(state.errors);
+    }
 }

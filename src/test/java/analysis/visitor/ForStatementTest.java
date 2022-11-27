@@ -17,7 +17,7 @@ import static analysis.visitor.VisitorTestUtils.*;
 public class ForStatementTest {
     @BeforeEach
     public void runBefore() {
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
@@ -97,5 +97,30 @@ public class ForStatementTest {
         varState.setVariable(a, new IntegerRange(10, 10));
         forStatement.accept(new AnalysisVisitor(""), analysisState);
         Assertions.assertTrue(varState.isDomainEmpty());
+    }
+
+    @Test
+    public void forLoopAssignmentInConditionTest() {
+        String code = """
+                public class Main {
+                    void test(int a) {
+                        for (int i = 100; (i = i - 3) >= 20; ) {
+                            a = a + i;
+                        }
+                    }
+                }
+                """;
+        int a = 10;
+        for (int i = 100; (i = i - 3) >= 20; ) {
+            a = a + i;
+        }
+        CompilationUnit compiled = compile(code);
+        ForStmt forStatement = getForStatements(compiled).get(0);
+        Parameter paramA = getParameter(compiled, "a");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(paramA, new IntegerRange(10, 10));
+        forStatement.accept(new AnalysisVisitor(""), analysisState);
+        Assertions.assertEquals(new IntegerRange(a, a), varState.getVariable(paramA));
     }
 }
