@@ -34,6 +34,15 @@ public class AnalysisState {
         }
     }
 
+    public void addError(Node node, AnalysisError error) {
+        if (error == null) return;
+        if (errorMap.containsKey(node)) {
+            errorMap.get(node).add(error);
+        } else {
+            errorMap.put(node, new HashSet<>() {{ add(error); }});
+        }
+    }
+
     public void addErrors(Node node, List<AnalysisError> errors) {
         if (errors == null || errors.isEmpty()) return;
         addErrors(node, new HashSet<>(errors));
