@@ -19,6 +19,8 @@ import com.github.javaparser.ast.visitor.GenericVisitor;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+import utils.MathUtil;
+import utils.VariableUtil;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -62,16 +64,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
         Expression target = n.getTarget();
         PossibleValues value = n.getValue().accept(this, arg);
-        if (target instanceof NameExpr nameTarget) {
-            VariablesState state = arg.getVariablesState();
-            ResolvedValueDeclaration dec = nameTarget.resolve();
-            if (dec instanceof JavaParserVariableDeclaration jpVarDec) {
-                state.setVariable(jpVarDec.getVariableDeclarator(), value);
-            }
-            if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
-                state.setVariable(jpParamDec.getWrappedNode(), value);
-            }
-        }
+        VariableUtil.setVariableFromExpression(n.getTarget(), value, arg.getVariablesState());
         return value;
     }
 
@@ -201,7 +194,42 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(UnaryExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        PossibleValues preValue = n.getExpression().accept(this, arg);
+        if (preValue instanceof IntegerValue intValue) {
+            PossibleValues postValue;
+            switch (n.getOperator()) {
+                case PREFIX_INCREMENT, POSTFIX_INCREMENT -> {
+                    postValue = intValue.acceptAbstractOp(addVisitor, new IntegerRange(1, 1));
+                    VariableUtil.setVariableFromExpression(n.getExpression(), postValue, arg.getVariablesState());
+                }
+                case PREFIX_DECREMENT, POSTFIX_DECREMENT -> {
+                    postValue = intValue.acceptAbstractOp(subtractVisitor, new IntegerRange(1, 1));
+                    VariableUtil.setVariableFromExpression(n.getExpression(), postValue, arg.getVariablesState());
+                }
+                case MINUS -> {
+                    postValue = new IntegerRange(
+                            MathUtil.flipSignToLimit(intValue.getMax()),
+                            MathUtil.flipSignToLimit(intValue.getMin())
+                    );
+                }
+                case PLUS -> {
+                    // If other types are added, this will specify any byte/short/char as int
+                    postValue = intValue;
+                }
+                case BITWISE_COMPLEMENT -> {
+                    postValue = IntegerRange.ANY_VALUE;
+                }
+                default -> {
+                    postValue = preValue.isEmpty() ? new EmptyValue() : new AnyValue();
+                }
+            }
+            return switch (n.getOperator()) {
+                case POSTFIX_INCREMENT, POSTFIX_DECREMENT -> preValue;
+                default -> postValue;
+            };
+        }
+        // TODO: booleans
+        return preValue.isEmpty() ? new EmptyValue() : new AnyValue();
     }
 
     // region ----Not required----

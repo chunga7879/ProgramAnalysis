@@ -31,17 +31,7 @@ public final class AnalysisLogger {
     public static void log(Node n, VariablesState arg, List<AnalysisError> errors) {
         if (!doLog) return;
         log(n, arg.toFormattedString());
-        if (errors != null && !errors.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Errors: ");
-            boolean first = true;
-            for (AnalysisError error : errors) {
-                if (!first) sb.append(", ");
-                sb.append("'").append(error.getMessage()).append("'");
-                first = false;
-            }
-            log(n, sb.toString());
-        }
+        logErrors(n, errors);
     }
 
     /**
@@ -97,5 +87,22 @@ public final class AnalysisLogger {
         String[] split = str.split("\n");
         if (split.length < 1) return "";
         return split[0];
+    }
+
+    /**
+     * Log errors at node
+     */
+    public static void logErrors(Node n, List<AnalysisError> errors) {
+        if (errors != null && !errors.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Errors: ");
+            boolean first = true;
+            for (AnalysisError error : errors) {
+                if (!first) sb.append(", ");
+                sb.append("'").append(error.getMessage()).append("'");
+                first = false;
+            }
+            log(n, sb.toString());
+        }
     }
 }
