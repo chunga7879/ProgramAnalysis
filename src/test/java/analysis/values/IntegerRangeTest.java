@@ -46,8 +46,8 @@ public class IntegerRangeTest {
         PossibleValues x = new IntegerRange(-10, 200);
         PossibleValues y = new IntegerRange(Integer.MIN_VALUE, 3);
         PossibleValues z = new IntegerRange(3000, 4000);
-        IntegerRange xy = (IntegerRange)merge(x, y);
-        IntegerRange xz = (IntegerRange)merge(x, z);
+        IntegerRange xy = (IntegerRange) merge(x, y);
+        IntegerRange xz = (IntegerRange) merge(x, z);
         Assertions.assertEquals(Integer.MIN_VALUE, xy.getMin());
         Assertions.assertEquals(200, xy.getMax());
         Assertions.assertEquals(-10, xz.getMin());
@@ -59,8 +59,8 @@ public class IntegerRangeTest {
         PossibleValues x = new IntegerRange(-10, 200);
         PossibleValues y = new IntegerRange(-160, -10);
         PossibleValues z = new IntegerRange(20, 99);
-        IntegerRange xy = (IntegerRange)add(x, y);
-        IntegerRange xz = (IntegerRange)add(x, z);
+        IntegerRange xy = (IntegerRange) add(x, y);
+        IntegerRange xz = (IntegerRange) add(x, z);
         Assertions.assertEquals(-170, xy.getMin());
         Assertions.assertEquals(190, xy.getMax());
         Assertions.assertEquals(10, xz.getMin());
@@ -72,8 +72,8 @@ public class IntegerRangeTest {
         PossibleValues x = new IntegerRange(-10, 200);
         PossibleValues y = new IntegerRange(-160, -10);
         PossibleValues z = new IntegerRange(20, 99);
-        IntegerRange xy = (IntegerRange)subtract(x, y);
-        IntegerRange xz = (IntegerRange)subtract(x, z);
+        IntegerRange xy = (IntegerRange) subtract(x, y);
+        IntegerRange xz = (IntegerRange) subtract(x, z);
         Assertions.assertEquals(0, xy.getMin());
         Assertions.assertEquals(360, xy.getMax());
         Assertions.assertEquals(-109, xz.getMin());
@@ -86,9 +86,9 @@ public class IntegerRangeTest {
         PossibleValues y = new IntegerRange(3, 8);
         PossibleValues z = new IntegerRange(-21, -9);
         PossibleValues e = new IntegerRange(-11, -10);
-        IntegerRange xy = (IntegerRange)restrictGT(x, y);
-        IntegerRange yx = (IntegerRange)restrictGT(y, x);
-        IntegerRange zx = (IntegerRange)restrictGT(z, x);
+        IntegerRange xy = (IntegerRange) restrictGT(x, y);
+        IntegerRange yx = (IntegerRange) restrictGT(y, x);
+        IntegerRange zx = (IntegerRange) restrictGT(z, x);
         Assertions.assertEquals(4, xy.getMin());
         Assertions.assertEquals(10, xy.getMax());
         Assertions.assertEquals(3, yx.getMin());
@@ -104,9 +104,9 @@ public class IntegerRangeTest {
         PossibleValues y = new IntegerRange(3, 8);
         PossibleValues z = new IntegerRange(-10, -10);
         PossibleValues e = new IntegerRange(-300, -11);
-        IntegerRange xy = (IntegerRange)restrictLTE(x, y);
-        IntegerRange yx = (IntegerRange)restrictLTE(y, x);
-        IntegerRange zx = (IntegerRange)restrictLTE(z, x);
+        IntegerRange xy = (IntegerRange) restrictLTE(x, y);
+        IntegerRange yx = (IntegerRange) restrictLTE(y, x);
+        IntegerRange zx = (IntegerRange) restrictLTE(z, x);
         Assertions.assertEquals(-10, xy.getMin());
         Assertions.assertEquals(8, xy.getMax());
         Assertions.assertEquals(3, yx.getMin());
@@ -114,5 +114,32 @@ public class IntegerRangeTest {
         Assertions.assertEquals(-10, zx.getMin());
         Assertions.assertEquals(-10, zx.getMax());
         Assertions.assertTrue(restrictLTE(x, e) instanceof EmptyValue);
+    }
+
+    @Test
+    public void boxedIntegerAdd() {
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(1));
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(2));
+        BoxedPrimitive ab = (BoxedPrimitive) add(a, b);
+        Assertions.assertEquals(3, ((IntegerRange) ab.unbox()).getMin());
+        Assertions.assertEquals(3, ((IntegerRange) ab.unbox()).getMax());
+    }
+
+    @Test
+    public void boxedIntegerSubtract() {
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(10));
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(2));
+        BoxedPrimitive ab = (BoxedPrimitive) subtract(a, b);
+        Assertions.assertEquals(8, ((IntegerRange) ab.unbox()).getMin());
+        Assertions.assertEquals(8, ((IntegerRange) ab.unbox()).getMax());
+    }
+
+    @Test
+    public void boxedIntegerMerge() {
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(1, 10));
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(4, 20));
+        BoxedPrimitive ab = (BoxedPrimitive) merge(a, b);
+        Assertions.assertEquals(1, ((IntegerRange) ab.unbox()).getMin());
+        Assertions.assertEquals(20, ((IntegerRange) ab.unbox()).getMax());
     }
 }

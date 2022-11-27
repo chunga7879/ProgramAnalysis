@@ -1,9 +1,12 @@
 package analysis.values;
 
 import analysis.values.visitor.MergeVisitor;
+import com.github.javaparser.ast.CompilationUnit;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static analysis.visitor.VisitorTestUtils.compile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BooleanValueTest {
@@ -24,4 +27,5 @@ public class BooleanValueTest {
         assertEquals(wt, have.canBeTrue());
         assertEquals(wf, have.canBeFalse());
     }
+
 }

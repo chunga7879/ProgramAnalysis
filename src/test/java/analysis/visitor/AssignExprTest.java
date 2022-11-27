@@ -5,33 +5,33 @@ import analysis.model.VariablesState;
 import analysis.values.EmptyValue;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.stmt.BlockStmt;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static analysis.visitor.VisitorTestUtils.*;
+import static analysis.visitor.VisitorTestUtils.compile;
+import static analysis.visitor.VisitorTestUtils.getVariable;
 
-public class BinaryExprTest {
+public class AssignExprTest {
     private VariablesState variablesState;
     private AnalysisState analysisState;
 
     @BeforeEach
     public void runBefore() {
-        variablesState = new NonEmptyVariablesState();
+        variablesState = new VisitorTestUtils.NonEmptyVariablesState();
         analysisState = new AnalysisState(variablesState);
         AnalysisLogger.setLog(false);
     }
 
     @Test
-    public void addTest() {
+    public void addAssignmentTest() {
         String code = """
                 public class Main {
                     int test() {
-                        int x = 100 + 200;
+                        int x = 100;
+                        x += 200;
                         return x;
                     }
                 }
@@ -46,52 +46,12 @@ public class BinaryExprTest {
     }
 
     @Test
-    public void divideZeroInRangeTest() {
-        String code = """
-                public class Main {
-                    int test(int x, int y) {
-                        int z = x / y;
-                        return x;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        BlockStmt block = getBlockStatements(compiled).get(0);
-        Parameter x = getParameter(compiled, "x");
-        Parameter y = getParameter(compiled, "y");
-        VariableDeclarator z = getVariable(compiled, "z");
-        variablesState.setVariable(x, new IntegerRange(20, 50));
-        variablesState.setVariable(y, new IntegerRange(-10, 10));
-        block.accept(new AnalysisVisitor(""), analysisState);
-        IntegerRange quotient = (IntegerRange) variablesState.getVariable(z);
-        Assertions.assertEquals(50 / -10, quotient.getMin());
-        Assertions.assertEquals(50 / 10, quotient.getMax());
-        Assertions.assertEquals(1, analysisState.getErrorMap().size());
-    }
-
-    @Test
-    public void divideByZeroTest() {
+    public void divideByNonZeroAssignmentTest() {
         String code = """
                 public class Main {
                     int test() {
-                        int x = 1 / 0;
-                        return x;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        VariableDeclarator x = getVariable(compiled, "x");
-        compiled.accept(new AnalysisVisitor("test"), analysisState);
-        Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(x));
-        Assertions.assertEquals(1, analysisState.getErrorMap().size());
-    }
-
-    @Test
-    public void divideByNonZeroTest() {
-        String code = """
-                public class Main {
-                    int test() {
-                        int x = 10 / 5;
+                        int x = 10;
+                        x /= 5;
                         return x;
                     }
                 }
@@ -106,11 +66,30 @@ public class BinaryExprTest {
     }
 
     @Test
-    public void multiplyTest() {
+    public void divideByZeroAssignmentTest() {
         String code = """
                 public class Main {
                     int test() {
-                        int x = 10 * 20;
+                        int x = 10;
+                        x /= 0;
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator x = getVariable(compiled, "x");
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(x));
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void multiplyAssignmentTest() {
+        String code = """
+                public class Main {
+                    int test() {
+                        int x = 10;
+                        x *= 20;
                         return x;
                     }
                 }
@@ -125,11 +104,12 @@ public class BinaryExprTest {
     }
 
     @Test
-    public void subtractTest() {
+    public void subtractAssignmentTest() {
         String code = """
                 public class Main {
                     int test() {
-                        int x = 10 - 5;
+                        int x = 10;
+                        x -= 6;
                         return x;
                     }
                 }
@@ -138,8 +118,8 @@ public class BinaryExprTest {
         VariableDeclarator x = getVariable(compiled, "x");
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange diff = (IntegerRange) variablesState.getVariable(x);
-        Assertions.assertEquals(10 - 5, diff.getMin());
-        Assertions.assertEquals(10 - 5, diff.getMax());
+        Assertions.assertEquals(10 - 6, diff.getMin());
+        Assertions.assertEquals(10 - 6, diff.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 }
