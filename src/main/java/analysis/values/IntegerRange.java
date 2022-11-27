@@ -2,6 +2,9 @@ package analysis.values;
 
 import analysis.values.visitor.OperationVisitor;
 
+/**
+ * Represents an integer range between min and max (inclusive)
+ */
 public class IntegerRange extends IntegerValue {
     public static final IntegerRange ANY_VALUE = new IntegerRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
     private final int min;
@@ -43,6 +46,11 @@ public class IntegerRange extends IntegerValue {
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, CharValue a) {
         return visitor.visit(a, this);
     }
 

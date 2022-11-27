@@ -1,5 +1,6 @@
 package analysis.visitor;
 
+import analysis.model.VariablesState;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
@@ -15,6 +16,13 @@ import java.util.List;
 import java.util.Objects;
 
 public final class VisitorTestUtils {
+    public static class NonEmptyVariablesState extends VariablesState {
+        @Override
+        public boolean isDomainEmpty() {
+            return false;
+        }
+    }
+
     public static CompilationUnit compile(String code) {
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new ReflectionTypeSolver()));
         return StaticJavaParser.parse(code);

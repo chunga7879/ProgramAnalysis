@@ -28,7 +28,7 @@ public final class ValueUtil {
         } else if (type.isReferenceType()) {
             String qualifiedName = type.asReferenceType().getQualifiedName();
             if (qualifiedName.equalsIgnoreCase("java.lang.String")) {
-                return new StringValue();
+                return StringValue.ANY_VALUE;
             }
         }
         return AnyValue.VALUE;
@@ -40,7 +40,7 @@ public final class ValueUtil {
     public static PossibleValues getValueForType(ResolvedType type, List<AnnotationExpr> annotations, VariablesState state, ExpressionVisitor exprVisitor) {
         // TODO: handle more annotations, types
         if (type.isPrimitive()) {
-            return switch(type.asPrimitive()) {
+            return switch (type.asPrimitive()) {
                 case INT -> IntegerRange.ANY_VALUE;
                 case BOOLEAN -> AnyValue.VALUE;
                 default -> AnyValue.VALUE;
