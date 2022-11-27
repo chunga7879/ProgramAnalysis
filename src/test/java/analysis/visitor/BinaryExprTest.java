@@ -34,7 +34,7 @@ public class BinaryExprTest {
                 """;
         CompilationUnit compiled = compile(code);
         VariableDeclarator x = getVariable(compiled, "x");
-        VariablesState varState = new VariablesState();
+        VariablesState varState = new NonEmptyVariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange sum = (IntegerRange) varState.getVariable(x);
@@ -58,7 +58,7 @@ public class BinaryExprTest {
         Parameter x = getParameter(compiled, "x");
         Parameter y = getParameter(compiled, "y");
         VariableDeclarator z = getVariable(compiled, "z");
-        VariablesState varState = new VariablesState();
+        VariablesState varState = new NonEmptyVariablesState();
         varState.setVariable(x, new IntegerRange(20, 50));
         varState.setVariable(y, new IntegerRange(-10, 10));
         AnalysisState analysisState = new AnalysisState(varState);
@@ -100,7 +100,7 @@ public class BinaryExprTest {
                 """;
         CompilationUnit compiled = compile(code);
         VariableDeclarator x = getVariable(compiled, "x");
-        VariablesState varState = new VariablesState();
+        VariablesState varState = new NonEmptyVariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange quotient = (IntegerRange) varState.getVariable(x);
@@ -121,7 +121,7 @@ public class BinaryExprTest {
                 """;
         CompilationUnit compiled = compile(code);
         VariableDeclarator x = getVariable(compiled, "x");
-        VariablesState varState = new VariablesState();
+        VariablesState varState = new NonEmptyVariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange product = (IntegerRange) varState.getVariable(x);
@@ -142,7 +142,7 @@ public class BinaryExprTest {
                 """;
         CompilationUnit compiled = compile(code);
         VariableDeclarator x = getVariable(compiled, "x");
-        VariablesState varState = new VariablesState();
+        VariablesState varState = new NonEmptyVariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         IntegerRange diff = (IntegerRange) varState.getVariable(x);
