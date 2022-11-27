@@ -19,8 +19,8 @@ public class DivideVisitor extends AbstractOperationVisitor {
 
         // 0 is the denominator
         if (bMin == 0 && bMax == 0) {
-            // TODO: make error definite
-            return new PairValue<>(new EmptyValue(), new AnalysisError("ArithmeticException: " + a + " / " + b));
+            return new PairValue<>(new EmptyValue(),
+                    new AnalysisError("ArithmeticException: " + a + " / " + b, true));
         }
 
         AnalysisError error = null;
