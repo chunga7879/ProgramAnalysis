@@ -24,7 +24,7 @@ public class DivideVisitor extends AbstractOperationVisitor {
         AnalysisError error = null;
         // 0 is a possible value for the denominator
         if (bMin <= 0 && bMax >= 0) {
-            error = new AnalysisError("ArithmeticException", true);
+            error = new AnalysisError("ArithmeticException");
             // if the minimum denominator is 0, we shift the range from [0, n] to [1, n]
             if (bMin == 0) {
                 bMin = 1;
