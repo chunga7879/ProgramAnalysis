@@ -1,5 +1,7 @@
 package analysis.model;
 
+import com.github.javaparser.ast.Node;
+
 import java.util.Objects;
 
 /**
@@ -24,6 +26,10 @@ public class AnalysisError {
 
     public boolean isDefinite() {
         return isDefinite;
+    }
+
+    public AnalysisError atNode(Node node) {
+        return new AnalysisError(this.message + ": " + node, this.isDefinite);
     }
 
     @Override

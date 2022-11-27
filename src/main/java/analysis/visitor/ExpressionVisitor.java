@@ -152,7 +152,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 PairValue<PossibleValues, AnalysisError> result = leftValue.acceptAbstractOp(divideVisitor, rightValue);
                 AnalysisError error = result.getB();
                 if (error != null) {
-                    arg.addError(error);
+                    arg.addError(error.atNode(n));
                 }
                 yield result.getA();
             }
