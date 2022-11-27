@@ -288,7 +288,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             i++;
         } while (true);
 
-        // Merge break states with current state
+        // Merge break states with exit state
         Set<VariablesState> breakStates = endState.popBreakStates();
         for (VariablesState breakState : breakStates) {
             exitState.merge(mergeVisitor, breakState);
