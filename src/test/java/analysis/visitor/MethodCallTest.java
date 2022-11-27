@@ -24,7 +24,7 @@ public class MethodCallTest {
     public void runBefore() {
         variablesState = new VariablesState();
         analysisState = new AnalysisState(variablesState);
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
