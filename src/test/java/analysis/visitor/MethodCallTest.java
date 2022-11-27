@@ -2,24 +2,31 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.NullValue;
+import analysis.values.StringValue;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import logger.AnalysisLogger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static analysis.visitor.VisitorTestUtils.compile;
+import static analysis.visitor.VisitorTestUtils.getVariable;
 
 public class MethodCallTest {
+    private VariablesState variablesState;
     private AnalysisState analysisState;
 
     @BeforeEach
     public void runBefore() {
-        analysisState = new AnalysisState(new VariablesState());
+        variablesState = new VariablesState();
+        analysisState = new AnalysisState(variablesState);
         AnalysisLogger.setLog(true);
     }
 
     @Test
-    public void nullPointerExceptionTest() {
+    public void nullPointerExceptionTestWithError() {
         String code = """
                 public class Main {
                     void test() {
@@ -30,10 +37,31 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        VariableDeclarator s = getVariable(compiled, "s");
+        NullValue val = (NullValue) variablesState.getVariable(s);
+        Assertions.assertEquals(NullValue.VALUE, val);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
-    public void throwsJavaDocTest() {
+    public void nullPointerExceptionTestWithoutError() {
+        String code = """
+                public class Main {
+                    void test() {
+                        String s = "str";
+                        int x = s.length();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        VariableDeclarator s = getVariable(compiled, "s");
+        StringValue val = (StringValue) variablesState.getVariable(s);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void throwsRuntimeExceptionTest() {
         String code = """
                 public class Main {
                     /**
@@ -50,6 +78,28 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void throwsNullPointerExceptionTest() {
+        String code = """
+                public class Main {
+                    /**
+                     * @throws NullPointerException
+                     */
+                    void foo() throws NullPointerException {
+                        // ...
+                    }
+                    
+                    void test() {
+                        foo();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     // region ---- annotation tests
@@ -68,6 +118,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -85,6 +136,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -102,6 +154,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -119,6 +172,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -136,6 +190,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -153,6 +208,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -170,6 +226,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -187,6 +244,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
     @Test
@@ -204,6 +262,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
 
@@ -222,6 +281,7 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
     // endregion ---- annotation tests
 }
