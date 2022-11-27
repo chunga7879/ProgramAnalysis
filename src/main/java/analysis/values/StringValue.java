@@ -3,9 +3,31 @@ package analysis.values;
 import analysis.values.visitor.OperationVisitor;
 
 public class StringValue extends ObjectWithNotNullValue {
+    public static final StringValue ANY_VALUE = new StringValue(Integer.MIN_VALUE, Integer.MAX_VALUE);
 
-    public StringValue() {
-        // TODO: add domain for String
+    private final int min;
+    private final int max;
+
+    public StringValue(String s) {
+        super(false);
+        this.min = s.length();
+        this.max = s.length();
+    }
+
+    public StringValue(int min, int max) {
+        assert min <= max;
+        this.min = min;
+        this.max = max;
+    }
+
+    @Override
+    public int minStringLength() {
+        return this.min;
+    }
+
+    @Override
+    public int maxStringLength() {
+        return this.max;
     }
 
     @Override
@@ -40,25 +62,32 @@ public class StringValue extends ObjectWithNotNullValue {
 
     @Override
     public ObjectWithNotNullValue copy() {
-        // TODO: implement
-        return new StringValue();
+        return new StringValue(this.min, this.max);
     }
 
     @Override
     public String toFormattedString() {
-        return this.canBeNull() ? "{null, String}" : "{String}";
+        String len = "[" + (this.min == this.max ? this.min : (this.min + "," + this.max)) + "]";
+        return this.canBeNull() ? "{null, String" + len + "}" : "{String" + len + "}";
     }
 
-
     @Override
-    public boolean equals(Object obj) {
-        // TODO: implement
-        return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        StringValue that = (StringValue) o;
+
+        if (min != that.min) return false;
+        return max == that.max;
     }
 
     @Override
     public int hashCode() {
-        // TODO: implement
-        return 0;
+        int result = super.hashCode();
+        result = 31 * result + min;
+        result = 31 * result + max;
+        return result;
     }
 }

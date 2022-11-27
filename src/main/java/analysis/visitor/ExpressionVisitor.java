@@ -5,6 +5,11 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
+import analysis.values.AnyValue;
+import analysis.values.IntegerRange;
+import analysis.values.PossibleValues;
+import analysis.values.StringValue;
+import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -26,19 +31,25 @@ import utils.VariableUtil;
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
     private final AddVisitor addVisitor;
+    private final DivideVisitor divideVisitor;
     private final SubtractVisitor subtractVisitor;
+    private final MultiplyVisitor multiplyVisitor;
 
     public ExpressionVisitor() {
-        this(new MergeVisitor(), new AddVisitor(), new SubtractVisitor());
+        this(new MergeVisitor(), new AddVisitor(), new DivideVisitor(), new MultiplyVisitor(), new SubtractVisitor());
     }
 
     public ExpressionVisitor(
             MergeVisitor mergeVisitor,
             AddVisitor addVisitor,
+            DivideVisitor divideVisitor,
+            MultiplyVisitor multiplyVisitor,
             SubtractVisitor subtractVisitor
     ) {
         this.mergeVisitor = mergeVisitor;
         this.addVisitor = addVisitor;
+        this.divideVisitor = divideVisitor;
+        this.multiplyVisitor = multiplyVisitor;
         this.subtractVisitor = subtractVisitor;
     }
 
@@ -139,8 +150,17 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
         return switch (n.getOperator()) {
+            case DIVIDE -> {
+                PairValue<PossibleValues, AnalysisError> result = leftValue.acceptAbstractOp(divideVisitor, rightValue);
+                AnalysisError error = result.getB();
+                if (error != null) {
+                    arg.addError(error);
+                }
+                yield result.getA();
+            }
             case PLUS -> leftValue.acceptAbstractOp(addVisitor, rightValue);
             case MINUS -> leftValue.acceptAbstractOp(subtractVisitor, rightValue);
+            case MULTIPLY -> leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
             default -> new AnyValue();
         };
     }
@@ -185,7 +205,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(StringLiteralExpr n, ExpressionAnalysisState arg) {
-        return new StringValue();
+        return new StringValue(n.asString());
     }
 
     @Override
@@ -200,7 +220,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(CharLiteralExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return new CharValue(n.asChar());
     }
 
     @Override
@@ -210,7 +230,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(BooleanLiteralExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return new BooleanValue(n.getValue());
     }
 
     @Override

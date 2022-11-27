@@ -3,6 +3,7 @@ package visualization;
 import net.sourceforge.plantuml.SourceStringReader;
 
 import java.io.*;
+import java.util.List;
 
 public class Diagram {
     private StringBuilder diagramString;
@@ -61,15 +62,76 @@ public class Diagram {
      * Adds a node to the diagram for a while loop's condition
      * @param node Node that represents the diagram node. The statement of the node should just be the conditional of the while loop.
      */
-    public void addWhileConditionalStartNode(DiagramNode node) {
-        String conditional = "while (" + node.statement() + ")\n";
+    public void addWhileForEachConditionalStartNode(DiagramNode node) {
+        String conditional = "while (" + node.statement() + ") is (true)\n";
 //        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
 //        addNode(conditionalNode);
         diagramString.append(conditional);
     }
 
-    public void addWhileEndNode() {
-        diagramString.append("endwhile\n");
+    public void addWhileForEachEndNode() {
+        diagramString.append("endwhile (false)\n");
+    }
+
+    public void addDoWhileStartNode() {
+        diagramString.append("repeat\n");
+    }
+
+    /**
+     * This adds the conditional for a do-while loop and also ends the loop in the diagram.
+     * @param node Conditional on which the loop is running on
+     */
+    public void addDoWhileConditionalEndNode(DiagramNode node) {
+        String conditional = "repeat while (" + node.statement() + ") is (true)\n";
+        diagramString.append(conditional);
+        diagramString.append("->false;\n");
+    }
+
+    /**
+     * Adds start node for a for loop
+     * @param initialization Initialization of for loop variable; ex. i = 1
+     * @param condition Condition of for loop execution; ex. i < 10
+     */
+    public void addForStartNode(List<String> initialization, String condition) {
+        for (String str : initialization) {
+            addStatementNode(str);
+        }
+        // TODO: May have an error in conditional
+        DiagramNode conditional = new DiagramNode(condition, Error.NONE, "");
+        addWhileForEachConditionalStartNode(conditional);
+    }
+
+    public void addSwitchConditionalStartNode(String condition) {
+        diagramString.append("switch (" + condition + ")\n");
+    }
+
+    public void addSwitchCaseNode(String switchCase) {
+        diagramString.append("case ( " + switchCase + " )\n");
+    }
+
+    public void addSwitchDefaultNode() {
+        diagramString.append("case ( default )\n");
+    }
+
+    public void addSwitchEndNode() {
+        diagramString.append("endswitch\n");
+    }
+
+    public void addThrowStatementNode(DiagramNode node) {
+        addNode(node);
+        // TODO: This is assuming that the exception we throw is not caught in the same method
+        diagramString.append("stop\n");
+    }
+
+    /**
+     * Adds end node for a for loop
+     * @param update How the conditional variable in the for loop is updated each iteration; ex. i++
+     */
+    public void addForEndNode(List<String> update) {
+        for (String str : update) {
+            addStatementNode(str);
+        }
+        addWhileForEachEndNode();
     }
 
     /**

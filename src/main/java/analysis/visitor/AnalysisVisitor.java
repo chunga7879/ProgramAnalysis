@@ -2,10 +2,7 @@ package analysis.visitor;
 
 import analysis.model.*;
 import analysis.values.*;
-import analysis.values.visitor.AddApproximateVisitor;
-import analysis.values.visitor.IntersectVisitor;
-import analysis.values.visitor.MergeVisitor;
-import analysis.values.visitor.SubtractApproximateVisitor;
+import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -16,12 +13,20 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import com.github.javaparser.javadoc.Javadoc;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
 import utils.ValueUtil;
+import utils.AnnotationUtil;
+import utils.JavadocUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> {
     private final String targetMethod;
@@ -73,10 +78,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(BlockStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         for (Statement s : n.getStatements()) {
-            s.accept(this, arg);
+            endState.add(s.accept(this, arg));
         }
-        return null;
+        return endState;
     }
 
     @Override
@@ -101,16 +107,41 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(BreakStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        endState.addBreakState(arg.getVariablesState().copy());
+        AnalysisLogger.logFormat(n, "BREAK: %s", arg.getVariablesState());
+        arg.getVariablesState().setDomainEmpty();
+        return endState;
     }
 
     @Override
     public EndState visit(ReturnStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        VariablesState varState = arg.getVariablesState();
+        if (n.getExpression().isPresent()) {
+            ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+            PossibleValues value = n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
+            AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+
+            // Check annotation against return
+            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+            if (dec != null) {
+                Set<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(
+                        value,
+                        dec.getAnnotations(),
+                        n.getExpression().get().toString()
+                );
+                arg.addErrors(n, errors);
+                AnalysisLogger.logErrors(n, errors);
+            }
+        }
+        varState.setDomainEmpty();
+        return endState;
     }
 
     @Override
     public EndState visit(IfStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         VariablesState varState = arg.getVariablesState();
         ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
         ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, exprAnalysisState);
@@ -123,33 +154,37 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         // IF case
         AnalysisLogger.log(n, "IF TRUE: " + trueVarState.toFormattedString());
         AnalysisState trueAnalysisState = new AnalysisState(trueVarState);
-        n.getThenStmt().accept(this, trueAnalysisState);
+        endState.add(n.getThenStmt().accept(this, trueAnalysisState));
 
         // ELSE case
         AnalysisLogger.log(n, "IF FALSE: " + falseVarState.toFormattedString());
         AnalysisState falseAnalysisState = new AnalysisState(falseVarState);
         if (n.getElseStmt().isPresent()) {
-            n.getElseStmt().get().accept(this, falseAnalysisState);
+            endState.add(n.getElseStmt().get().accept(this, falseAnalysisState));
         }
 
         // Merge together
         VariablesState mergedState = new VariablesState();
+        mergedState.setDomainEmpty();
         if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
         if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
         varState.copyValuesFrom(mergedState);
         AnalysisLogger.logEndFormat(n, "IF MERGED: %s", varState);
-        return null;
+        return endState;
     }
 
     @Override
     public EndState visit(WhileStmt n, AnalysisState arg) {
-        handleLoop(n, "WHILE", arg, n.getCondition(), n.getBody(), null);
-        return null;
+        return handleLoop(n, "WHILE", arg, n.getCondition(), n.getBody(), null);
     }
 
     @Override
     public EndState visit(ContinueStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        endState.addContinueState(arg.getVariablesState().copy());
+        AnalysisLogger.logFormat(n, "CONTINUE: %s", arg.getVariablesState());
+        arg.getVariablesState().setDomainEmpty();
+        return endState;
     }
 
     @Override
@@ -172,8 +207,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         }
         AnalysisLogger.log(n, "FOR INITIALIZE: " + varState.toFormattedString());
 
-        handleLoop(n, "FOR", arg, n.getCompare().orElse(null), n.getBody(), n.getUpdate());
-        return null;
+        return handleLoop(n, "FOR", arg, n.getCompare().orElse(null), n.getBody(), n.getUpdate());
     }
 
     /**
@@ -185,7 +219,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
      * @param body     Body inside the loop
      * @param update   Updater (i.e. for loop)
      */
-    private void handleLoop(Node loopNode, String loopName, AnalysisState state, Expression compare, Statement body, NodeList<Expression> update) {
+    private EndState handleLoop(Node loopNode, String loopName, AnalysisState state, Expression compare, Statement body, NodeList<Expression> update) {
+        EndState endState = new EndState();
         VariablesState varState = state.getVariablesState();
         VariablesState mergeState = varState.copy(); // State tracking the values in all iterations
         VariablesState currentState = mergeState.copy(); // State tracking the values in each iteration
@@ -204,10 +239,12 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
                 // If # of loop runs is too long, start to approximate changes
                 isApprox = true;
                 AnalysisLogger.logFormat(loopNode, "%s [%s] TOO MANY ITERATIONS", loopName, i);
-                loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new SubtractApproximateVisitor());
+                loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new DivideVisitor(),
+                        new MultiplyVisitor(), new SubtractApproximateVisitor());
                 loopAnalysisVisitor = new AnalysisVisitor(targetMethod, loopExprVisitor);
             }
 
+            // Check condition
             if (compare != null) {
                 ExpressionAnalysisState compareAnalysisState = new ExpressionAnalysisState(currentState);
                 ConditionStates condStates = compare.accept(conditionVisitor, compareAnalysisState);
@@ -225,7 +262,15 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             AnalysisState analysisState = new AnalysisState(currentState);
             EndState bodyEndState = body.accept(loopAnalysisVisitor, analysisState);
             state.addErrors(analysisState);
-            // TODO: add early breaks from bodyEndState to exitState
+
+            // Merge continue states to current state
+            Set<VariablesState> continueStates = bodyEndState.popContinueStates();
+            for (VariablesState continueState : continueStates) {
+                currentState.merge(mergeVisitor, continueState);
+            }
+            endState.add(bodyEndState);
+
+            // Update in FOR loops
             if (update != null) {
                 for (Expression e : update) {
                     ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
@@ -243,14 +288,55 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             }
             i++;
         } while (true);
+
+        // Merge break states with exit state
+        Set<VariablesState> breakStates = endState.popBreakStates();
+        for (VariablesState breakState : breakStates) {
+            exitState.merge(mergeVisitor, breakState);
+        }
+
         AnalysisLogger.logEndFormat(loopNode, "%s EXIT STATE: %s", loopName, exitState);
         if (exitState.isDomainEmpty()) AnalysisLogger.logEndFormat(loopNode, "%s LOOP IS INFINITE", loopName);
         varState.copyValuesFrom(exitState);
+
+        return endState;
     }
 
     @Override
     public EndState visit(ThrowStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        VariablesState varState = arg.getVariablesState();
+        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
+        n.getExpression().accept(expressionVisitor, exprAnalysisState);
+        AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+
+        if (varState.isDomainEmpty()) return null;
+        ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
+
+        // TODO: add exception to EndState and move computation to visit MethodDeclaration
+        ResolvedType throwType = n.getExpression().calculateResolvedType();
+        if (throwType.isReferenceType() && runtimeExceptionType.isAssignableBy(throwType)) {
+            // Check if the thrown RuntimeException is in the throws signature or the @throws annotation in Javadocs
+            boolean inSignature = false;
+            boolean inJavadocs = false;
+            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+            if (dec != null) {
+                inSignature = dec.getThrownExceptions().stream().map(Type::resolve).anyMatch(x -> runtimeExceptionType.isAssignableBy(x) && x.isAssignableBy(throwType));
+
+                Javadoc javadoc = dec.getJavadoc().orElse(null);
+                if (javadoc != null) {
+                    Set<ResolvedType> throwsTags = JavadocUtil.getThrows(dec);
+                    inJavadocs = throwsTags.stream().anyMatch(x -> x.isAssignableBy(throwType));
+                }
+            }
+
+            AnalysisLogger.log(n, "RUNTIME THROW " + throwType.asReferenceType().getQualifiedName() + ((!inSignature && !inJavadocs) ? " (Not in signature/Javadoc)" : ""));
+            arg.addError(n, new AnalysisError("Runtime Exception not in signature/Javadoc: " + throwType));
+        } else {
+            AnalysisLogger.log(n, "THROW " + throwType.asReferenceType().getQualifiedName());
+        }
+        varState.setDomainEmpty();
+        return endState;
     }
 
     @Override
