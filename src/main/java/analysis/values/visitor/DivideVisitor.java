@@ -18,13 +18,13 @@ public class DivideVisitor extends AbstractOperationVisitor {
         // 0 is the denominator
         if (bMin == 0 && bMax == 0) {
             return new PairValue<>(new EmptyValue(),
-                    new AnalysisError("ArithmeticException", true));
+                    new AnalysisError(ArithmeticException.class, true));
         }
 
         AnalysisError error = null;
         // 0 is a possible value for the denominator
         if (bMin <= 0 && bMax >= 0) {
-            error = new AnalysisError("ArithmeticException");
+            error = new AnalysisError(ArithmeticException.class, false);
             // if the minimum denominator is 0, we shift the range from [0, n] to [1, n]
             if (bMin == 0) {
                 bMin = 1;
@@ -47,7 +47,7 @@ public class DivideVisitor extends AbstractOperationVisitor {
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(IntegerValue a, AnyValue b) {
-        return new PairValue<>(new AnyValue(), new AnalysisError("ArithmeticException: " + a + " / " + b));
+        return new PairValue<>(new AnyValue(), new AnalysisError(ArithmeticException.class, false));
     }
 
 }

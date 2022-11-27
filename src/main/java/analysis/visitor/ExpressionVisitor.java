@@ -20,6 +20,7 @@ import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 import utils.MathUtil;
+import utils.ResolverUtil;
 import utils.ValueUtil;
 import utils.VariableUtil;
 
@@ -93,7 +94,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
         // Check null
         if (arrayNameValue.canBeNull()) {
-            arg.addError(new AnalysisError("NullPointerException: " + n.getName(), arrayNameValue == NullValue.VALUE));
+            arg.addError(new AnalysisError(NullPointerException.class, n.getName(), arrayNameValue == NullValue.VALUE));
         }
 
         // Check valid index
@@ -108,7 +109,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         validIndex = validIndex.acceptAbstractOp(restrictLTVisitor, length);
         PossibleValues validLength = length.acceptAbstractOp(restrictGTVisitor, validIndex);
         if (!Objects.equals(indexValue, validIndex)) {
-            arg.addError(new AnalysisError("ArrayIndexOutOfBoundsException: " + n, validIndex.isEmpty()));
+            arg.addError(new AnalysisError(ArrayIndexOutOfBoundsException.class, n, validIndex.isEmpty()));
         }
 
         if (n.getName().isNameExpr()) {
@@ -136,7 +137,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             if (dimensionValue instanceof IntegerValue intDimensionValue) {
                 PossibleValues validSize = intDimensionValue.acceptAbstractOp(restrictGTEVisitor, new IntegerRange(0));
                 if (!Objects.equals(validSize, intDimensionValue)) {
-                    arg.addError(new AnalysisError("NegativeArraySizeException: " + n, validSize.isEmpty()));
+                    arg.addError(new AnalysisError(NegativeArraySizeException.class, n, validSize.isEmpty()));
                 }
                 // Update possible values of size variable
                 VariableUtil.setVariableFromExpression(e, validSize, arg.getVariablesState());
@@ -200,7 +201,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         PossibleValues scopeValue = n.getScope().accept(this, arg);
         ResolvedValueDeclaration valDec = n.resolve();
         if (scopeValue.canBeNull()) {
-            arg.addError(new AnalysisError("NullPointerException: " + n.getScope(), Objects.equals(scopeValue, NullValue.VALUE)));
+            arg.addError(new AnalysisError(NullPointerException.class, n.getScope(), Objects.equals(scopeValue, NullValue.VALUE)));
             if (scopeValue instanceof ObjectValue objValue) {
                 VariableUtil.setVariableFromExpression(n.getScope(), objValue.withNotNullable(), arg.getVariablesState());
             }
@@ -211,7 +212,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             }
         }
         // TODO: handle field access default value (+ annotations)
-        return new AnyValue();
+        return ValueUtil.getValueForType(valDec.getType());
     }
 
     @Override
@@ -261,7 +262,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(NameExpr n, ExpressionAnalysisState arg) {
-        ResolvedValueDeclaration dec = n.resolve();
+        ResolvedValueDeclaration dec = ResolverUtil.resolveOrNull(n);
+        if (dec == null) return AnyValue.VALUE;
         VariablesState state = arg.getVariablesState();
         if (dec instanceof JavaParserVariableDeclaration jpVarDec) {
             return state.getVariable(jpVarDec.getVariableDeclarator());
@@ -269,7 +271,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
             return state.getVariable(jpParamDec.getWrappedNode());
         }
-        return new AnyValue();
+        return AnyValue.VALUE;
     }
 
     @Override

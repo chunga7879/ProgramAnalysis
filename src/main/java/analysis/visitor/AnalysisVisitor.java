@@ -1,7 +1,7 @@
 package analysis.visitor;
 
 import analysis.model.*;
-import analysis.values.*;
+import analysis.values.PossibleValues;
 import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
@@ -18,11 +18,10 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
-import utils.ValueUtil;
 import utils.AnnotationUtil;
 import utils.JavadocUtil;
+import utils.ValueUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -332,7 +331,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             }
 
             AnalysisLogger.log(n, "RUNTIME THROW " + throwType.asReferenceType().getQualifiedName() + ((!inSignature && !inJavadocs) ? " (Not in signature/Javadoc)" : ""));
-            arg.addError(n, new AnalysisError("Runtime Exception not in signature/Javadoc: " + throwType));
+            arg.addError(n, new AnalysisError("Runtime Exception not in signature/Javadoc: " + throwType, true));
         } else {
             AnalysisLogger.log(n, "THROW " + throwType.asReferenceType().getQualifiedName());
         }
