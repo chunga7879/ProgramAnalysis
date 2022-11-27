@@ -24,7 +24,8 @@ public class AddVisitor extends OperationVisitorWithDefault {
     public PossibleValues visit(PossibleValues a, StringValue b) {
         return new StringValue(
                 MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
-                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
+                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength()),
+                false
         );
     }
 
@@ -37,7 +38,8 @@ public class AddVisitor extends OperationVisitorWithDefault {
     public PossibleValues visit(NullValue a, ObjectValue b) {
         return new StringValue(
                 MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
-                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
+                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength()),
+                false
         );
     }
 
