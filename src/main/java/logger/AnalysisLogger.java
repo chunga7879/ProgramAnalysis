@@ -31,25 +31,15 @@ public final class AnalysisLogger {
     public static void log(Node n, VariablesState arg, List<AnalysisError> errors) {
         if (!doLog) return;
         log(n, arg.toFormattedString());
-        if (errors != null && !errors.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Errors: ");
-            boolean first = true;
-            for (AnalysisError error : errors) {
-                if (!first) sb.append(", ");
-                sb.append("'").append(error.getMessage()).append("'");
-                first = false;
-            }
-            log(n, sb.toString());
-        }
+        logErrors(n, errors);
     }
 
     /**
      * Log a message at a node
      */
-    public static void log(Node n, String message, VariablesState state) {
+    public static void logFormat(Node n, String format, Object... args) {
         if (!doLog) return;
-        log(n, message + state.toFormattedString());
+        log(n, String.format(format, args));
     }
 
     /**
@@ -68,11 +58,11 @@ public final class AnalysisLogger {
     }
 
     /**
-     * Log a message at a node
+     * Log the end of the control statement
      */
-    public static void logEnd(Node n, String message, VariablesState state) {
+    public static void logEndFormat(Node n, String format, Object... arg) {
         if (!doLog) return;
-        log(n, message + state.toFormattedString());
+        logEnd(n, String.format(format, arg));
     }
 
 
@@ -97,5 +87,22 @@ public final class AnalysisLogger {
         String[] split = str.split("\n");
         if (split.length < 1) return "";
         return split[0];
+    }
+
+    /**
+     * Log errors at node
+     */
+    public static void logErrors(Node n, List<AnalysisError> errors) {
+        if (errors != null && !errors.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Errors: ");
+            boolean first = true;
+            for (AnalysisError error : errors) {
+                if (!first) sb.append(", ");
+                sb.append("'").append(error.getMessage()).append("'");
+                first = false;
+            }
+            log(n, sb.toString());
+        }
     }
 }

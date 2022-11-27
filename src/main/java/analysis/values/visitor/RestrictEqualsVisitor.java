@@ -34,4 +34,10 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
         if (a.canBeNull()) return b;
         return new EmptyValue();
     }
+
+    @Override
+    public PossibleValues visit(ArrayValue a, ArrayValue b) {
+        // To do this properly, you'd need to keep track of potential pointer values
+        return a;
+    }
 }
