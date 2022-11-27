@@ -121,6 +121,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
             PossibleValues value = n.getExpression().get().accept(expressionVisitor, exprAnalysisState);
             AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
+            arg.addErrors(n, exprAnalysisState.getErrors());
 
             // Check annotation against return
             MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
