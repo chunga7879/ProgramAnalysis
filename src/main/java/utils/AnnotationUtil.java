@@ -49,62 +49,108 @@ public final class AnnotationUtil {
         return errors;
     }
 
-    public static Set<AnalysisError> checkArgumentWithAnnotation(
+    public static List<AnalysisError> checkArgumentWithAnnotation(
             PossibleValues value,
             List<AnnotationExpr> annotations
     ) {
-        Set<AnalysisError> errors = new HashSet<>();
+        List<AnalysisError> errors = new ArrayList<>();
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
-        if (annotationMap.containsKey(AnnotationType.Null) && value.canBeNull()) {
-            boolean isDefinite = value == NullValue.VALUE;
+        if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
+            errors.add(createArgumentError("@NotNull", "null", value == NullValue.VALUE));
         }
-        if (annotationMap.containsKey(AnnotationType.Positive) && !checkPositiveAnnotation(value)) {
-            errors.add(createArgumentError("@Positive", "not positive", false));
+        PairValue<Boolean, Boolean> check = checkPositiveAnnotation(value);
+        if (annotationMap.containsKey(AnnotationType.Positive) && !check.getA()) {
+            errors.add(createArgumentError("@Positive", "not positive", !check.getB()));
         }
-        if (annotationMap.containsKey(AnnotationType.PositiveOrZero) && !checkPositiveOrZeroAnnotation(value)) {
-            errors.add(createArgumentError("@PositiveOrZero", "not positive or zero", false));
+        check = checkPositiveOrZeroAnnotation(value);
+        if (annotationMap.containsKey(AnnotationType.PositiveOrZero) && !check.getA()) {
+            errors.add(createArgumentError("@PositiveOrZero", "not positive or zero", !check.getB()));
         }
-        if (annotationMap.containsKey(AnnotationType.Negative) && !checkNegativeAnnotation(value)) {
-            errors.add(createArgumentError("@Negative", "not negative", false));
+        check = checkNegativeAnnotation(value);
+        if (annotationMap.containsKey(AnnotationType.Negative) && !checkNegativeAnnotation(value).getA()) {
+            errors.add(createArgumentError("@Negative", "not negative", !check.getB()));
         }
-        if (annotationMap.containsKey(AnnotationType.NegativeOrZero) && !checkNegativeOrZeroAnnotation(value)) {
-            errors.add(createArgumentError("@NegativeOrZero", "not negative or zero", false));
+        check = checkNegativeOrZeroAnnotation(value);
+        if (annotationMap.containsKey(AnnotationType.NegativeOrZero) && !checkNegativeOrZeroAnnotation(value).getA()) {
+            errors.add(createArgumentError("@NegativeOrZero", "not negative or zero", !check.getB()));
         }
         return errors;
     }
 
-    private static boolean checkPositiveAnnotation(PossibleValues v) {
+    private static PairValue<Boolean, Boolean> checkPositiveAnnotation(PossibleValues v) {
         if (v instanceof AnyValue) {
             // indefinite error
-            return false;
+            return new PairValue<>(false, false);
         }
 
         if (v instanceof IntegerValue iv) {
             if (iv.getMax() <= 0) {
                 // definite error
-                return false;
+                return new PairValue<>(false, true);
             }
             if (iv.getMin() <= 0) {
                 // indefinite error
-                return false;
+                return new PairValue<>(false, false);
             }
         }
-        return true;
+        return new PairValue<>(true, false);
     }
 
-    private static boolean checkPositiveOrZeroAnnotation(PossibleValues v) {
-        // TODO: implement
-        return true;
+    private static PairValue<Boolean, Boolean> checkPositiveOrZeroAnnotation(PossibleValues v) {
+        if (v instanceof AnyValue) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+
+        if (v instanceof IntegerValue iv) {
+            if (iv.getMax() < 0) {
+                // definite error
+                return new PairValue<>(false, true);
+            }
+            if (iv.getMin() < 0) {
+                // indefinite error
+                return new PairValue<>(false, false);
+            }
+        }
+        return new PairValue<>(true, false);
     }
 
-    private static boolean checkNegativeAnnotation(PossibleValues v) {
-        // TODO: implement
-        return true;
+    private static PairValue<Boolean, Boolean> checkNegativeAnnotation(PossibleValues v) {
+        if (v instanceof AnyValue) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+
+        if (v instanceof IntegerValue iv) {
+            if (iv.getMin() >= 0) {
+                // definite error
+                return new PairValue<>(false, true);
+            }
+            if (iv.getMax() >= 0) {
+                // indefinite error
+                return new PairValue<>(false, false);
+            }
+        }
+        return new PairValue<>(true, false);
     }
 
-    private static boolean checkNegativeOrZeroAnnotation(PossibleValues v) {
-        // TODO: implement
-        return true;
+    private static PairValue<Boolean, Boolean> checkNegativeOrZeroAnnotation(PossibleValues v) {
+        if (v instanceof AnyValue) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+
+        if (v instanceof IntegerValue iv) {
+            if (iv.getMin() > 0) {
+                // definite error
+                return new PairValue<>(false, true);
+            }
+            if (iv.getMax() > 0) {
+                // indefinite error
+                return new PairValue<>(false, false);
+            }
+        }
+        return new PairValue<>(true, false);
     }
 
     /**
@@ -135,15 +181,18 @@ public final class AnnotationUtil {
     }
 
     /**
-     * Create a AnalysisError for the return annotation error
+     * Create an AnalysisError for the return annotation error
      */
     private static AnalysisError createReturnError(String annotation, String badCondition, String nodeName, boolean isDefinite) {
         String message = annotation + " return is " + (isDefinite ? "always " : "sometimes ") + badCondition + ": " + nodeName;
         return new AnalysisError(message, isDefinite);
     }
 
+    /**
+     * Create an AnalysisError for the argurment annotation error
+     */
     private static AnalysisError createArgumentError(String annotation, String badCondition, boolean isDefinite) {
-        String message = annotation + "";
+        String message = annotation + " argument is " + (isDefinite ? "always " : "sometimes ") + badCondition;
         return new AnalysisError(message, isDefinite);
     }
 }
