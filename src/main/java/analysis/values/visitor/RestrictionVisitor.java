@@ -49,7 +49,7 @@ public abstract class RestrictionVisitor implements OperationVisitor<PossibleVal
     }
 
     @Override
-    public PossibleValues visitAbstract(BoxedPrimitive<?> a, PossibleValues b) {
+    public PossibleValues visitAbstract(BoxedPrimitive a, PossibleValues b) {
         return b.acceptOp(this, b);
     }
 
@@ -132,7 +132,7 @@ public abstract class RestrictionVisitor implements OperationVisitor<PossibleVal
     }
 
     @Override
-    public <S extends PrimitiveValue, U extends PrimitiveValue> PossibleValues visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
+    public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
         return a;
     }
 }

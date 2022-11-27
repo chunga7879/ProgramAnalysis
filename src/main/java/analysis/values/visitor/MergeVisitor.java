@@ -62,8 +62,8 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     }
 
     @Override
-    public <S extends PrimitiveValue, U extends PrimitiveValue> PossibleValues visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
-        return new BoxedPrimitive<>((S) a.unbox().acceptAbstractOp(this, b.unbox()));
+    public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
+        return new BoxedPrimitive((PrimitiveValue) a.unbox().acceptAbstractOp(this, b.unbox()));
     }
 
     /**

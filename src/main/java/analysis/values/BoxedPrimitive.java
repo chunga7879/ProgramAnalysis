@@ -4,15 +4,15 @@ import analysis.values.visitor.OperationVisitor;
 
 import java.util.Objects;
 
-public class BoxedPrimitive<V extends PrimitiveValue> extends ObjectWithNotNullValue {
+public class BoxedPrimitive extends ObjectWithNotNullValue {
 
-    private final V v;
+    private final PrimitiveValue v;
 
-    public BoxedPrimitive(V v) {
+    public BoxedPrimitive(PrimitiveValue v) {
         this.v = v;
     }
 
-    public V unbox() {
+    public PrimitiveValue unbox() {
         return this.v;
     }
 
@@ -22,13 +22,13 @@ public class BoxedPrimitive<V extends PrimitiveValue> extends ObjectWithNotNullV
     }
 
     @Override
-    public <T, S extends PrimitiveValue> T acceptOp(OperationVisitor<T> visitor, BoxedPrimitive<S> a) {
+    public <T> T acceptOp(OperationVisitor<T> visitor, BoxedPrimitive a) {
         return visitor.visit(a, this);
     }
 
     @Override
     public ObjectWithNotNullValue copy() {
-        return new BoxedPrimitive<>(v);
+        return new BoxedPrimitive(this.v);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class BoxedPrimitive<V extends PrimitiveValue> extends ObjectWithNotNullV
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        BoxedPrimitive<?> that = (BoxedPrimitive<?>) o;
+        BoxedPrimitive that = (BoxedPrimitive) o;
 
         return Objects.equals(v, that.v);
     }

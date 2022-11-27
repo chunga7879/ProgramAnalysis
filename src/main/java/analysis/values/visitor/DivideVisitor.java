@@ -51,8 +51,8 @@ public class DivideVisitor extends AbstractOperationVisitor {
     }
 
     @Override
-    public <S extends PrimitiveValue, U extends PrimitiveValue> PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
+    public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, BoxedPrimitive b) {
         PairValue<PossibleValues, AnalysisError> p = a.unbox().acceptAbstractOp(this, b.unbox());
-        return new PairValue<>(new BoxedPrimitive<>((S) p.getA()), p.getB());
+        return new PairValue<>(new BoxedPrimitive((PrimitiveValue) p.getA()), p.getB());
     }
 }

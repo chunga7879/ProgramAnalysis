@@ -118,28 +118,28 @@ public class IntegerRangeTest {
 
     @Test
     public void boxedIntegerAdd() {
-        BoxedPrimitive<IntegerRange> a = new BoxedPrimitive<>(new IntegerRange(1));
-        BoxedPrimitive<IntegerRange> b = new BoxedPrimitive<>(new IntegerRange(2));
-        BoxedPrimitive<IntegerRange> ab = (BoxedPrimitive<IntegerRange>) add(a, b);
-        Assertions.assertEquals(3, ab.unbox().getMin());
-        Assertions.assertEquals(3, ab.unbox().getMax());
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(1));
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(2));
+        BoxedPrimitive ab = (BoxedPrimitive) add(a, b);
+        Assertions.assertEquals(3, ((IntegerRange) ab.unbox()).getMin());
+        Assertions.assertEquals(3, ((IntegerRange) ab.unbox()).getMax());
     }
 
     @Test
     public void boxedIntegerSubtract() {
-        BoxedPrimitive<IntegerRange> a = new BoxedPrimitive<>(new IntegerRange(10));
-        BoxedPrimitive<IntegerRange> b = new BoxedPrimitive<>(new IntegerRange(2));
-        BoxedPrimitive<IntegerRange> ab = (BoxedPrimitive<IntegerRange>) subtract(a, b);
-        Assertions.assertEquals(8, ab.unbox().getMin());
-        Assertions.assertEquals(8, ab.unbox().getMax());
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(10));
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(2));
+        BoxedPrimitive ab = (BoxedPrimitive) subtract(a, b);
+        Assertions.assertEquals(8, ((IntegerRange) ab.unbox()).getMin());
+        Assertions.assertEquals(8, ((IntegerRange) ab.unbox()).getMax());
     }
 
     @Test
     public void boxedIntegerMerge() {
-        BoxedPrimitive<IntegerRange> a = new BoxedPrimitive<>(new IntegerRange(1, 10));
-        BoxedPrimitive<IntegerRange> b = new BoxedPrimitive<>(new IntegerRange(4, 20));
-        BoxedPrimitive<IntegerRange> ab = (BoxedPrimitive<IntegerRange>) merge(a, b);
-        Assertions.assertEquals(1, ab.unbox().getMin());
-        Assertions.assertEquals(20, ab.unbox().getMax());
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(1, 10));
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(4, 20));
+        BoxedPrimitive ab = (BoxedPrimitive) merge(a, b);
+        Assertions.assertEquals(1, ((IntegerRange) ab.unbox()).getMin());
+        Assertions.assertEquals(20, ((IntegerRange) ab.unbox()).getMax());
     }
 }
