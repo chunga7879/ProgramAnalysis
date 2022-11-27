@@ -9,6 +9,19 @@ public final class MathUtil {
         return (int)limitToIntRange(result);
     }
 
+    public static int divideToLimit(int a, int b) {
+        long result = (long)a / (long)b;
+        return (int)limitToIntRange(result);
+    }
+
+    /**
+     * Multiply a * b without overflows and limits the final value in valid range of int
+     */
+    public static int multiplyToLimit(int a, int b) {
+        long result = (long)a * (long)b;
+        return (int)limitToIntRange(result);
+    }
+
     /**
      * Subtract a - b without overflows and limits the final value in valid range of int
      */
