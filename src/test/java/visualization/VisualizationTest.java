@@ -167,31 +167,34 @@ public class VisualizationTest {
         visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testReturnStmt.png");
     }
 
-//
-//    @Test
-//    public void testThrowStat() {
-//        String code = """
-//                public class Main {
-//                    int test(int x) {
-//                        int b = 0;
-//                        if (b == 0) {
-//                            throw new ArithmeticException("divide by zero");
-//                        }
-//                        int y = 2 / b;
-//                        return x * b;
-//                    }
-//                }
-//                """;
-//        CompilationUnit compiled = compile(code);
-//        Parameter x = getParameter(compiled, "x");
-//        VariablesState varState = new VariablesState();
-//        AnalysisState analysisState = new AnalysisState(varState);
-//        analysisState.diagram = new Diagram();
-//        varState.setVariable(x, new IntegerRange(-33, 115));
-//        AnalysisVisitor av = new AnalysisVisitor("test");
-//
-//        av.visit(compiled, analysisState);
-//
-//        analysisState.diagram.createDiagramPNG("src/test/java/visualization/outputs/throwStat.png");
-//    }
+
+    @Test
+    public void testThrowStat() {
+        String code = """
+                public class Main {
+                    int test(int x) {
+                        int b = 0;
+                        if (b == 0) {
+                            throw new ArithmeticException("divide by zero");
+                        }
+                        int y = 2 / b;
+                        return x * b;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+        varState.setVariable(x, new IntegerRange(-33, 115));
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/throwStat.png");
+    }
 }
