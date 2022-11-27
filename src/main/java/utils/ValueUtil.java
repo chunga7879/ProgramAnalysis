@@ -23,7 +23,7 @@ public final class ValueUtil {
         if (type.isPrimitive()) {
             return switch (type.asPrimitive()) {
                 case INT -> IntegerRange.ANY_VALUE;
-                case BOOLEAN -> AnyValue.VALUE;
+                case BOOLEAN -> new BooleanValue(true, true);
                 default -> AnyValue.VALUE;
             };
         } else if (type.isArray()) {
@@ -40,62 +40,18 @@ public final class ValueUtil {
     /**
      * Get the initial value for type with annotations
      */
-    public static PossibleValues getValueForType(ResolvedType type, List<AnnotationExpr> annotations, VariablesState state, ExpressionVisitor exprVisitor) {
+    public static PossibleValues getValueForType(ResolvedType type, List<AnnotationExpr> annotations, ExpressionVisitor exprVisitor) {
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = AnnotationUtil.getAnnotationMap(annotations);
         if (type.isPrimitive()) {
             return switch (type.asPrimitive()) {
-                case INT -> {
-                    PossibleValues integerValue = IntegerRange.ANY_VALUE;
-                    if (annotationMap.containsKey(AnnotationType.Min)) {
-                        integerValue = restrictValuesWithAnnotationParameters(
-                                annotationMap.get(AnnotationType.Min),
-                                exprVisitor,
-                                integerValue,
-                                "value",
-                                RestrictGreaterThanOrEqualVisitor.INSTANCE
-                        );
-                    }
-                    if (annotationMap.containsKey(AnnotationType.Max)) {
-                        integerValue = restrictValuesWithAnnotationParameters(
-                                annotationMap.get(AnnotationType.Max),
-                                exprVisitor,
-                                integerValue,
-                                "value",
-                                RestrictLessThanOrEqualVisitor.INSTANCE
-                        );
-                    }
-                    if (annotationMap.containsKey(AnnotationType.Negative)) {
-                        integerValue = integerValue.acceptAbstractOp(RestrictLessThanVisitor.INSTANCE, new IntegerRange(0));
-                    }
-                    if (annotationMap.containsKey(AnnotationType.Positive)) {
-                        integerValue = integerValue.acceptAbstractOp(RestrictGreaterThanVisitor.INSTANCE, new IntegerRange(0));
-                    }
-                    if (annotationMap.containsKey(AnnotationType.NegativeOrZero)) {
-                        integerValue = integerValue.acceptAbstractOp(RestrictLessThanOrEqualVisitor.INSTANCE, new IntegerRange(0));
-                    }
-                    if (annotationMap.containsKey(AnnotationType.PositiveOrZero)) {
-                        integerValue = integerValue.acceptAbstractOp(RestrictGreaterThanOrEqualVisitor.INSTANCE, new IntegerRange(0));
-                    }
-                    yield integerValue;
-                }
+                case INT -> getIntegerValue(annotationMap, exprVisitor);
                 case BOOLEAN -> new BooleanValue(true, true);
                 default -> AnyValue.VALUE;
             };
         } else if (type.isArray()) {
-            return getArrayValue(annotationMap, state, exprVisitor);
+            return getArrayValue(annotationMap, exprVisitor);
         } else if (type.isReferenceType()) {
-            boolean isNotNull = annotationMap.containsKey(AnnotationType.NotNull);
-            boolean isNull = annotationMap.containsKey(AnnotationType.Null);
-            boolean isNotEmpty = annotationMap.containsKey(AnnotationType.NotEmpty);
-            isNotNull = isNotNull || isNotEmpty;
-            if (isNull && isNotNull) return EmptyValue.VALUE;
-            if (isNull) return NullValue.VALUE;
-
-            String name = type.asReferenceType().getQualifiedName();
-            if (name.equalsIgnoreCase("java.lang.String")) {
-                StringValue baseValue = isNotEmpty ? new StringValue(1, Integer.MAX_VALUE) : StringValue.ANY_VALUE;
-                return isNotNull ? baseValue.withNotNullable() : baseValue;
-            }
+            return getObjectValue(annotationMap, type);
         }
         return AnyValue.VALUE;
     }
@@ -133,14 +89,53 @@ public final class ValueUtil {
     }
 
     /**
-     * Get the initial value for the array
-     * using @NotNull and @Size annotations
+     * Get the initial value for an integer
+     * using @Positive, @Negative, @PositiveOrZero, @NegativeOrZero, @Min, and @Max
      */
-    private static PossibleValues getArrayValue(Map<AnnotationType, Set<AnnotationExpr>> annotationMap, VariablesState state, ExpressionVisitor exprVisitor) {
+    private static PossibleValues getIntegerValue(Map<AnnotationType, Set<AnnotationExpr>> annotationMap, ExpressionVisitor exprVisitor) {
+        PossibleValues integerValue = IntegerRange.ANY_VALUE;
+        if (annotationMap.containsKey(AnnotationType.Min)) {
+            integerValue = restrictValuesWithAnnotationParameters(
+                    annotationMap.get(AnnotationType.Min),
+                    exprVisitor,
+                    integerValue,
+                    "value",
+                    RestrictGreaterThanOrEqualVisitor.INSTANCE
+            );
+        }
+        if (annotationMap.containsKey(AnnotationType.Max)) {
+            integerValue = restrictValuesWithAnnotationParameters(
+                    annotationMap.get(AnnotationType.Max),
+                    exprVisitor,
+                    integerValue,
+                    "value",
+                    RestrictLessThanOrEqualVisitor.INSTANCE
+            );
+        }
+        if (annotationMap.containsKey(AnnotationType.Negative)) {
+            integerValue = integerValue.acceptAbstractOp(RestrictLessThanVisitor.INSTANCE, new IntegerRange(0));
+        }
+        if (annotationMap.containsKey(AnnotationType.Positive)) {
+            integerValue = integerValue.acceptAbstractOp(RestrictGreaterThanVisitor.INSTANCE, new IntegerRange(0));
+        }
+        if (annotationMap.containsKey(AnnotationType.NegativeOrZero)) {
+            integerValue = integerValue.acceptAbstractOp(RestrictLessThanOrEqualVisitor.INSTANCE, new IntegerRange(0));
+        }
+        if (annotationMap.containsKey(AnnotationType.PositiveOrZero)) {
+            integerValue = integerValue.acceptAbstractOp(RestrictGreaterThanOrEqualVisitor.INSTANCE, new IntegerRange(0));
+        }
+        return integerValue;
+    }
+
+    /**
+     * Get the initial value for the array
+     * using @NotNull, @Null, @NotEmpty, and @Size annotations
+     */
+    private static PossibleValues getArrayValue(Map<AnnotationType, Set<AnnotationExpr>> annotationMap, ExpressionVisitor exprVisitor) {
         // @NotEmpty annotation
         boolean isNotEmpty = annotationMap.containsKey(AnnotationType.NotEmpty);
 
-        // @NotNull annotation
+        // @NotNull & @Null annotation
         boolean isNotNull = annotationMap.containsKey(AnnotationType.NotNull);
         boolean isNull = annotationMap.containsKey(AnnotationType.Null);
         isNotNull = isNotNull || isNotEmpty;
@@ -167,5 +162,25 @@ public final class ValueUtil {
         }
 
         return ArrayValue.create(length, !isNotNull);
+    }
+
+    /**
+     * Get the initial value for an object using @NotNull and @Null
+     * - String: @NotEmpty
+     */
+    private static PossibleValues getObjectValue(Map<AnnotationType, Set<AnnotationExpr>> annotationMap, ResolvedType type) {
+        boolean isNotNull = annotationMap.containsKey(AnnotationType.NotNull);
+        boolean isNull = annotationMap.containsKey(AnnotationType.Null);
+        boolean isNotEmpty = annotationMap.containsKey(AnnotationType.NotEmpty);
+        isNotNull = isNotNull || isNotEmpty;
+        if (isNull && isNotNull) return EmptyValue.VALUE;
+        if (isNull) return NullValue.VALUE;
+
+        String name = type.asReferenceType().getQualifiedName();
+        if (name.equalsIgnoreCase("java.lang.String")) {
+            StringValue baseValue = isNotEmpty ? new StringValue(1, Integer.MAX_VALUE) : StringValue.ANY_VALUE;
+            return isNotNull ? baseValue.withNotNullable() : baseValue;
+        }
+        return AnyValue.VALUE;
     }
 }
