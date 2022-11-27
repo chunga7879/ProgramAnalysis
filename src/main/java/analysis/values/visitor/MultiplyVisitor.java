@@ -1,8 +1,6 @@
 package analysis.values.visitor;
 
-import analysis.values.IntegerRange;
-import analysis.values.IntegerValue;
-import analysis.values.PossibleValues;
+import analysis.values.*;
 import utils.MathUtil;
 
 /**
@@ -25,5 +23,10 @@ public class MultiplyVisitor extends OperationVisitorWithDefault {
         int newMax = Math.max(Math.max(product1, product2), Math.max(product3, product4));
 
         return new IntegerRange(newMin, newMax);
+    }
+
+    @Override
+    public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
+        return new BoxedPrimitive((PrimitiveValue) a.unbox().acceptAbstractOp(this, b.unbox()));
     }
 }
