@@ -167,7 +167,18 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(CastExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        ResolvedType castType = n.getType().resolve();
+        ResolvedType exprType = n.getExpression().calculateResolvedType();
+
+        // check cast both ways
+        if (!(exprType.isAssignableBy(castType) || castType.isAssignableBy(exprType))) {
+            AnalysisError error = new AnalysisError("ClassCastException: " + n.getExpression() +
+                    " is not a subtype of " + n.getType());
+            arg.addError(error);
+            return new EmptyValue();
+        }
+
+        return n.getExpression().accept(this, arg);
     }
 
     @Override
