@@ -17,6 +17,11 @@ public abstract class ObjectValue extends PossibleValues {
         return visitor.visit(a, this);
     }
 
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, NullValue a) {
+        return visitor.visit(a, this);
+    }
+
     /**
      * Create an object value that is this value but nullable
      */

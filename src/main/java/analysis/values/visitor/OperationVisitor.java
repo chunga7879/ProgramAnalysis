@@ -22,6 +22,8 @@ public interface OperationVisitor<T> {
 
     T visitAbstract(NullValue a, PossibleValues b);
 
+    T visitAbstract(ArrayValue a, PossibleValues b);
+
     T visitAbstract(CharValue a, PossibleValues b);
 
     T visit(PossibleValues a, PossibleValues b);
@@ -53,4 +55,6 @@ public interface OperationVisitor<T> {
     T visit(IntegerValue a, CharValue b);
 
     T visit(BooleanValue a, BooleanValue b);
+
+    T visit(ArrayValue a, ArrayValue b);
 }
