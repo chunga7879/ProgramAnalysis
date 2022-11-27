@@ -18,7 +18,7 @@ import static analysis.visitor.VisitorTestUtils.*;
 public class WhileStatementTest {
     @BeforeEach
     public void runBefore() {
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
