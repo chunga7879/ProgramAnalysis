@@ -17,6 +17,8 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import logger.AnalysisLogger;
+import visualization.DiagramNode;
+import visualization.Error;
 import visualization.model.VisualizationState;
 
 import java.util.List;
@@ -47,6 +49,16 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(MethodDeclaration n, VisualizationState arg) {
+        String diagramStatement = n.getNameAsString() + "(";
+
+        for (Parameter p : n.getParameters()) {
+            diagramStatement = diagramStatement + p + ",";
+        }
+
+        diagramStatement = diagramStatement.substring(0, diagramStatement.length() - 1) + ")";
+        DiagramNode methodCall = new DiagramNode(diagramStatement, Error.NONE, "");
+        arg.diagram.addNode(methodCall);
+
         Optional<BlockStmt> body = n.getBody();
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);
     }
@@ -62,6 +74,19 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
     @Override
     public EndState visit(ExpressionStmt n, VisualizationState arg) {
         String expression = n.getExpression().toString();
+
+        DiagramNode diagramNode;
+        StringBuilder errorDescription = new StringBuilder();
+        if (!arg.getErrorMap().get(n).isEmpty()) {
+            for (AnalysisError er : arg.getErrorMap().get(n)) {
+                errorDescription.append(er.getMessage()).append("\n");
+            }
+            diagramNode = new DiagramNode(expression, Error.POTENTIAL, errorDescription.toString());
+        } else {
+            diagramNode = new DiagramNode(expression, Error.NONE, errorDescription.toString());
+        }
+        arg.diagram.addNode(diagramNode);
+
         return null;
     }
 
