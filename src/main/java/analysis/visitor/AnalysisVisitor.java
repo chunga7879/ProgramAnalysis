@@ -1,7 +1,7 @@
 package analysis.visitor;
 
 import analysis.model.*;
-import analysis.values.AnyValue;
+import analysis.values.*;
 import analysis.values.visitor.AddApproximateVisitor;
 import analysis.values.visitor.IntersectVisitor;
 import analysis.values.visitor.MergeVisitor;
@@ -17,6 +17,7 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import logger.AnalysisLogger;
+import utils.ValueUtil;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,7 +64,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         Optional<BlockStmt> body = n.getBody();
         for (Parameter p : n.getParameters()) {
             // TODO: handle annotations for parameters
-            varState.setVariable(p, new AnyValue());
+            PossibleValues val = ValueUtil.getValueForType(p.getType().resolve(), p.getAnnotations(), arg.getVariablesState(), expressionVisitor);
+            varState.setVariable(p, val);
         }
         AnalysisLogger.log(n.getName(), varState);
         return body.map(blockStmt -> blockStmt.accept(this, arg)).orElse(null);

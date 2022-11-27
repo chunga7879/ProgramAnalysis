@@ -7,7 +7,7 @@ import analysis.values.*;
  */
 public class MergeVisitor extends OperationVisitorWithDefault {
     @Override
-    public PossibleValues visit(IntegerValue a, IntegerValue b) {
+    public IntegerValue visit(IntegerValue a, IntegerValue b) {
         return new IntegerRange(
                 Math.min(a.getMin(), b.getMin()),
                 Math.max(a.getMax(), b.getMax())
@@ -38,5 +38,18 @@ public class MergeVisitor extends OperationVisitorWithDefault {
     @Override
     public PossibleValues visit(ObjectValue a, NullValue b) {
         return a.withNullable();
+    }
+
+    @Override
+    public PossibleValues visit(ArrayValue a, ArrayValue b) {
+        IntegerValue length = visit(a.getLength(), b.getLength());
+        return new ArrayValue(length, canBeNull(a, b));
+    }
+
+    /**
+     * Whether a merge of a & b can be null
+     */
+    private boolean canBeNull(ObjectValue a, ObjectValue b) {
+        return a.canBeNull() || b.canBeNull();
     }
 }

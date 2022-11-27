@@ -4,6 +4,7 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ForStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.WhileStmt;
@@ -41,5 +42,9 @@ public final class VisitorTestUtils {
 
     public static List<WhileStmt> getWhileStatements(CompilationUnit compilationUnit) {
         return compilationUnit.findAll(WhileStmt.class);
+    }
+
+    public static List<BlockStmt> getBlockStatements(CompilationUnit compilationUnit) {
+        return compilationUnit.findAll(BlockStmt.class);
     }
 }
