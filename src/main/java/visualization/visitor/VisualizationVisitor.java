@@ -107,6 +107,18 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(ReturnStmt n, VisualizationState arg) {
+        DiagramNode expression;
+        StringBuilder errorDescription = new StringBuilder();
+        if (!arg.getErrorMap().get(n).isEmpty()) {
+            for (AnalysisError er : arg.getErrorMap().get(n)) {
+                errorDescription.append(er.getMessage()).append("\n");
+            }
+            // TODO: differentiate potential and definite error
+            expression = new DiagramNode("return" + n.getExpression(), Error.POTENTIAL, errorDescription.toString());
+        } else {
+            expression = new DiagramNode("return " + n.getExpression(), Error.NONE, errorDescription.toString());
+        }
+        arg.diagram.addNode(expression);
         return null;
     }
 
