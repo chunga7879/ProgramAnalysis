@@ -201,8 +201,14 @@ public class VariablesState {
         this.isDomainEmpty = other.isDomainEmpty;
     }
 
+    @Override
+    public String toString() {
+        return toFormattedString();
+    }
+
     public String toFormattedString() {
         if (this.isDomainEmpty()) return "empty domain";
+        if (this.variableMap.isEmpty()) return "no variables";
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (Map.Entry<Node, PossibleValues> entry : this.variableMap.entrySet()) {
