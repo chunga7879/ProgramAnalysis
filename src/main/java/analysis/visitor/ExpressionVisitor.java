@@ -10,7 +10,6 @@ import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
 import analysis.values.StringValue;
-import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
