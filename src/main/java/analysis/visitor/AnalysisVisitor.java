@@ -114,7 +114,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, exprAnalysisState);
         VariablesState trueVarState = conditionStates.getTrueState();
         VariablesState falseVarState = conditionStates.getFalseState();
-        AnalysisLogger.log(n, "IF: ", varState);
+        AnalysisLogger.logFormat(n, "IF: ", varState);
         AnalysisLogger.logErrors(n, exprAnalysisState.getErrors());
         arg.addErrors(n, exprAnalysisState.getErrors());
 
@@ -209,7 +209,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             if (compare != null) {
                 ExpressionAnalysisState compareAnalysisState = new ExpressionAnalysisState(currentState);
                 ConditionStates condStates = compare.accept(conditionVisitor, compareAnalysisState);
-                arg.addErrors(compare, compareAnalysisState.getErrors());
+                state.addErrors(compare, compareAnalysisState.getErrors());
                 if (!condStates.getFalseState().isDomainEmpty()) {
                     exitState.merge(mergeVisitor, condStates.getFalseState());
                     AnalysisLogger.logFormat(loopNode, "%s [%s] EXIT STATE: %s", loopName, i, exitState);
@@ -222,13 +222,13 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             AnalysisLogger.logFormat(loopNode, "%s [%s] ITERATION START STATE: %s", loopName, i, currentState);
             AnalysisState analysisState = new AnalysisState(currentState);
             EndState bodyEndState = body.accept(loopAnalysisVisitor, analysisState);
-            arg.addErrors(analysisState);
+            state.addErrors(analysisState);
             // TODO: add early breaks from bodyEndState to exitState
             if (update != null) {
                 for (Expression e : update) {
                     ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
-                    e.accept(loopExprVisitor, loopExprAnalysisState);
-                    arg.addErrors(e, updateAnalysisState.getErrors());
+                    e.accept(loopExprVisitor, updateAnalysisState);
+                    state.addErrors(e, updateAnalysisState.getErrors());
                 }
             }
             AnalysisLogger.logEndFormat(loopNode, "%s [%s] ITERATION STATE: %s", loopName, i, currentState);
