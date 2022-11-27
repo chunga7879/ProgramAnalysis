@@ -5,7 +5,6 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
-import com.github.javaparser.StaticJavaParser;
 import analysis.values.AnyValue;
 import analysis.values.IntegerRange;
 import analysis.values.PossibleValues;
@@ -20,11 +19,8 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
-import com.github.javaparser.javadoc.Javadoc;
-import com.github.javaparser.javadoc.JavadocBlockTag;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
@@ -33,7 +29,6 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import utils.MathUtil;
 import utils.ValueUtil;
 import utils.VariableUtil;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 import utils.*;
 
@@ -41,8 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
-import java.util.Objects;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
