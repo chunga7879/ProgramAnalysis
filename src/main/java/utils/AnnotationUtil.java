@@ -56,7 +56,7 @@ public final class AnnotationUtil {
     ) {
         List<AnalysisError> errors = new ArrayList<>();
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
-        if (annotationMap.containsKey(AnnotationType.NotNull) && (value instanceof NullValue || value instanceof AnyValue)) {
+        if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
             errors.add(createArgumentError("@NotNull", "null", nodeName, value == NullValue.VALUE));
         }
         PairValue<Boolean, Boolean> check = checkPositiveAnnotation(value);
