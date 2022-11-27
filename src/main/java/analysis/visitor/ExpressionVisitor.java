@@ -5,11 +5,6 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
-import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -24,9 +19,11 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
-import utils.ValueUtil;
 import utils.MathUtil;
+import utils.ValueUtil;
 import utils.VariableUtil;
+
+import java.util.Objects;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -34,6 +31,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     private final DivideVisitor divideVisitor;
     private final SubtractVisitor subtractVisitor;
     private final MultiplyVisitor multiplyVisitor;
+    private RestrictGreaterThanVisitor restrictGTVisitor;
+    private RestrictGreaterThanOrEqualVisitor restrictGTEVisitor;
+    private RestrictLessThanVisitor restrictLTVisitor;
+    private RestrictLessThanOrEqualVisitor restrictLTEVisitor;
 
     public ExpressionVisitor() {
         this(new MergeVisitor(), new AddVisitor(), new DivideVisitor(), new MultiplyVisitor(), new SubtractVisitor());
@@ -51,6 +52,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         this.divideVisitor = divideVisitor;
         this.multiplyVisitor = multiplyVisitor;
         this.subtractVisitor = subtractVisitor;
+        this.restrictGTVisitor = new RestrictGreaterThanVisitor();
+        this.restrictGTEVisitor = new RestrictGreaterThanOrEqualVisitor();
+        this.restrictLTVisitor = new RestrictLessThanVisitor();
+        this.restrictLTEVisitor = new RestrictLessThanOrEqualVisitor();
     }
 
     @Override
@@ -87,7 +92,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
         // Check null
         if (arrayNameValue.canBeNull()) {
-            arg.addError(new AnalysisError("NullPointerException: " + n.getName()));
+            arg.addError(new AnalysisError("NullPointerException: " + n.getName(), arrayNameValue == NullValue.VALUE));
         }
 
         // Check valid index
@@ -97,13 +102,20 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         } else {
             length = ArrayValue.DEFAULT_LENGTH;
         }
-        // TODO: Use boolean operators
-        PossibleValues lessThanZeroIndex = indexValue.acceptAbstractOp(new RestrictLessThanVisitor(), new IntegerRange(0));
-        PossibleValues greaterOrEqualLengthIndex = indexValue.acceptAbstractOp(new RestrictGreaterThanOrEqualVisitor(), length);
-        if (!lessThanZeroIndex.isEmpty() || !greaterOrEqualLengthIndex.isEmpty()) {
-            arg.addError(new AnalysisError("ArrayIndexOutOfBoundsException: " + n));
-            // TODO: Restrict value of index variable (if it was) after this point
+
+        PossibleValues validIndex = indexValue.acceptAbstractOp(restrictGTEVisitor, new IntegerRange(0));
+        validIndex = validIndex.acceptAbstractOp(restrictLTVisitor, length);
+        PossibleValues validLength = length.acceptAbstractOp(restrictGTVisitor, validIndex);
+        if (!Objects.equals(indexValue, validIndex)) {
+            arg.addError(new AnalysisError("ArrayIndexOutOfBoundsException: " + n, validIndex.isEmpty()));
         }
+
+        if (n.getName().isNameExpr()) {
+            // Update array length
+            VariableUtil.updateArrayLength(n.getName().asNameExpr().resolve(), validLength, arg.getVariablesState());
+        }
+        // Update length variable
+        VariableUtil.setVariableFromExpression(n.getIndex(), validIndex, arg.getVariablesState());
 
         // Return proper value
         ResolvedType type = n.getName().calculateResolvedType();
@@ -121,16 +133,13 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             Expression e = arrayCreationLevel.getDimension().get();
             PossibleValues dimensionValue = e.accept(this, arg);
             if (dimensionValue instanceof IntegerValue intDimensionValue) {
-                // TODO: Use boolean operators
-                PossibleValues lessThanZeroSize = intDimensionValue.acceptAbstractOp(new RestrictLessThanVisitor(), new IntegerRange(0));
-                if (!lessThanZeroSize.isEmpty()) {
-                    arg.addError(new AnalysisError("NegativeArraySizeException: " + n));
-                    // TODO: Restrict value of size after this point
+                PossibleValues validSize = intDimensionValue.acceptAbstractOp(restrictGTEVisitor, new IntegerRange(0));
+                if (!Objects.equals(validSize, intDimensionValue)) {
+                    arg.addError(new AnalysisError("NegativeArraySizeException: " + n, validSize.isEmpty()));
                 }
-                PossibleValues greaterOrEqualZeroSize = intDimensionValue.acceptAbstractOp(new RestrictGreaterThanOrEqualVisitor(), new IntegerRange(0));
-                if (greaterOrEqualZeroSize instanceof IntegerValue validSize) {
-                    return new ArrayValue(validSize);
-                }
+                // Update possible values of size variable
+                VariableUtil.setVariableFromExpression(e, validSize, arg.getVariablesState());
+                return ArrayValue.create(validSize, false);
             }
         }
         if (n.getInitializer().isPresent()) {
@@ -182,7 +191,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(EnclosedExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        return n.getInner().accept(this, arg);
     }
 
     @Override
