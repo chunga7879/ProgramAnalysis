@@ -26,6 +26,8 @@ public interface OperationVisitor<T> {
 
     T visitAbstract(CharValue a, PossibleValues b);
 
+    T visitAbstract(BoxedPrimitive<?> a, PossibleValues b);
+
     T visit(PossibleValues a, PossibleValues b);
 
     T visit(EmptyValue a, PossibleValues b);
@@ -57,4 +59,6 @@ public interface OperationVisitor<T> {
     T visit(BooleanValue a, BooleanValue b);
 
     T visit(ArrayValue a, ArrayValue b);
+
+    <S extends PrimitiveValue, U extends PrimitiveValue> T visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b);
 }

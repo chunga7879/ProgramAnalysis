@@ -69,4 +69,13 @@ public class CharValueTest {
         assertEquals('a', i.getMin());
         assertEquals('z', i.getMax());
     }
+
+    @Test
+    public void TestAddBoxedChars() {
+        BoxedPrimitive<CharValue> a = new BoxedPrimitive<>(new CharValue('a'));
+        BoxedPrimitive<CharValue> b = new BoxedPrimitive<>(new CharValue('b'));
+        BoxedPrimitive<IntegerRange> ab = (BoxedPrimitive<IntegerRange>) a.acceptOp(new AddVisitor(), b);
+        assertEquals('a' + 'b', ab.unbox().getMin());
+        assertEquals('a' + 'b', ab.unbox().getMax());
+    }
 }

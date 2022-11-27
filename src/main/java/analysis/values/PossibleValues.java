@@ -6,6 +6,7 @@ public abstract class PossibleValues implements ValueVisitable {
     public <T> T acceptAbstractOp(OperationVisitor<T> visitor, PossibleValues b) {
         return visitor.visitAbstract(this, b);
     }
+
     public <T> T acceptOp(OperationVisitor<T> visitor, PossibleValues a) {
         return visitor.visit(a, this);
     }
@@ -21,6 +22,7 @@ public abstract class PossibleValues implements ValueVisitable {
     public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
         return visitor.visit(a, this);
     }
+
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
     }
@@ -44,6 +46,11 @@ public abstract class PossibleValues implements ValueVisitable {
 
     @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, ArrayValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T, S extends PrimitiveValue> T acceptOp(OperationVisitor<T> visitor, BoxedPrimitive<S> a) {
         return visitor.visit(a, this);
     }
 

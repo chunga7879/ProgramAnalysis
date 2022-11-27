@@ -49,6 +49,11 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
+    public PossibleValues visitAbstract(BoxedPrimitive<?> a, PossibleValues b) {
+        return b.acceptOp(this, a);
+    }
+
+    @Override
     public PossibleValues visit(PossibleValues a, PossibleValues b) {
         return new AnyValue();
     }
@@ -125,6 +130,11 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
 
     @Override
     public PossibleValues visit(ArrayValue a, ArrayValue b) {
+        return new AnyValue();
+    }
+
+    @Override
+    public <S extends PrimitiveValue, U extends PrimitiveValue> PossibleValues visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
         return new AnyValue();
     }
 }

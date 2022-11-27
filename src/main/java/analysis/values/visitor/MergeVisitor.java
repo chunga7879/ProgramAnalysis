@@ -61,6 +61,11 @@ public class MergeVisitor extends OperationVisitorWithDefault {
         return new ArrayValue(length, canBeNull(a, b));
     }
 
+    @Override
+    public <S extends PrimitiveValue, U extends PrimitiveValue> PossibleValues visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
+        return new BoxedPrimitive<>((S) a.unbox().acceptAbstractOp(this, b.unbox()));
+    }
+
     /**
      * Whether a merge of a & b can be null
      */

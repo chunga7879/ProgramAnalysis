@@ -50,6 +50,11 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
     }
 
     @Override
+    public PairValue<PossibleValues, AnalysisError> visitAbstract(BoxedPrimitive<?> a, PossibleValues b) {
+        return null;
+    }
+
+    @Override
     public PairValue<PossibleValues, AnalysisError> visit(PossibleValues a, PossibleValues b) {
         return new PairValue<>(new AnyValue(), null);
     }
@@ -129,6 +134,11 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(BooleanValue a, BooleanValue b) {
+        return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public <S extends PrimitiveValue, U extends PrimitiveValue> PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
         return new PairValue<>(new AnyValue(), null);
     }
 }

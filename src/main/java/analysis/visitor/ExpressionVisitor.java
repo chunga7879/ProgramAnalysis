@@ -24,8 +24,8 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
-import utils.ValueUtil;
 import utils.MathUtil;
+import utils.ValueUtil;
 import utils.VariableUtil;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
@@ -258,7 +258,15 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(ObjectCreationExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        switch (n.getType().resolve().asReferenceType().getQualifiedName()) {
+            case "java.lang.Integer":
+            case "java.lang.Boolean":
+            case "java.lang.Character":
+                assert n.getArguments().size() == 1;
+                return new BoxedPrimitive<>((PrimitiveValue) n.getArguments().get(0).accept(this, arg));
+            default:
+                return new AnyValue();
+        }
     }
 
     @Override
