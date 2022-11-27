@@ -9,6 +9,11 @@ public class BoxedPrimitive extends ObjectWithNotNullValue {
     private final PrimitiveValue v;
 
     public BoxedPrimitive(PrimitiveValue v) {
+        this(v, false);
+    }
+
+    public BoxedPrimitive(PrimitiveValue v, boolean canBeNull) {
+        super(canBeNull);
         this.v = v;
     }
 
