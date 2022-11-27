@@ -9,8 +9,13 @@ public class StringValue extends ObjectWithNotNullValue {
     private final int max;
 
     public StringValue(String s) {
+        super(false);
         this.min = s.length();
         this.max = s.length();
+    }
+
+    public StringValue(int min, int max) {
+        this(min, max, false);
     }
 
     public StringValue(int min, int max, boolean canBeNull) {
