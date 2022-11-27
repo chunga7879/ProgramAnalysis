@@ -4,6 +4,10 @@ import analysis.model.AnalysisError;
 import analysis.values.*;
 
 public abstract class AbstractOperationVisitor implements OperationVisitor<PairValue<PossibleValues, AnalysisError>> {
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visitAbstract(ArrayValue a, PossibleValues b) {
+        return null;
+    }
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visitAbstract(PossibleValues a, PossibleValues b) {
@@ -93,5 +97,10 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(ObjectValue a, NullValue b) {
         return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(ArrayValue a, ArrayValue b) {
+        return null;
     }
 }

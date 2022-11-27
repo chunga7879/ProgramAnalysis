@@ -5,7 +5,9 @@ import analysis.model.VariablesState;
 import analysis.values.EmptyValue;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +41,32 @@ public class BinaryExprTest {
         Assertions.assertEquals(100 + 200, sum.getMin());
         Assertions.assertEquals(100 + 200, sum.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void divideZeroInRangeTest() {
+        String code = """
+                public class Main {
+                    int test(int x, int y) {
+                        int z = x / y;
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        BlockStmt block = getBlockStatements(compiled).get(0);
+        Parameter x = getParameter(compiled, "x");
+        Parameter y = getParameter(compiled, "y");
+        VariableDeclarator z = getVariable(compiled, "z");
+        VariablesState varState = new VariablesState();
+        varState.setVariable(x, new IntegerRange(20, 50));
+        varState.setVariable(y, new IntegerRange(-10, 10));
+        AnalysisState analysisState = new AnalysisState(varState);
+        block.accept(new AnalysisVisitor(""), analysisState);
+        IntegerRange quotient = (IntegerRange) varState.getVariable(z);
+        Assertions.assertEquals(50 / -10, quotient.getMin());
+        Assertions.assertEquals(50 / 10, quotient.getMax());
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
