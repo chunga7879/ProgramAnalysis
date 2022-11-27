@@ -49,4 +49,11 @@ public class ExpressionAnalysisState {
     public void addErrors(ExpressionAnalysisState state) {
         this.errors.addAll(state.errors);
     }
+
+    /**
+     * Add multiple errors to the state
+     */
+    public void addErrors(List<AnalysisError> errors) {
+        this.errors.addAll(errors);
+    }
 }

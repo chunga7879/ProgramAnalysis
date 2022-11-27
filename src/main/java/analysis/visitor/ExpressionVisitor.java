@@ -5,6 +5,10 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
+import analysis.values.AnyValue;
+import analysis.values.IntegerRange;
+import analysis.values.PossibleValues;
+import analysis.values.StringValue;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -15,8 +19,11 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 import utils.MathUtil;
@@ -24,7 +31,12 @@ import utils.ResolverUtil;
 import utils.ValueUtil;
 import utils.VariableUtil;
 
+import utils.*;
+
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -278,8 +290,53 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         return NullValue.VALUE;
     }
 
+    /**
+     * A method call on an object in the form
+     * a.b(c)
+     * where a = method scope, b = method name, c = method arg(s)
+     */
     @Override
     public PossibleValues visit(MethodCallExpr n, ExpressionAnalysisState arg) {
+        Optional<Expression> scope = n.getScope();
+        String methodName = n.getName().asString();
+
+        // handle method scope if present
+        if (scope.isPresent()) {
+            Expression object = scope.get();
+            PossibleValues objectValue = object.accept(this, arg);
+
+            if (objectValue.canBeNull()) {
+                arg.addError(new AnalysisError("NullPointerException: " + n, objectValue == NullValue.VALUE));
+            }
+        }
+
+        ResolvedMethodDeclaration dec = n.resolve();
+
+        // handle method args
+        NodeList<Expression> methodArgs = n.getArguments();
+        for (int i = 0; i < methodArgs.size(); i++) {
+            Expression methodArg = methodArgs.get(i);
+            PossibleValues expValue = methodArg.accept(this, arg);
+
+            ResolvedParameterDeclaration paramDec = dec.getParam(i);
+            if (paramDec instanceof JavaParserParameterDeclaration javaParamDec) {
+                List<AnnotationExpr> annotations = javaParamDec.getWrappedNode().getAnnotations().stream().toList();
+                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations, n.toString());
+                if (errors.size() != 0) {
+                    arg.addErrors(errors);
+                }
+            }
+        }
+
+        // handle exceptions in Javadoc
+        if (dec instanceof JavaParserMethodDeclaration methodDec) {
+            MethodDeclaration methodDeclaration = methodDec.getWrappedNode();
+            Set<ResolvedType> resolvedTypes = JavadocUtil.getThrows(methodDeclaration);
+            for (ResolvedType rt: resolvedTypes) {
+                arg.addError(new AnalysisError(methodName + " may throw " + rt.describe()));
+            }
+        }
+
         return new AnyValue();
     }
 
