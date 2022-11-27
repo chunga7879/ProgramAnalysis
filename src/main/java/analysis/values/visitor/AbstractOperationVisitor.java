@@ -45,6 +45,11 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
     }
 
     @Override
+    public PairValue<PossibleValues, AnalysisError> visitAbstract(CharValue a, PossibleValues b) {
+        return b.acceptOp(this, a);
+    }
+
+    @Override
     public PairValue<PossibleValues, AnalysisError> visit(PossibleValues a, PossibleValues b) {
         return new PairValue<>(new AnyValue(), null);
     }
@@ -101,6 +106,29 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(ArrayValue a, ArrayValue b) {
+        return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(CharValue a, CharValue b) {
+        // TODO implement
+        return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(CharValue a, IntegerValue b) {
+        // TODO implement
+        return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(IntegerValue a, CharValue b) {
+        // TODO implement
+        return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(BooleanValue a, BooleanValue b) {
         return new PairValue<>(new AnyValue(), null);
     }
 }

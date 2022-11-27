@@ -25,6 +25,7 @@ public class AddVisitor extends OperationVisitorWithDefault {
         return new StringValue(
                 MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
                 MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
+        );
     }
 
     @Override
