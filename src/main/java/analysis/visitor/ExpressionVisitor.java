@@ -5,11 +5,6 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
-import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -24,9 +19,11 @@ import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
-import utils.ValueUtil;
 import utils.MathUtil;
+import utils.ValueUtil;
 import utils.VariableUtil;
+
+import java.util.Objects;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -189,6 +186,12 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(FieldAccessExpr n, ExpressionAnalysisState arg) {
         PossibleValues scopeValue = n.getScope().accept(this, arg);
         ResolvedValueDeclaration valDec = n.resolve();
+        if (scopeValue.canBeNull()) {
+            arg.addError(new AnalysisError("NullPointerException: " + n.getScope(), Objects.equals(scopeValue, NullValue.VALUE)));
+            if (scopeValue instanceof ObjectValue objValue) {
+                VariableUtil.setVariableFromExpression(n.getScope(), objValue.withNotNullable(), arg.getVariablesState());
+            }
+        }
         if (scopeValue instanceof ArrayValue arrayValue) {
             if (valDec.getName().equals("length")) {
                 return arrayValue.getLength();
