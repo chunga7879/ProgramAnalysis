@@ -22,7 +22,9 @@ public class AddVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(PossibleValues a, StringValue b) {
-        return new StringValue(a.minStringLength() + b.minStringLength(), a.maxStringLength() + b.maxStringLength());
+        return new StringValue(
+                MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
+                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
     }
 
     @Override
