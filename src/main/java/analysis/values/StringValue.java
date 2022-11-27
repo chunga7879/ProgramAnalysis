@@ -3,7 +3,7 @@ package analysis.values;
 import analysis.values.visitor.OperationVisitor;
 
 public class StringValue extends ObjectWithNotNullValue {
-    public static final StringValue ANY_VALUE = new StringValue(0, Integer.MAX_VALUE, false);
+    public static final StringValue ANY_VALUE = new StringValue(0, Integer.MAX_VALUE, true);
 
     private final int min;
     private final int max;
