@@ -6,6 +6,8 @@ import analysis.values.IntegerValue;
 import analysis.values.PossibleValues;
 
 public class RestrictGreaterThanOrEqualVisitor extends RestrictionVisitor {
+    public static final RestrictGreaterThanOrEqualVisitor INSTANCE = new RestrictGreaterThanOrEqualVisitor();
+
     @Override
     public PossibleValues visit(IntegerValue a, IntegerValue b) {
         if (a.getMax() < b.getMin()) return new EmptyValue();
