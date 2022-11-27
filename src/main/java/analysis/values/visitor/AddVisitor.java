@@ -32,7 +32,10 @@ public class AddVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
-        return new StringValue(a.minStringLength() + b.minStringLength(), a.maxStringLength() + b.maxStringLength());
+        return new StringValue(
+                MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
+                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
+        );
     }
 
     @Override
@@ -59,5 +62,10 @@ public class AddVisitor extends OperationVisitorWithDefault {
     @Override
     public PossibleValues visit(IntegerValue a, CharValue b) {
         return this.visit(b, a);
+    }
+
+    @Override
+    public <S extends PrimitiveValue, U extends PrimitiveValue> PossibleValues visit(BoxedPrimitive<S> a, BoxedPrimitive<U> b) {
+        return new BoxedPrimitive<S>((S) a.unbox().acceptAbstractOp(this, b.unbox()));
     }
 }
