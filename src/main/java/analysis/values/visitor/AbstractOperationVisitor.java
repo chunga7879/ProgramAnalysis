@@ -6,7 +6,7 @@ import analysis.values.*;
 public abstract class AbstractOperationVisitor implements OperationVisitor<PairValue<PossibleValues, AnalysisError>> {
     @Override
     public PairValue<PossibleValues, AnalysisError> visitAbstract(ArrayValue a, PossibleValues b) {
-        return null;
+        return b.acceptOp(this, a);
     }
 
     @Override
@@ -101,6 +101,6 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(ArrayValue a, ArrayValue b) {
-        return null;
+        return new PairValue<>(new AnyValue(), null);
     }
 }
