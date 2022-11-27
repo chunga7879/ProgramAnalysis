@@ -30,4 +30,14 @@ public abstract class IntegerValue extends PrimitiveValue {
     public <T> T acceptOp(OperationVisitor<T> visitor, StringValue a) {
         return visitor.visit(a, this);
     }
+
+    @Override
+    public int minStringLength() {
+        return String.valueOf(this.getMin()).length();
+    }
+
+    @Override
+    public int maxStringLength() {
+        return String.valueOf(this.getMax()).length();
+    }
 }
