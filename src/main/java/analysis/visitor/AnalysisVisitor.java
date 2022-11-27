@@ -77,10 +77,11 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(BlockStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         for (Statement s : n.getStatements()) {
-            s.accept(this, arg);
+            endState.add(s.accept(this, arg));
         }
-        return null;
+        return endState;
     }
 
     @Override
@@ -105,11 +106,16 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(BreakStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        endState.addBreakState(arg.getVariablesState().copy());
+        AnalysisLogger.logFormat(n, "BREAK: %s", arg.getVariablesState());
+        arg.getVariablesState().setDomainEmpty();
+        return endState;
     }
 
     @Override
     public EndState visit(ReturnStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         VariablesState varState = arg.getVariablesState();
         if (n.getExpression().isPresent()) {
             ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
@@ -129,11 +135,12 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             }
         }
         varState.setDomainEmpty();
-        return null;
+        return endState;
     }
 
     @Override
     public EndState visit(IfStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         VariablesState varState = arg.getVariablesState();
         ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
         ConditionStates conditionStates = n.getCondition().accept(conditionVisitor, exprAnalysisState);
@@ -146,33 +153,37 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         // IF case
         AnalysisLogger.log(n, "IF TRUE: " + trueVarState.toFormattedString());
         AnalysisState trueAnalysisState = new AnalysisState(trueVarState);
-        n.getThenStmt().accept(this, trueAnalysisState);
+        endState.add(n.getThenStmt().accept(this, trueAnalysisState));
 
         // ELSE case
         AnalysisLogger.log(n, "IF FALSE: " + falseVarState.toFormattedString());
         AnalysisState falseAnalysisState = new AnalysisState(falseVarState);
         if (n.getElseStmt().isPresent()) {
-            n.getElseStmt().get().accept(this, falseAnalysisState);
+            endState.add(n.getElseStmt().get().accept(this, falseAnalysisState));
         }
 
         // Merge together
         VariablesState mergedState = new VariablesState();
+        mergedState.setDomainEmpty();
         if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
         if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
         varState.copyValuesFrom(mergedState);
         AnalysisLogger.logEndFormat(n, "IF MERGED: %s", varState);
-        return null;
+        return endState;
     }
 
     @Override
     public EndState visit(WhileStmt n, AnalysisState arg) {
-        handleLoop(n, "WHILE", arg, n.getCondition(), n.getBody(), null);
-        return null;
+        return handleLoop(n, "WHILE", arg, n.getCondition(), n.getBody(), null);
     }
 
     @Override
     public EndState visit(ContinueStmt n, AnalysisState arg) {
-        return null;
+        EndState endState = new EndState();
+        endState.addContinueState(arg.getVariablesState().copy());
+        AnalysisLogger.logFormat(n, "CONTINUE: %s", arg.getVariablesState());
+        arg.getVariablesState().setDomainEmpty();
+        return endState;
     }
 
     @Override
@@ -195,8 +206,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         }
         AnalysisLogger.log(n, "FOR INITIALIZE: " + varState.toFormattedString());
 
-        handleLoop(n, "FOR", arg, n.getCompare().orElse(null), n.getBody(), n.getUpdate());
-        return null;
+        return handleLoop(n, "FOR", arg, n.getCompare().orElse(null), n.getBody(), n.getUpdate());
     }
 
     /**
@@ -208,7 +218,8 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
      * @param body     Body inside the loop
      * @param update   Updater (i.e. for loop)
      */
-    private void handleLoop(Node loopNode, String loopName, AnalysisState state, Expression compare, Statement body, NodeList<Expression> update) {
+    private EndState handleLoop(Node loopNode, String loopName, AnalysisState state, Expression compare, Statement body, NodeList<Expression> update) {
+        EndState endState = new EndState();
         VariablesState varState = state.getVariablesState();
         VariablesState mergeState = varState.copy(); // State tracking the values in all iterations
         VariablesState currentState = mergeState.copy(); // State tracking the values in each iteration
@@ -232,6 +243,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
                 loopAnalysisVisitor = new AnalysisVisitor(targetMethod, loopExprVisitor);
             }
 
+            // Check condition
             if (compare != null) {
                 ExpressionAnalysisState compareAnalysisState = new ExpressionAnalysisState(currentState);
                 ConditionStates condStates = compare.accept(conditionVisitor, compareAnalysisState);
@@ -249,7 +261,15 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             AnalysisState analysisState = new AnalysisState(currentState);
             EndState bodyEndState = body.accept(loopAnalysisVisitor, analysisState);
             state.addErrors(analysisState);
-            // TODO: add early breaks from bodyEndState to exitState
+
+            // Merge continue states to current state
+            Set<VariablesState> continueStates = bodyEndState.popContinueStates();
+            for (VariablesState continueState : continueStates) {
+                currentState.merge(mergeVisitor, continueState);
+            }
+            endState.add(bodyEndState);
+
+            // Update in FOR loops
             if (update != null) {
                 for (Expression e : update) {
                     ExpressionAnalysisState updateAnalysisState = new ExpressionAnalysisState(currentState);
@@ -267,13 +287,23 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             }
             i++;
         } while (true);
+
+        // Merge break states with current state
+        Set<VariablesState> breakStates = endState.popBreakStates();
+        for (VariablesState breakState : breakStates) {
+            exitState.merge(mergeVisitor, breakState);
+        }
+
         AnalysisLogger.logEndFormat(loopNode, "%s EXIT STATE: %s", loopName, exitState);
         if (exitState.isDomainEmpty()) AnalysisLogger.logEndFormat(loopNode, "%s LOOP IS INFINITE", loopName);
         varState.copyValuesFrom(exitState);
+
+        return endState;
     }
 
     @Override
     public EndState visit(ThrowStmt n, AnalysisState arg) {
+        EndState endState = new EndState();
         VariablesState varState = arg.getVariablesState();
         ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(varState);
         n.getExpression().accept(expressionVisitor, exprAnalysisState);
@@ -305,7 +335,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             AnalysisLogger.log(n, "THROW " + throwType.asReferenceType().getQualifiedName());
         }
         varState.setDomainEmpty();
-        return null;
+        return endState;
     }
 
     @Override
