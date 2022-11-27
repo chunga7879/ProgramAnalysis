@@ -78,10 +78,12 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         DiagramNode diagramNode;
         StringBuilder errorDescription = new StringBuilder();
         if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
+            boolean isDefinite = false;
             for (AnalysisError er : arg.getErrorMap().get(n)) {
+                isDefinite = er.isDefinite();
                 errorDescription.append(er.getMessage()).append("\n");
             }
-            diagramNode = new DiagramNode(expression, Error.POTENTIAL, errorDescription.toString());
+            diagramNode = new DiagramNode(expression, isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
         } else {
             diagramNode = new DiagramNode(expression, Error.NONE, errorDescription.toString());
         }
@@ -110,11 +112,12 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         DiagramNode expression;
         StringBuilder errorDescription = new StringBuilder();
         if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
+            boolean isDefinite = false;
             for (AnalysisError er : arg.getErrorMap().get(n)) {
+                isDefinite = er.isDefinite();
                 errorDescription.append(er.getMessage()).append("\n");
             }
-            // TODO: differentiate potential and definite error
-            expression = new DiagramNode("return" + n.getExpression().get(), Error.POTENTIAL, errorDescription.toString());
+            expression = new DiagramNode("return" + n.getExpression().get(), isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
         } else {
             expression = new DiagramNode("return " + n.getExpression().get(), Error.NONE, errorDescription.toString());
         }
@@ -131,11 +134,12 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         if (arg.getErrorMap().isEmpty() || !arg.getErrorMap().containsKey(n)) {
             ifCondition = new DiagramNode(n.getCondition().toString(), Error.NONE, errorDescription.toString());
         } else {
+            boolean isDefinite = false;
             for (AnalysisError er : arg.getErrorMap().get(n)) {
-                // TODO: NEED TO seperate potential and definite error
+                isDefinite = er.isDefinite();
                 errorDescription.append(er.getMessage()).append("\n");
             }
-            ifCondition = new DiagramNode(n.getCondition().toString(), Error.POTENTIAL, errorDescription.toString());
+            ifCondition = new DiagramNode(n.getCondition().toString(), isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
         }
         arg.diagram.addIfThenStartNode(ifCondition);
 

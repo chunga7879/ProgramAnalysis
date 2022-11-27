@@ -166,6 +166,7 @@ public class VisualizationTest {
 
         visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testReturnStmt.png");
     }
+
 //
 //    @Test
 //    public void testThrowStat() {
