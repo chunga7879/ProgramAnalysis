@@ -24,7 +24,7 @@ public class MethodCallTest {
     public void runBefore() {
         variablesState = new VariablesState();
         analysisState = new AnalysisState(variablesState);
-        AnalysisLogger.setLog(false);
+        AnalysisLogger.setLog(true);
     }
 
     @Test
@@ -63,21 +63,20 @@ public class MethodCallTest {
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
-    // TODO: Uncomment after implementing object creation expressions
-//    @Test
-//    public void nullPointerExceptionTestWithoutError2() {
-//        String code = """
-//                public class Main {
-//                    void test() {
-//                        Integer i = new Integer(1);
-//                        int x = i.intValue();
-//                    }
-//                }
-//                """;
-//        CompilationUnit compiled = compile(code);
-//        compiled.accept(new AnalysisVisitor("test"), analysisState);
-//        Assertions.assertEquals(0, analysisState.getErrorMap().size());
-//    }
+    @Test
+    public void nullPointerExceptionTestWithoutError2() {
+        String code = """
+                public class Main {
+                    void test() {
+                        Integer i = new Integer(1);
+                        int x = i.intValue();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
 
     @Test
     public void nullPointerExceptionTestWithPossibleError() {
@@ -157,6 +156,45 @@ public class MethodCallTest {
         for (Set<AnalysisError> errors: analysisState.getErrorMap().values()) {
             Assertions.assertEquals(2, errors.size());
         }
+    }
+
+    @Test
+    public void throwsNonRuntimeExceptionTest() {
+        String code = """
+                public class Main {
+                    /**
+                     * @throws Exception
+                     */
+                    void foo() throws Exception {
+                        // ...
+                    }
+                    
+                    void test() {
+                        foo();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void throwsExceptionWithoutJavadocsTest() {
+        String code = """
+                public class Main {
+                    void foo() throws NullPointerException {
+                        // ...
+                    }
+                    
+                    void test() {
+                        foo();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     // region ---- annotation tests

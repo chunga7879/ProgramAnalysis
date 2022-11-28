@@ -21,11 +21,14 @@ import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import utils.MathUtil;
 import utils.ResolverUtil;
 import utils.ValueUtil;
@@ -33,10 +36,8 @@ import utils.VariableUtil;
 
 import utils.*;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -306,7 +307,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             PossibleValues objectValue = object.accept(this, arg);
 
             if (objectValue.canBeNull()) {
-                arg.addError(new AnalysisError("NullPointerException: " + n, objectValue == NullValue.VALUE));
+                arg.addError(new AnalysisError(NullPointerException.class, n, objectValue == NullValue.VALUE));
             }
         }
 
@@ -328,12 +329,26 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             }
         }
 
-        // handle exceptions in Javadoc
+        // handle possible runtime exceptions
         if (dec instanceof JavaParserMethodDeclaration methodDec) {
+            ResolvedReferenceTypeDeclaration runtimeExceptionType = new ReflectionTypeSolver().solveType("java.lang.RuntimeException");
             MethodDeclaration methodDeclaration = methodDec.getWrappedNode();
-            Set<ResolvedType> resolvedTypes = JavadocUtil.getThrows(methodDeclaration);
-            for (ResolvedType rt: resolvedTypes) {
-                arg.addError(new AnalysisError(methodName + " may throw " + rt.describe()));
+
+            // exceptions in signature
+            List<ResolvedType> exceptionsInSignature = methodDeclaration.getThrownExceptions()
+                    .stream()
+                    .map(Type::resolve)
+                    .filter(e -> runtimeExceptionType.isAssignableBy(e))
+                    .toList();
+
+            Set<ResolvedType> exceptions = new HashSet<>();
+            exceptions.addAll(exceptionsInSignature);
+
+            // exceptions in javadoc
+            exceptions.addAll(JavadocUtil.getRuntimeThrows(methodDeclaration));
+
+            for (ResolvedType rt: exceptions) {
+                arg.addError(new AnalysisError(rt.describe(), n, false));
             }
         }
 

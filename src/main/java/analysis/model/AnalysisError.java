@@ -29,6 +29,10 @@ public class AnalysisError {
         this(exception.getSimpleName() + ": " + n.toString(), isDefinite);
     }
 
+    public AnalysisError(String exception, Node n, boolean isDefinite) {
+        this(exception + ": " + n.toString(), isDefinite);
+    }
+
     public String getMessage() {
         return message;
     }
