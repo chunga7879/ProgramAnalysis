@@ -89,8 +89,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
         PossibleValues left = n.getTarget().accept(this, arg);
         PossibleValues right = n.getValue().accept(this, arg);
+        AssignExpr.Operator operator = n.getOperator();
         PossibleValues result;
-        switch (n.getOperator()) {
+        switch (operator) {
             case DIVIDE -> {
                 PairValue<PossibleValues, AnalysisError> quotient = left.acceptAbstractOp(divideVisitor, right);
                 AnalysisError error = quotient.getB();
@@ -103,6 +104,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             case MINUS -> result = left.acceptAbstractOp(subtractVisitor, right);
             case MULTIPLY -> result = left.acceptAbstractOp(multiplyVisitor, right);
             default -> result = right;
+        }
+        if (result instanceof EmptyValue && operator != AssignExpr.Operator.DIVIDE) {
+            arg.addError(new AnalysisError(NullPointerException.class, n, true));
         }
         ResolvedType type = ResolverUtil.calculateResolvedTypeOrNull(n.getTarget());
         if (type != null) result = VariableUtil.implicitTypeCasting(type, n.getValue(), result, arg);
@@ -195,20 +199,26 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         }
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
-        return switch (n.getOperator()) {
+        BinaryExpr.Operator operator = n.getOperator();
+        PossibleValues result;
+        switch (operator) {
             case DIVIDE -> {
-                PairValue<PossibleValues, AnalysisError> result = leftValue.acceptAbstractOp(divideVisitor, rightValue);
-                AnalysisError error = result.getB();
+                PairValue<PossibleValues, AnalysisError> quotient = leftValue.acceptAbstractOp(divideVisitor, rightValue);
+                AnalysisError error = quotient.getB();
                 if (error != null) {
                     arg.addError(error.atNode(n));
                 }
-                yield result.getA();
+                result = quotient.getA();
             }
-            case PLUS -> leftValue.acceptAbstractOp(addVisitor, rightValue);
-            case MINUS -> leftValue.acceptAbstractOp(subtractVisitor, rightValue);
-            case MULTIPLY -> leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
-            default -> new AnyValue();
-        };
+            case PLUS -> result = leftValue.acceptAbstractOp(addVisitor, rightValue);
+            case MINUS -> result = leftValue.acceptAbstractOp(subtractVisitor, rightValue);
+            case MULTIPLY -> result = leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
+            default -> result = new AnyValue();
+        }
+        if (result instanceof EmptyValue && operator != BinaryExpr.Operator.DIVIDE) {
+            arg.addError(new AnalysisError(NullPointerException.class, n, true));
+        }
+        return result;
     }
 
     @Override
