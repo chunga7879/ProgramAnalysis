@@ -63,4 +63,6 @@ public interface OperationVisitor<T> {
     T visit(ArrayValue a, ArrayValue b);
 
     T visit(BoxedPrimitive a, BoxedPrimitive b);
+    T visit(BoxedPrimitive a, PrimitiveValue b);
+    T visit(PrimitiveValue a, BoxedPrimitive b);
 }

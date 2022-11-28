@@ -26,4 +26,6 @@ public interface ValueVisitable {
     <T> T acceptOp(OperationVisitor<T> visitor, ArrayValue a);
 
     <T> T acceptOp(OperationVisitor<T> visitor, BoxedPrimitive a);
+
+    <T> T acceptOp(OperationVisitor<T> visitor, PrimitiveValue a);
 }

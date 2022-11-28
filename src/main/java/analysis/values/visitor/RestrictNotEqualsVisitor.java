@@ -13,6 +13,15 @@ public class RestrictNotEqualsVisitor extends RestrictionVisitor {
         return a;
     }
 
+
+    @Override
+    public PossibleValues visit(BooleanValue a, BooleanValue b) {
+        if (b.canBeTrue() && b.canBeFalse()) return a;
+        if (a.canBeTrue() && b.canBeFalse()) return BooleanValue.TRUE;
+        if (a.canBeFalse() && b.canBeTrue()) return BooleanValue.FALSE;
+        return EmptyValue.VALUE;
+    }
+
     @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
         if (b.equals(a)) return new EmptyValue();

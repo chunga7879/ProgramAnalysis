@@ -2,6 +2,7 @@ package analysis.values;
 
 import analysis.values.visitor.MergeVisitor;
 import analysis.values.visitor.RestrictEqualsVisitor;
+import analysis.values.visitor.RestrictNotEqualsVisitor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,29 +31,57 @@ public class BooleanValueTest {
 
     @Test
     public void restrictEqualsTest() {
-        BooleanValue a = new BooleanValue(true, true);
-        BooleanValue b = new BooleanValue(false, true);
-        BooleanValue c = new BooleanValue(true, false);
+        BooleanValue any = new BooleanValue(true, true);
+        BooleanValue alwaysFalse = new BooleanValue(false, true);
+        BooleanValue alwaysTrue = new BooleanValue(true, false);
 
-        PossibleValues aa = a.acceptAbstractOp(new RestrictEqualsVisitor(), a);
-        PossibleValues ab = a.acceptAbstractOp(new RestrictEqualsVisitor(), b);
-        PossibleValues ac = a.acceptAbstractOp(new RestrictEqualsVisitor(), c);
-        PossibleValues ba = b.acceptAbstractOp(new RestrictEqualsVisitor(), a);
-        PossibleValues bb = b.acceptAbstractOp(new RestrictEqualsVisitor(), b);
-        PossibleValues bc = b.acceptAbstractOp(new RestrictEqualsVisitor(), c);
-        PossibleValues ca = c.acceptAbstractOp(new RestrictEqualsVisitor(), a);
-        PossibleValues cb = c.acceptAbstractOp(new RestrictEqualsVisitor(), b);
-        PossibleValues cc = c.acceptAbstractOp(new RestrictEqualsVisitor(), c);
+        RestrictEqualsVisitor visitor = new RestrictEqualsVisitor();
+        PossibleValues anyAndAny = any.acceptAbstractOp(visitor, any);
+        PossibleValues anyAndFalse = any.acceptAbstractOp(visitor, alwaysFalse);
+        PossibleValues anyAndTrue = any.acceptAbstractOp(visitor, alwaysTrue);
+        PossibleValues falseAndAny = alwaysFalse.acceptAbstractOp(visitor, any);
+        PossibleValues falseAndFalse = alwaysFalse.acceptAbstractOp(visitor, alwaysFalse);
+        PossibleValues falseAndTrue = alwaysFalse.acceptAbstractOp(visitor, alwaysTrue);
+        PossibleValues trueAndAny = alwaysTrue.acceptAbstractOp(visitor, any);
+        PossibleValues trueAndFalse = alwaysTrue.acceptAbstractOp(visitor, alwaysFalse);
+        PossibleValues trueAndTrue = alwaysTrue.acceptAbstractOp(visitor, alwaysTrue);
 
-        Assertions.assertEquals(a, aa);
-        Assertions.assertEquals(b, ab);
-        Assertions.assertEquals(c, ac);
-        Assertions.assertEquals(b, ba);
-        Assertions.assertEquals(b, bb);
-        Assertions.assertEquals(EmptyValue.VALUE, bc);
-        Assertions.assertEquals(c, ca);
-        Assertions.assertEquals(EmptyValue.VALUE, cb);
-        Assertions.assertEquals(c, cc);
+        Assertions.assertEquals(any, anyAndAny);
+        Assertions.assertEquals(alwaysFalse, anyAndFalse);
+        Assertions.assertEquals(alwaysTrue, anyAndTrue);
+        Assertions.assertEquals(alwaysFalse, falseAndAny);
+        Assertions.assertEquals(alwaysFalse, falseAndFalse);
+        Assertions.assertEquals(EmptyValue.VALUE, falseAndTrue);
+        Assertions.assertEquals(alwaysTrue, trueAndAny);
+        Assertions.assertEquals(EmptyValue.VALUE, trueAndFalse);
+        Assertions.assertEquals(alwaysTrue, trueAndTrue);
+    }
 
+    @Test
+    public void restrictNotEqualsTest() {
+        BooleanValue any = new BooleanValue(true, true);
+        BooleanValue alwaysFalse = new BooleanValue(false, true);
+        BooleanValue alwaysTrue = new BooleanValue(true, false);
+
+        RestrictNotEqualsVisitor visitor = new RestrictNotEqualsVisitor();
+        PossibleValues anyAndAny = any.acceptAbstractOp(visitor, any);
+        PossibleValues anyAndFalse = any.acceptAbstractOp(visitor, alwaysFalse);
+        PossibleValues anyAndTrue = any.acceptAbstractOp(visitor, alwaysTrue);
+        PossibleValues falseAndAny = alwaysFalse.acceptAbstractOp(visitor, any);
+        PossibleValues falseAndFalse = alwaysFalse.acceptAbstractOp(visitor, alwaysFalse);
+        PossibleValues falseAndTrue = alwaysFalse.acceptAbstractOp(visitor, alwaysTrue);
+        PossibleValues trueAndAny = alwaysTrue.acceptAbstractOp(visitor, any);
+        PossibleValues trueAndFalse = alwaysTrue.acceptAbstractOp(visitor, alwaysFalse);
+        PossibleValues trueAndTrue = alwaysTrue.acceptAbstractOp(visitor, alwaysTrue);
+
+        Assertions.assertEquals(any, anyAndAny);
+        Assertions.assertEquals(alwaysTrue, anyAndFalse);
+        Assertions.assertEquals(alwaysFalse, anyAndTrue);
+        Assertions.assertEquals(alwaysFalse, falseAndAny);
+        Assertions.assertEquals(EmptyValue.VALUE, falseAndFalse);
+        Assertions.assertEquals(alwaysFalse, falseAndTrue);
+        Assertions.assertEquals(alwaysTrue, trueAndAny);
+        Assertions.assertEquals(alwaysTrue, trueAndFalse);
+        Assertions.assertEquals(EmptyValue.VALUE, trueAndTrue);
     }
 }

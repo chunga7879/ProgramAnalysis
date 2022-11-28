@@ -142,4 +142,14 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
         return new AnyValue();
     }
+
+    @Override
+    public PossibleValues visit(BoxedPrimitive a, PrimitiveValue b) {
+        return AnyValue.VALUE;
+    }
+
+    @Override
+    public PossibleValues visit(PrimitiveValue a, BoxedPrimitive b) {
+        return AnyValue.VALUE;
+    }
 }

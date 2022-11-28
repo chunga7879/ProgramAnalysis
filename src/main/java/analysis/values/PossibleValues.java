@@ -50,6 +50,11 @@ public abstract class PossibleValues implements ValueVisitable {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, PrimitiveValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
     public <T> T acceptOp(OperationVisitor<T> visitor, BoxedPrimitive a) {
         return visitor.visit(a, this);
     }

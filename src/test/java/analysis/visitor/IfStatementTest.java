@@ -2,6 +2,8 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.BooleanValue;
+import analysis.values.BoxedPrimitive;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
@@ -264,5 +266,32 @@ public class IfStatementTest {
         Assertions.assertEquals(new IntegerRange(0, 21), varState.getVariable(d));
         Assertions.assertEquals(new IntegerRange(Integer.MIN_VALUE + 1, Integer.MAX_VALUE), varState.getVariable(e));
         Assertions.assertEquals(new IntegerRange(0), varState.getVariable(f));
+    }
+
+    @Test
+    public void ifBooleanTest() {
+        String code = """
+                public class Main {
+                    void test(Boolean x) {
+                        boolean a = true;
+                        boolean b = false;
+                        if ((a = false) || (b == false && x == true)) {
+                            boolean c = x;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariableDeclarator a = getVariable(compiled,"a");
+        VariableDeclarator b = getVariable(compiled,"b");
+        VariableDeclarator c = getVariable(compiled,"c");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(BoxedPrimitive.create(BooleanValue.ANY_VALUE, false), varState.getVariable(x));
+        Assertions.assertEquals(BooleanValue.FALSE, varState.getVariable(a));
+        Assertions.assertEquals(BooleanValue.FALSE, varState.getVariable(b));
+        Assertions.assertEquals(BooleanValue.TRUE, varState.getVariable(c));
     }
 }

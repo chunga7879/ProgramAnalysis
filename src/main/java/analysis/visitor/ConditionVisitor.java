@@ -236,7 +236,7 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
 
     @Override
     public ConditionStates visit(AssignExpr n, ExpressionAnalysisState arg) {
-        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(arg.getVariablesState().copy());
+        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(arg.getVariablesState());
         PossibleValues value = n.accept(expressionVisitor, exprAnalysisState);
         arg.addErrors(exprAnalysisState);
         return getConditionStatesFromBooleanValue(value, arg.getVariablesState());

@@ -146,4 +146,14 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
     public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, BoxedPrimitive b) {
         return new PairValue<>(new AnyValue(), null);
     }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, PrimitiveValue b) {
+        return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(PrimitiveValue a, BoxedPrimitive b) {
+        return new PairValue<>(new AnyValue(), null);
+    }
 }
