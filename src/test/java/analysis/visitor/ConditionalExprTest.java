@@ -24,7 +24,7 @@ public class ConditionalExprTest {
         String code = """
                 public class Main {
                     void test(int a) {
-                        int v = 18 < 2 ? 4 : -22 + 3
+                        int v = 18 < 2 ? 4 : (-22 + 3);
                         int w = true ? 6 : -44;
                         int x = a > 0 ? (2 + 15) : 3;
                         int y = x;
