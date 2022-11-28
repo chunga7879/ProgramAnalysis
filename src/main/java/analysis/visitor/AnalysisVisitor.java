@@ -189,6 +189,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         AnalysisLogger.logFormat(n, "CONTINUE: %s", arg.getVariablesState());
         arg.getVariablesState().setDomainEmpty();
         return endState;
+
     }
 
     @Override

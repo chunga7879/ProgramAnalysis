@@ -1,8 +1,9 @@
-package analysis.visitor;
+package visualization;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.IntegerRange;
+import analysis.visitor.AnalysisVisitor;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import logger.AnalysisLogger;
@@ -167,18 +168,14 @@ public class VisualizationTest {
         visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testReturnStmt.png");
     }
 
-
     @Test
-    public void testThrowStat() {
+    public void testForLoop() {
         String code = """
                 public class Main {
-                    int test(int x) {
-                        int b = 0;
-                        if (b == 0) {
-                            throw new ArithmeticException("divide by zero");
+                    void test(int x) {
+                        for (int i = 0; i < 10; i++) {
+                            int y = 2 / i;
                         }
-                        int y = 2 / b;
-                        return x * b;
                     }
                 }
                 """;
@@ -186,8 +183,8 @@ public class VisualizationTest {
         Parameter x = getParameter(compiled, "x");
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
-        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
         varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
 
         AnalysisVisitor av = new AnalysisVisitor("test");
         VisualizationVisitor vv = new VisualizationVisitor("test");
@@ -195,6 +192,185 @@ public class VisualizationTest {
         av.visit(compiled, analysisState);
         vv.visit(compiled, visualizationState);
 
-        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/throwStat.png");
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testForLoop.png");
     }
+
+    @Test
+    public void testForEachStmt() {
+        String code = """
+                public class Main {
+                    void test(int[] x) {
+                        for (int i : x) {
+                            int y = 2 / i;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testForEachLoop.png");
+    }
+
+    @Test
+    public void testWhileStmt() {
+        String code = """
+                public class Main {
+                    void test(int x) {
+                        while (x < 10) {
+                            int y = x / 0;
+                            x++;
+                        }
+                        int z = x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testWhileLoop.png");
+    }
+
+    @Test
+    public void testDoWhile() {
+        String code = """
+                public class Main {
+                    void test(int x) {
+                        do {
+                            int y = 1324 / x;
+                            x++;
+                        } while (x < 10);
+                        int z = x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testDoWhileLoop.png");
+
+    }
+//
+//    @Test
+//    public void testThrowStat() {
+//        String code = """
+//                public class Main {
+//                    int test(int x) {
+//                        int b = 0;
+//                        if (b == 0) {
+//                            throw new ArithmeticException("divide by zero");
+//                        }
+//                        int y = 2 / b;
+//                        return x * b;
+//                    }
+//                }
+//                """;
+//        CompilationUnit compiled = compile(code);
+//        Parameter x = getParameter(compiled, "x");
+//        VariablesState varState = new VariablesState();
+//        AnalysisState analysisState = new AnalysisState(varState);
+//        analysisState.diagram = new Diagram();
+//        varState.setVariable(x, new IntegerRange(-33, 115));
+//        AnalysisVisitor av = new AnalysisVisitor("test");
+//
+//        av.visit(compiled, analysisState);
+//
+//        analysisState.diagram.createDiagramPNG("src/test/java/visualization/outputs/throwStat.png");
+//    }
+
+    @Test
+    public void testBreakStatement() {
+        String code = """
+                public class Main {
+                    int test(int x) {
+                        while (x < 10) {
+                            int y = x / 5;
+                            if (y == 2) { 
+                                break;
+                            }
+                            x++;
+                        }
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testBreakStatement.png");
+    }
+
+    @Test
+    public void testContinueStatement() {
+        String code = """
+                    public class Main {
+                        int test(int x) {
+                            while (x < 10) {
+                                int y = x / 5;
+                                if (y == 2) {
+                                    continue;
+                                }
+                                x++;
+                            }
+                            return x;
+                        }
+                    }
+                    """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testContinue.png");
+    }
+
+
 }

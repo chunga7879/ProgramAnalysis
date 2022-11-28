@@ -1,7 +1,4 @@
 package visualization;
 
-public enum Error {
-    POTENTIAL,
-    DEFINITE,
-    NONE
+public record Error(ErrorType errorType, String errorDescription) {
 }
