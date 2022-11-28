@@ -16,7 +16,7 @@ public class DiagramTest {
 
     @Test
     public void createSimpleDiagram() {
-        DiagramNode node = new DiagramNode("int b = 1", Error.NONE, "");
+        DiagramNode node = new DiagramNode("int b = 1", ErrorType.NONE, null);
         diagram.addStartDiagramNode();
         diagram.addNode(node);
         diagram.addEndDiagramNode();
@@ -25,9 +25,13 @@ public class DiagramTest {
 
     @Test
     public void createSimpleErrorDiagram() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("int b = c.toString()", Error.POTENTIAL, "NullPointerException : c.toString()");
-        DiagramNode error = new DiagramNode("int a = 2/0;", Error.DEFINITE, "ArithmeticException : 2/0");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        List<Error> errors = new ArrayList<>();
+        errors.add(new Error(ErrorType.POTENTIAL, "NullPointerException : c.toString()"));
+        List<Error> errors2 = new ArrayList<>();
+        errors2.add(new Error(ErrorType.DEFINITE, "ArithmeticException : 2/0"));
+        DiagramNode potentialError = new DiagramNode("int b = c.toString()", ErrorType.POTENTIAL, errors);
+        DiagramNode error = new DiagramNode("int a = 2/0;", ErrorType.DEFINITE, errors2);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addNode(potentialError);
@@ -38,10 +42,12 @@ public class DiagramTest {
 
     @Test
     public void createIfConditional() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode ifCondition = new DiagramNode("x > 10", Error.NONE, "");
-        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        DiagramNode ifCondition = new DiagramNode("x > 10", ErrorType.NONE, null);
+        DiagramNode statement = new DiagramNode("print(x);", ErrorType.NONE, null);
+        List<Error> error = new ArrayList<>();
+        error.add(new Error(ErrorType.POTENTIAL, "Placeholder"));
+        DiagramNode potentialError = new DiagramNode("print(x);", ErrorType.POTENTIAL, error);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addIfThenStartNode(ifCondition);
@@ -55,10 +61,12 @@ public class DiagramTest {
 
     @Test
     public void createWhileLoop() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode whileCondition = new DiagramNode("x > 10", Error.NONE, "");
-        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        DiagramNode whileCondition = new DiagramNode("x > 10", ErrorType.NONE, null);
+        DiagramNode statement = new DiagramNode("print(x);", ErrorType.NONE, null);
+        List<Error> error = new ArrayList<>();
+        error.add(new Error(ErrorType.POTENTIAL, "Placeholder"));
+        DiagramNode potentialError = new DiagramNode("print(x);", ErrorType.POTENTIAL, error);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addWhileForEachConditionalStartNode(whileCondition);
@@ -72,10 +80,12 @@ public class DiagramTest {
 
     @Test
     public void createDoWhileLoop() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode doWhileCondition = new DiagramNode("x > 10", Error.NONE, "");
-        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        DiagramNode doWhileCondition = new DiagramNode("x > 10", ErrorType.NONE, null);
+        DiagramNode statement = new DiagramNode("print(x);", ErrorType.NONE, null);
+        List<Error> error = new ArrayList<>();
+        error.add(new Error(ErrorType.POTENTIAL, "Placeholder"));
+        DiagramNode potentialError = new DiagramNode("print(x);", ErrorType.POTENTIAL, error);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addDoWhileStartNode();
@@ -89,18 +99,21 @@ public class DiagramTest {
 
     @Test
     public void createForLoop() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        DiagramNode statement = new DiagramNode("print(x);", ErrorType.NONE, null);
+        List<Error> error = new ArrayList<>();
+        error.add(new Error(ErrorType.POTENTIAL, "Placeholder"));
+        DiagramNode potentialError = new DiagramNode("print(x);", ErrorType.POTENTIAL, error);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
-        List<String> initialization = new ArrayList<>();
-        initialization.add("int i = 1");
-        diagram.addForStartNode(initialization, "int i < 10");
+        List<DiagramNode> initialization = new ArrayList<>();
+        initialization.add(new DiagramNode("int i = 0", ErrorType.NONE, null));
+        DiagramNode node = new DiagramNode("int i < 10", ErrorType.NONE, null);
+        diagram.addForStartNode(initialization, node);
         diagram.addNode(statement);
         diagram.addNode(potentialError);
-        List<String> update = new ArrayList<>();
-        initialization.add("i++");
+        List<DiagramNode> update = new ArrayList<>();
+        initialization.add(new DiagramNode("i++", ErrorType.NONE, null));
         diagram.addForEndNode(update);
         diagram.addNode(statement);
         diagram.addEndDiagramNode();
@@ -109,11 +122,15 @@ public class DiagramTest {
 
     @Test
     public void createThrowStatement() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode ifCondition = new DiagramNode("x > 10", Error.NONE, "");
-        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
-        DiagramNode throwStatement = new DiagramNode("throw new Exception();", Error.DEFINITE, "Exception : throw new Exception()");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        DiagramNode ifCondition = new DiagramNode("x > 10", ErrorType.NONE, null);
+        DiagramNode statement = new DiagramNode("print(x);", ErrorType.NONE, null);
+        List<Error> error = new ArrayList<>();
+        error.add(new Error(ErrorType.POTENTIAL, "Placeholder"));
+        DiagramNode potentialError = new DiagramNode("print(x);", ErrorType.POTENTIAL, error);
+        List<Error> definiteError = new ArrayList<>();
+        definiteError.add(new Error(ErrorType.DEFINITE, "Exception : throw new Exception()"));
+        DiagramNode throwStatement = new DiagramNode("throw new Exception();", ErrorType.DEFINITE, definiteError);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addIfThenStartNode(ifCondition);
@@ -128,9 +145,11 @@ public class DiagramTest {
 
     @Test
     public void createSwitchStatement() {
-        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", Error.NONE, "");
-        DiagramNode statement = new DiagramNode("print(x);", Error.NONE, "");
-        DiagramNode potentialError = new DiagramNode("print(x);", Error.POTENTIAL, "Placeholder");
+        DiagramNode methodCall = new DiagramNode("methodCall(Object c)", ErrorType.NONE, null);
+        DiagramNode statement = new DiagramNode("print(x);", ErrorType.NONE, null);
+        List<Error> error = new ArrayList<>();
+        error.add(new Error(ErrorType.POTENTIAL, "Placeholder"));
+        DiagramNode potentialError = new DiagramNode("print(x);", ErrorType.POTENTIAL, error);
         diagram.addStartDiagramNode();
         diagram.addNode(methodCall);
         diagram.addSwitchConditionalStartNode("switch (x)");
