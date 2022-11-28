@@ -2,6 +2,7 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.CharValue;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
@@ -103,6 +104,29 @@ public class CastExprTest {
         IntegerRange val = (IntegerRange) variablesState.getVariable(y);
         Assertions.assertEquals(1, val.getMin());
         Assertions.assertEquals(1, val.getMax());
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void validCastCharToIntTest() {
+        String code = """
+                public class Main {
+                    void test() {
+                        int a = 5;
+                        char b = (char) 5;
+                        char c = 'a';
+                        int d = (int) c;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        CharValue b = (CharValue) variablesState.getVariable(getVariable(compiled, "b"));
+        IntegerRange d = (IntegerRange) variablesState.getVariable(getVariable(compiled, "d"));
+        Assertions.assertEquals(5, b.getMin());
+        Assertions.assertEquals(5, b.getMax());
+        Assertions.assertEquals(97, d.getMin());
+        Assertions.assertEquals(97, d.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 }
