@@ -111,6 +111,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(BreakStmt n, VisualizationState arg) {
+
         return null;
     }
 
