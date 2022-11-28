@@ -6,6 +6,9 @@ import java.io.*;
 import java.util.List;
 
 public class Diagram {
+
+    private final String orangeColour = "#F28C28";
+    private final String redColour = "#FF0000";
     private StringBuilder diagramString;
 
     public Diagram() {
@@ -27,9 +30,9 @@ public class Diagram {
     }
 
     public void addNode(DiagramNode node) {
-        switch (node.error()) {
-            case POTENTIAL -> addErrorNode(node.statement(), node.errorDescription(), true);
-            case DEFINITE -> addErrorNode(node.statement(), node.errorDescription(), false);
+        switch (node.errorType()) {
+            case POTENTIAL -> addErrorNode(node.statement(), node.errors(), true);
+            case DEFINITE -> addErrorNode(node.statement(), node.errors(), false);
             case NONE -> addStatementNode(node.statement());
             default -> throw new RuntimeException("Invalid type of DiagramNode");
         }
@@ -92,13 +95,13 @@ public class Diagram {
      * @param initialization Initialization of for loop variable; ex. i = 1
      * @param condition Condition of for loop execution; ex. i < 10
      */
-    public void addForStartNode(List<String> initialization, String condition) {
-        for (String str : initialization) {
-            addStatementNode(str);
+    public void addForStartNode(List<DiagramNode> initialization, DiagramNode condition) {
+        for (DiagramNode node : initialization) {
+            addNode(node);
         }
         // TODO: May have an error in conditional
-        DiagramNode conditional = new DiagramNode(condition, Error.NONE, "");
-        addWhileForEachConditionalStartNode(conditional);
+//        DiagramNode conditional = new DiagramNode(condition, ErrorType.NONE, "");
+        addWhileForEachConditionalStartNode(condition);
     }
 
     public void addSwitchConditionalStartNode(String condition) {
@@ -125,11 +128,11 @@ public class Diagram {
 
     /**
      * Adds end node for a for loop
-     * @param update How the conditional variable in the for loop is updated each iteration; ex. i++
+     * @param updates How the conditional variable in the for loop is updated each iteration; ex. i++
      */
-    public void addForEndNode(List<String> update) {
-        for (String str : update) {
-            addStatementNode(str);
+    public void addForEndNode(List<DiagramNode> updates) {
+        for (DiagramNode update : updates) {
+            addNode(update);
         }
         addWhileForEachEndNode();
     }
@@ -148,6 +151,40 @@ public class Diagram {
         }
         addStatementNode(statement);
         diagramString.append("note right:" + error + "\n");
+    }
+
+    private void addErrorNode(String statement, List<Error> errors, boolean potentialError) {
+        if (potentialError) {
+            diagramString.append("#Orange");
+        } else {
+            diagramString.append("#Red");
+        }
+        addStatementNode(statement);
+        addErrorInsightNote(errors);
+    }
+
+    private void addErrorInsightNote(List<Error> errors) {
+        if (errors != null) {
+            diagramString.append("note right\n");
+            for (Error error : errors) {
+                diagramString.append(addErrorDescription(error));
+            }
+            diagramString.append("endnote\n");
+        }
+    }
+
+    private String addErrorDescription(Error error) {
+        switch (error.errorType()) {
+            case DEFINITE -> {
+                return "<FONT COLOR=" + redColour + ">" + error.errorDescription() + "</FONT>\n";
+            }
+            case POTENTIAL -> {
+                return "<FONT COLOR=" + orangeColour + ">" + error.errorDescription() + "</FONT>\n";
+            }
+            default -> {
+                return "\n";
+            }
+        }
     }
 
     /**
