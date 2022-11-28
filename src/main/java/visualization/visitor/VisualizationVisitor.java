@@ -1,11 +1,6 @@
 package visualization.visitor;
 
 import analysis.model.*;
-import analysis.values.AnyValue;
-import analysis.values.visitor.AddApproximateVisitor;
-import analysis.values.visitor.SubtractApproximateVisitor;
-import analysis.visitor.AnalysisVisitor;
-import analysis.visitor.ExpressionVisitor;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -16,11 +11,12 @@ import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
-import logger.AnalysisLogger;
 import visualization.DiagramNode;
 import visualization.Error;
+import visualization.ErrorType;
 import visualization.model.VisualizationState;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,17 +32,19 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
     public DiagramNode errorDescriptionHelper(Node n, VisualizationState arg, String expression) {
         DiagramNode diagramNode;
         StringBuilder errorDescription = new StringBuilder();
+        List<Error> errors = new ArrayList<>();
         if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
             boolean isDefinite = false;
             for (AnalysisError er : arg.getErrorMap().get(n)) {
                 if (er.isDefinite()) {
                     isDefinite = true;
                 }
-                errorDescription.append(er.getMessage()).append("\n");
+                errors.add(new Error(er.isDefinite()? ErrorType.DEFINITE : ErrorType.POTENTIAL, er.getMessage()));
+//                errorDescription.append(er.getMessage()).append("\n");
             }
-            diagramNode = new DiagramNode(expression, isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
+            diagramNode = new DiagramNode(expression, isDefinite ? ErrorType.DEFINITE : ErrorType.POTENTIAL, errors);
         } else {
-            diagramNode = new DiagramNode(expression, Error.NONE, errorDescription.toString());
+            diagramNode = new DiagramNode(expression, ErrorType.NONE, errors);
         }
 
         return diagramNode;
@@ -76,7 +74,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         }
 
         diagramStatement = diagramStatement.substring(0, diagramStatement.length() - 1) + ")";
-        DiagramNode methodCall = new DiagramNode(diagramStatement, Error.NONE, "");
+        DiagramNode methodCall = new DiagramNode(diagramStatement, ErrorType.NONE, null);
         arg.diagram.addNode(methodCall);
 
         Optional<BlockStmt> body = n.getBody();
@@ -146,6 +144,13 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(WhileStmt n, VisualizationState arg) {
+        String whileConditional = n.getCondition().toString();
+        DiagramNode node = errorDescriptionHelper(n.getCondition(), arg, whileConditional);
+        arg.diagram.addWhileForEachConditionalStartNode(node);
+
+        n.getBody().accept(this, arg);
+
+        arg.diagram.addWhileForEachEndNode();
         return null;
     }
 
@@ -156,16 +161,58 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(DoStmt n, VisualizationState arg) {
+        arg.diagram.addDoWhileStartNode();
+        n.getBody().accept(this, arg);
+        String conditionalDescription = n.getCondition().toString();
+        DiagramNode conditional = errorDescriptionHelper(n.getCondition(), arg, conditionalDescription);
+        arg.diagram.addDoWhileConditionalEndNode(conditional);
         return null;
     }
 
     @Override
     public EndState visit(ForEachStmt n, VisualizationState arg) {
+
+        String forEachVariable = n.getVariable().toString();
+        String iterable = n.getIterable().toString();
+
+        String conditional = forEachVariable + " : " + iterable;
+        DiagramNode node = errorDescriptionHelper(n.getVariableDeclarator(), arg, conditional);
+        arg.diagram.addWhileForEachConditionalStartNode(node);
+
+        n.getBody().accept(this, arg);
+
+        arg.diagram.addWhileForEachEndNode();
         return null;
     }
 
     @Override
     public EndState visit(ForStmt n, VisualizationState arg) {
+        // Get initializations for FOR-loop statement
+        List<DiagramNode> initializations = new ArrayList<>();
+        for (Expression e : n.getInitialization()) {
+            String expression = e.toString();
+            initializations.add(errorDescriptionHelper(e, arg, expression));
+        }
+
+        // Get comparison conditional for FOR-loop statement
+        if (n.getCompare().isPresent()) {
+            String compare = n.getCompare().get().toString();
+            arg.diagram.addForStartNode(initializations, errorDescriptionHelper(n.getCompare().get(), arg, compare));
+        } else {
+            arg.diagram.addForStartNode(initializations, new DiagramNode("", ErrorType.NONE, null));
+        }
+
+        // Visit FOR-loop's body
+        n.getBody().accept(this, arg);
+
+        // End FOR-loop and add update node to FOR-loop body
+        List<DiagramNode> update = new ArrayList<>();
+        for (Expression e : n.getUpdate()) {
+            String expression = e.toString();
+            update.add(errorDescriptionHelper(e, arg, expression));
+        }
+        arg.diagram.addForEndNode(update);
+
         return null;
     }
 
