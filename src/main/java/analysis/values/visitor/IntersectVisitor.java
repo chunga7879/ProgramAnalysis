@@ -40,7 +40,7 @@ public class IntersectVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(BooleanValue a, BooleanValue b) {
-        if (a.canBeTrue() != b.canBeTrue() && a.canBeTrue() != b.canBeTrue()) return EmptyValue.VALUE;
+        if (a.canBeTrue() != b.canBeTrue() && a.canBeFalse() != b.canBeFalse()) return EmptyValue.VALUE;
         return new BooleanValue(a.canBeTrue() && b.canBeTrue(), a.canBeFalse() && b.canBeFalse());
     }
 
