@@ -378,7 +378,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             case "java.lang.Boolean":
             case "java.lang.Character":
                 assert n.getArguments().size() == 1;
-                return new BoxedPrimitive((PrimitiveValue) n.getArguments().get(0).accept(this, arg));
+                return BoxedPrimitive.create(n.getArguments().get(0).accept(this, arg), false);
             default:
                 return new AnyValue();
         }
