@@ -137,6 +137,16 @@ public class Diagram {
         addWhileForEachEndNode();
     }
 
+    public void addBreakStatementNode() {
+        diagramString.append("break\n");
+    }
+
+    public void addContinueStatementNode() {
+        diagramString.append("#ADD8E6:return to beginning of loop;\n");
+        diagramString.append("detach\n");
+    }
+
+
     /**
      * Adds a node to the plantUML diagram, where the statement has an error
      * @param statement Statement that causes error
