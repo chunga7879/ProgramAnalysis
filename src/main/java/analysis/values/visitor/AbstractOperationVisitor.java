@@ -101,12 +101,12 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(NullValue a, ObjectValue b) {
-        return new PairValue<>(new AnyValue(), null);
+        return new PairValue<>(new EmptyValue(), null);
     }
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(ObjectValue a, NullValue b) {
-        return new PairValue<>(new AnyValue(), null);
+        return new PairValue<>(new EmptyValue(), null);
     }
 
     @Override
@@ -140,5 +140,15 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, BoxedPrimitive b) {
         return new PairValue<>(new AnyValue(), null);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(NullValue a, PossibleValues b) {
+        return new PairValue<>(new EmptyValue(), new AnalysisError(NullPointerException.class, true));
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(PossibleValues a, NullValue b) {
+        return new PairValue<>(new EmptyValue(), new AnalysisError(NullPointerException.class, true));
     }
 }
