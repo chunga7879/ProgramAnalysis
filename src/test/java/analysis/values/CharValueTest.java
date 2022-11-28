@@ -64,10 +64,10 @@ public class CharValueTest {
         CharValue a = new CharValue('a');
         CharValue b = new CharValue('z');
 
-        IntegerValue i = (IntegerValue) a.acceptAbstractOp(new MergeVisitor(), b);
+        CharValue i = (CharValue) a.acceptAbstractOp(new MergeVisitor(), b);
 
-        assertEquals('a', i.getMin());
-        assertEquals('z', i.getMax());
+        assertEquals('a', (char) i.getMin());
+        assertEquals('z', (char) i.getMax());
     }
 
     @Test

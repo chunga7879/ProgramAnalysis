@@ -16,9 +16,9 @@ public class MergeVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(CharValue a, CharValue b) {
-        return new IntegerRange(
-                Math.min(a.getMin(), b.getMin()),
-                Math.max(a.getMax(), b.getMax())
+        return new CharValue(
+                (char) Math.min(a.getMin(), b.getMin()),
+                (char) Math.max(a.getMax(), b.getMax())
         );
     }
 
