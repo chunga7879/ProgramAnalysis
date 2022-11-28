@@ -27,7 +27,6 @@ import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import utils.MathUtil;
 import utils.ResolverUtil;
@@ -37,7 +36,6 @@ import utils.VariableUtil;
 import utils.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
     private final MergeVisitor mergeVisitor;
@@ -95,8 +93,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(AssignExpr n, ExpressionAnalysisState arg) {
         PossibleValues left = n.getTarget().accept(this, arg);
         PossibleValues right = n.getValue().accept(this, arg);
+        AssignExpr.Operator operator = n.getOperator();
         PossibleValues result;
-        switch (n.getOperator()) {
+        switch (operator) {
             case DIVIDE -> {
                 PairValue<PossibleValues, AnalysisError> quotient = left.acceptAbstractOp(divideVisitor, right);
                 AnalysisError error = quotient.getB();
@@ -109,6 +108,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             case MINUS -> result = left.acceptAbstractOp(subtractVisitor, right);
             case MULTIPLY -> result = left.acceptAbstractOp(multiplyVisitor, right);
             default -> result = right;
+        }
+        if (result instanceof EmptyValue && operator != AssignExpr.Operator.DIVIDE) {
+            arg.addError(new AnalysisError(NullPointerException.class, n, true));
         }
         VariableUtil.setVariableFromExpression(n.getTarget(), result, arg.getVariablesState());
         return result;
@@ -187,20 +189,26 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(BinaryExpr n, ExpressionAnalysisState arg) {
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
-        return switch (n.getOperator()) {
+        BinaryExpr.Operator operator = n.getOperator();
+        PossibleValues result;
+        switch (operator) {
             case DIVIDE -> {
-                PairValue<PossibleValues, AnalysisError> result = leftValue.acceptAbstractOp(divideVisitor, rightValue);
-                AnalysisError error = result.getB();
+                PairValue<PossibleValues, AnalysisError> quotient = leftValue.acceptAbstractOp(divideVisitor, rightValue);
+                AnalysisError error = quotient.getB();
                 if (error != null) {
                     arg.addError(error.atNode(n));
                 }
-                yield result.getA();
+                result = quotient.getA();
             }
-            case PLUS -> leftValue.acceptAbstractOp(addVisitor, rightValue);
-            case MINUS -> leftValue.acceptAbstractOp(subtractVisitor, rightValue);
-            case MULTIPLY -> leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
-            default -> new AnyValue();
-        };
+            case PLUS -> result = leftValue.acceptAbstractOp(addVisitor, rightValue);
+            case MINUS -> result = leftValue.acceptAbstractOp(subtractVisitor, rightValue);
+            case MULTIPLY -> result = leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
+            default -> result = new AnyValue();
+        }
+        if (result instanceof EmptyValue && operator != BinaryExpr.Operator.DIVIDE) {
+            arg.addError(new AnalysisError(NullPointerException.class, n, true));
+        }
+        return result;
     }
 
     @Override
