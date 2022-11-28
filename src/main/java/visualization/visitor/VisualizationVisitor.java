@@ -109,6 +109,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(BreakStmt n, VisualizationState arg) {
+        arg.diagram.addBreakStatementNode();
         return null;
     }
 
@@ -155,6 +156,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(ContinueStmt n, VisualizationState arg) {
+        arg.diagram.addContinueStatementNode();
         return null;
     }
 

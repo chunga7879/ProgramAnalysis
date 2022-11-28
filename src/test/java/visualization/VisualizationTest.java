@@ -307,4 +307,70 @@ public class VisualizationTest {
 //
 //        analysisState.diagram.createDiagramPNG("src/test/java/visualization/outputs/throwStat.png");
 //    }
+
+    @Test
+    public void testBreakStatement() {
+        String code = """
+                public class Main {
+                    int test(int x) {
+                        while (x < 10) {
+                            int y = x / 5;
+                            if (y == 2) { 
+                                break;
+                            }
+                            x++;
+                        }
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testBreakStatement.png");
+    }
+
+    @Test
+    public void testContinueStatement() {
+        String code = """
+                    public class Main {
+                        int test(int x) {
+                            while (x < 10) {
+                                int y = x / 5;
+                                if (y == 2) {
+                                    continue;
+                                }
+                                x++;
+                            }
+                            return x;
+                        }
+                    }
+                    """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testContinue.png");
+    }
+
+
 }
