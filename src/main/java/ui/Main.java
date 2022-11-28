@@ -10,6 +10,8 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
+import visualization.model.VisualizationState;
+import visualization.visitor.VisualizationVisitor;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -36,7 +38,9 @@ public class Main {
                 AnalysisState analysisState = new AnalysisState(new VariablesState());
                 compilationUnit.accept(new AnalysisVisitor(method), analysisState);
                 System.out.println("Finished analysis");
-                // TODO: compilationUnit.accept(new VisualizationVisitor(), new VisualizationState(analysisState.getErrorMap()));
+                VisualizationState visualizationState = new VisualizationState(analysisState.getErrorMap());
+                compilationUnit.accept(new VisualizationVisitor(method), visualizationState);
+                visualizationState.diagram.createDiagramPNG("output.png");
             } catch (Exception e) {
                 System.err.println("Analysis error: " + e.getMessage());
             }
