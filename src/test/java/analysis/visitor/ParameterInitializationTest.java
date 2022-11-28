@@ -16,7 +16,7 @@ import static analysis.visitor.VisitorTestUtils.getParameter;
 public class ParameterInitializationTest {
     @BeforeEach
     public void runBefore() {
-        AnalysisLogger.setLog(true);
+        AnalysisLogger.setLog(false);
     }
 
     @Test
