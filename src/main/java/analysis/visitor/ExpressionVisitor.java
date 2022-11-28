@@ -242,7 +242,27 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(ConditionalExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        ConditionStates states = n.getCondition().accept(conditionVisitor, arg);
+        VariablesState trueVarState = states.getTrueState();
+        VariablesState falseVarState = states.getFalseState();
+        ExpressionAnalysisState trueState = new ExpressionAnalysisState(trueVarState);
+        ExpressionAnalysisState falseState = new ExpressionAnalysisState(falseVarState);
+        PossibleValues trueValue = n.getThenExpr().accept(this, trueState);
+        PossibleValues falseValue = n.getElseExpr().accept(this, falseState);
+
+        VariablesState mergedState = new VariablesState();
+        mergedState.setDomainEmpty();
+        if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
+        if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
+        arg.getVariablesState().copyValuesFrom(mergedState);
+        if (!trueVarState.isDomainEmpty() && !falseVarState.isDomainEmpty()) {
+            return trueValue.acceptAbstractOp(mergeVisitor, falseValue);
+        } else if (!trueVarState.isDomainEmpty()) {
+            return trueValue;
+        } else if (!falseVarState.isDomainEmpty()) {
+            return falseValue;
+        }
+        return EmptyValue.VALUE;
     }
 
     @Override
