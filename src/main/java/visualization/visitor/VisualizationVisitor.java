@@ -39,7 +39,9 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
             boolean isDefinite = false;
             for (AnalysisError er : arg.getErrorMap().get(n)) {
-                isDefinite = er.isDefinite();
+                if (er.isDefinite()) {
+                    isDefinite = true;
+                }
                 errorDescription.append(er.getMessage()).append("\n");
             }
             diagramNode = new DiagramNode(expression, isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
