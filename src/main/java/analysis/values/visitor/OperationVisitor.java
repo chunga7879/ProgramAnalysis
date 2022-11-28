@@ -26,6 +26,8 @@ public interface OperationVisitor<T> {
 
     T visitAbstract(CharValue a, PossibleValues b);
 
+    T visitAbstract(BooleanValue a, PossibleValues b);
+
     T visitAbstract(BoxedPrimitive a, PossibleValues b);
 
     T visit(PossibleValues a, PossibleValues b);

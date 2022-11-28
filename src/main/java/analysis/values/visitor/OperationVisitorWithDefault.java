@@ -44,6 +44,11 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
+    public PossibleValues visitAbstract(BooleanValue a, PossibleValues b) {
+        return b.acceptOp(this, a);
+    }
+
+    @Override
     public PossibleValues visitAbstract(ArrayValue a, PossibleValues b) {
         return b.acceptOp(this, a);
     }

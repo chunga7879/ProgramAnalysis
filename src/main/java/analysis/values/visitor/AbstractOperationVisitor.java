@@ -50,6 +50,11 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
     }
 
     @Override
+    public PairValue<PossibleValues, AnalysisError> visitAbstract(BooleanValue a, PossibleValues b) {
+        return b.acceptOp(this, a);
+    }
+
+    @Override
     public PairValue<PossibleValues, AnalysisError> visitAbstract(BoxedPrimitive a, PossibleValues b) {
         return null;
     }

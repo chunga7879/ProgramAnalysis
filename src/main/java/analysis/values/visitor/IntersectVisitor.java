@@ -2,6 +2,7 @@ package analysis.values.visitor;
 
 import analysis.values.*;
 
+@Deprecated
 public class IntersectVisitor extends OperationVisitorWithDefault {
     @Override
     public PossibleValues visit(IntegerValue a, IntegerValue b) {
@@ -35,6 +36,20 @@ public class IntersectVisitor extends OperationVisitorWithDefault {
             return EmptyValue.VALUE;
         }
         return ArrayValue.ANY_VALUE;
+    }
+
+    @Override
+    public PossibleValues visit(BooleanValue a, BooleanValue b) {
+        if (a.canBeTrue() != b.canBeTrue() && a.canBeTrue() != b.canBeTrue()) return EmptyValue.VALUE;
+        return new BooleanValue(a.canBeTrue() && b.canBeTrue(), a.canBeFalse() && b.canBeFalse());
+    }
+
+    @Override
+    public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
+        return new BoxedPrimitive(
+                (PrimitiveValue) a.unbox().acceptAbstractOp(this, b.unbox()),
+                canBeNull(a, b)
+        );
     }
 
     /**
