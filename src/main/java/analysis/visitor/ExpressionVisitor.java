@@ -298,6 +298,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             Expression object = scope.get();
             PossibleValues objectValue = object.accept(this, arg);
 
+            if (objectValue.isEmpty()) {
+                return new EmptyValue();
+            }
             if (objectValue.canBeNull()) {
                 arg.addError(new AnalysisError(NullPointerException.class, n, objectValue == NullValue.VALUE));
                 if (objectValue instanceof ObjectValue objValue) {
