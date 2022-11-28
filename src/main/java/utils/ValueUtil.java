@@ -7,6 +7,7 @@ import analysis.values.visitor.*;
 import analysis.visitor.ExpressionVisitor;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import utils.AnnotationUtil.AnnotationType;
 
@@ -23,16 +24,21 @@ public final class ValueUtil {
         if (type.isPrimitive()) {
             return switch (type.asPrimitive()) {
                 case INT -> IntegerRange.ANY_VALUE;
-                case BOOLEAN -> new BooleanValue(true, true);
+                case CHAR -> CharValue.ANY_VALUE;
+                case BOOLEAN -> BooleanValue.ANY_VALUE;
                 default -> AnyValue.VALUE;
             };
         } else if (type.isArray()) {
             return ArrayValue.ANY_VALUE;
         } else if (type.isReferenceType()) {
             String qualifiedName = type.asReferenceType().getQualifiedName();
-            if (qualifiedName.equalsIgnoreCase("java.lang.String")) {
-                return StringValue.ANY_VALUE;
-            }
+            return switch (qualifiedName) {
+                case "java.lang.String" -> StringValue.ANY_VALUE;
+                case "java.lang.Integer" -> BoxedPrimitive.create(IntegerRange.ANY_VALUE, true);
+                case "java.lang.Boolean" -> BoxedPrimitive.create(BooleanValue.ANY_VALUE, true);
+                case "java.lang.Character" -> BoxedPrimitive.create(CharValue.ANY_VALUE, true);
+                default -> AnyValue.VALUE;
+            };
         }
         return AnyValue.VALUE;
     }
@@ -45,13 +51,14 @@ public final class ValueUtil {
         if (type.isPrimitive()) {
             return switch (type.asPrimitive()) {
                 case INT -> getIntegerValue(annotationMap, exprVisitor);
-                case BOOLEAN -> new BooleanValue(true, true);
+                case CHAR -> CharValue.ANY_VALUE;
+                case BOOLEAN -> BooleanValue.ANY_VALUE;
                 default -> AnyValue.VALUE;
             };
         } else if (type.isArray()) {
             return getArrayValue(annotationMap, exprVisitor);
         } else if (type.isReferenceType()) {
-            return getObjectValue(annotationMap, type);
+            return getObjectValue(annotationMap, type, exprVisitor);
         }
         return AnyValue.VALUE;
     }
@@ -166,9 +173,12 @@ public final class ValueUtil {
 
     /**
      * Get the initial value for an object using @NotNull and @Null
+     * Additionally:
      * - String: @NotEmpty
+     * - Integer: @Positive, @Negative, @PositiveOrZero, @NegativeOrZero, @Min, and @Max
+     * - Boolean, Character: none
      */
-    private static PossibleValues getObjectValue(Map<AnnotationType, Set<AnnotationExpr>> annotationMap, ResolvedType type) {
+    private static PossibleValues getObjectValue(Map<AnnotationType, Set<AnnotationExpr>> annotationMap, ResolvedType type, ExpressionVisitor exprVisitor) {
         boolean isNotNull = annotationMap.containsKey(AnnotationType.NotNull);
         boolean isNull = annotationMap.containsKey(AnnotationType.Null);
         boolean isNotEmpty = annotationMap.containsKey(AnnotationType.NotEmpty);
@@ -177,10 +187,12 @@ public final class ValueUtil {
         if (isNull) return NullValue.VALUE;
 
         String name = type.asReferenceType().getQualifiedName();
-        if (name.equalsIgnoreCase("java.lang.String")) {
-            StringValue baseValue = isNotEmpty ? new StringValue(1, Integer.MAX_VALUE) : StringValue.ANY_VALUE;
-            return isNotNull ? baseValue.withNotNullable() : baseValue;
-        }
-        return AnyValue.VALUE;
+        return switch (name) {
+            case "java.lang.String" -> new StringValue(isNotEmpty ? 1 : 0, Integer.MAX_VALUE, !isNotNull);
+            case "java.lang.Integer" -> BoxedPrimitive.create(getIntegerValue(annotationMap, exprVisitor), !isNotNull);
+            case "java.lang.Boolean" -> BoxedPrimitive.create(getValueForType(ResolvedPrimitiveType.BOOLEAN), !isNotNull);
+            case "java.lang.Character" -> BoxedPrimitive.create(getValueForType(ResolvedPrimitiveType.CHAR), !isNotNull);
+            default -> AnyValue.VALUE;
+        };
     }
 }
