@@ -40,7 +40,17 @@ public class BoxedPrimitive extends ObjectWithNotNullValue {
     }
 
     @Override
-    public <T> T acceptOp(OperationVisitor<T> visitor, PrimitiveValue a) {
+    public <T> T acceptOp(OperationVisitor<T> visitor, IntegerValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, CharValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, BooleanValue a) {
         return visitor.visit(a, this);
     }
 

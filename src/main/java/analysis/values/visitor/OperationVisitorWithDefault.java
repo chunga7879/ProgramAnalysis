@@ -140,17 +140,17 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
 
     @Override
     public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
-        return new AnyValue();
+        return BoxedPrimitive.create(a.unbox().acceptAbstractOp(this, b.unbox()), false);
     }
 
     @Override
     public PossibleValues visit(BoxedPrimitive a, PrimitiveValue b) {
-        return AnyValue.VALUE;
+        return a.unbox().acceptAbstractOp(this, b);
     }
 
     @Override
     public PossibleValues visit(PrimitiveValue a, BoxedPrimitive b) {
-        return AnyValue.VALUE;
+        return a.acceptAbstractOp(this, b.unbox());
     }
 
     @Override

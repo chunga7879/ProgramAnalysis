@@ -56,7 +56,7 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visitAbstract(BoxedPrimitive a, PossibleValues b) {
-        return null;
+        return b.acceptOp(this, a);
     }
 
     @Override
@@ -144,7 +144,8 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, BoxedPrimitive b) {
-        return new PairValue<>(new AnyValue(), null);
+        PairValue<PossibleValues, AnalysisError> p = a.unbox().acceptAbstractOp(this, b.unbox());
+        return new PairValue<>(BoxedPrimitive.create(p.getA(), false), p.getB());
     }
 
     @Override
@@ -159,11 +160,11 @@ public abstract class AbstractOperationVisitor implements OperationVisitor<PairV
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, PrimitiveValue b) {
-        return new PairValue<>(new AnyValue(), null);
+        return a.unbox().acceptAbstractOp(this, b);
     }
 
     @Override
     public PairValue<PossibleValues, AnalysisError> visit(PrimitiveValue a, BoxedPrimitive b) {
-        return new PairValue<>(new AnyValue(), null);
+        return a.acceptAbstractOp(this, b);
     }
 }
