@@ -225,7 +225,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         PossibleValues exprVal = n.getExpression().accept(this, arg);
 
         // do not perform cast expression is empty
-        if (exprVal instanceof EmptyValue) {
+        if (exprVal.isEmpty()) {
             return new EmptyValue();
         }
 
