@@ -33,6 +33,24 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
         this.targetMethod = targetMethod;
     }
 
+    public DiagramNode errorDescriptionHelper(Node n, VisualizationState arg, String expression) {
+        DiagramNode diagramNode;
+        StringBuilder errorDescription = new StringBuilder();
+        if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
+            boolean isDefinite = false;
+            for (AnalysisError er : arg.getErrorMap().get(n)) {
+                isDefinite = er.isDefinite();
+                errorDescription.append(er.getMessage()).append("\n");
+            }
+            diagramNode = new DiagramNode(expression, isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
+        } else {
+            diagramNode = new DiagramNode(expression, Error.NONE, errorDescription.toString());
+        }
+
+        return diagramNode;
+    }
+
+
     @Override
     public EndState visit(CompilationUnit n, VisualizationState arg) {
         List<MethodDeclaration> declarations = n.findAll(
@@ -73,20 +91,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(ExpressionStmt n, VisualizationState arg) {
-        String expression = n.getExpression().toString();
-
-        DiagramNode diagramNode;
-        StringBuilder errorDescription = new StringBuilder();
-        if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
-            boolean isDefinite = false;
-            for (AnalysisError er : arg.getErrorMap().get(n)) {
-                isDefinite = er.isDefinite();
-                errorDescription.append(er.getMessage()).append("\n");
-            }
-            diagramNode = new DiagramNode(expression, isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
-        } else {
-            diagramNode = new DiagramNode(expression, Error.NONE, errorDescription.toString());
-        }
+        DiagramNode diagramNode = errorDescriptionHelper(n, arg, n.getExpression().toString());
         arg.diagram.addNode(diagramNode);
 
         return null;
@@ -109,38 +114,17 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(ReturnStmt n, VisualizationState arg) {
-        DiagramNode expression;
-        StringBuilder errorDescription = new StringBuilder();
-        if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
-            boolean isDefinite = false;
-            for (AnalysisError er : arg.getErrorMap().get(n)) {
-                isDefinite = er.isDefinite();
-                errorDescription.append(er.getMessage()).append("\n");
-            }
-            expression = new DiagramNode("return" + n.getExpression().get(), isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
-        } else {
-            expression = new DiagramNode("return " + n.getExpression().get(), Error.NONE, errorDescription.toString());
-        }
-        arg.diagram.addNode(expression);
+        DiagramNode diagramNode = errorDescriptionHelper(n, arg, n.getExpression().isPresent() ? "return " + n.getExpression().get() : "return") ;
+
+        arg.diagram.addNode(diagramNode);
         return null;
     }
 
     @Override
     public EndState visit(IfStmt n, VisualizationState arg) {
 
-        DiagramNode ifCondition;
-        StringBuilder errorDescription = new StringBuilder();
-        // Not sure to check this error
-        if (arg.getErrorMap().isEmpty() || !arg.getErrorMap().containsKey(n)) {
-            ifCondition = new DiagramNode(n.getCondition().toString(), Error.NONE, errorDescription.toString());
-        } else {
-            boolean isDefinite = false;
-            for (AnalysisError er : arg.getErrorMap().get(n)) {
-                isDefinite = er.isDefinite();
-                errorDescription.append(er.getMessage()).append("\n");
-            }
-            ifCondition = new DiagramNode(n.getCondition().toString(), isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
-        }
+        DiagramNode ifCondition = errorDescriptionHelper(n, arg, n.getCondition().toString());
+
         arg.diagram.addIfThenStartNode(ifCondition);
 
         // IF case
@@ -184,18 +168,7 @@ public class VisualizationVisitor implements GenericVisitor<EndState, Visualizat
 
     @Override
     public EndState visit(ThrowStmt n, VisualizationState arg) {
-        DiagramNode diagramNode;
-        StringBuilder errorDescription = new StringBuilder();
-        if (!arg.getErrorMap().isEmpty() && arg.getErrorMap().containsKey(n)) {
-            boolean isDefinite = false;
-            for (AnalysisError er : arg.getErrorMap().get(n)) {
-                isDefinite = er.isDefinite();
-                errorDescription.append(er.getMessage()).append("\n");
-            }
-            diagramNode = new DiagramNode("throw " + n.getExpression().toString(), isDefinite ? Error.DEFINITE : Error.POTENTIAL, errorDescription.toString());
-        } else {
-            diagramNode = new DiagramNode("throw " + n.getExpression().toString(), Error.NONE, errorDescription.toString());
-        }
+        DiagramNode diagramNode = errorDescriptionHelper(n, arg, "throw " + n.getExpression().toString());
         arg.diagram.addThrowStatementNode(diagramNode);
         return null;
     }
