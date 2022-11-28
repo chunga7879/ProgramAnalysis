@@ -1,14 +1,14 @@
-package analysis.visitor;
+package visualization;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.IntegerRange;
+import analysis.visitor.AnalysisVisitor;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import visualization.Diagram;
 import visualization.model.VisualizationState;
 import visualization.visitor.VisualizationVisitor;
 
