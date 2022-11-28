@@ -241,7 +241,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             return new IntegerRange(val.getMin(), val.getMax());
         }
 
-        // int to long, long to int, other
+        // object to object, other
         return exprVal;
     }
 

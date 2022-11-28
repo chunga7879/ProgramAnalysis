@@ -62,29 +62,6 @@ public class CastExprTest {
     }
 
     @Test
-    public void validCastIntLongTest() {
-        String code = """
-                public class Main {
-                    void test() {
-                        int a = 5;
-                        long b = (long) a;
-                        long c = 10;
-                        int d = (int) c;
-                    }
-                }
-                """;
-        CompilationUnit compiled = compile(code);
-        compiled.accept(new AnalysisVisitor("test"), analysisState);
-        IntegerRange b = (IntegerRange) variablesState.getVariable(getVariable(compiled, "b"));
-        IntegerRange d = (IntegerRange) variablesState.getVariable(getVariable(compiled, "d"));
-        Assertions.assertEquals(5, b.getMin());
-        Assertions.assertEquals(5, b.getMax());
-        Assertions.assertEquals(10, d.getMax());
-        Assertions.assertEquals(10, d.getMax());
-        Assertions.assertEquals(0, analysisState.getErrorMap().size());
-    }
-
-    @Test
     public void validCastIntToIntTest() {
         String code = """
                 public class Main {
