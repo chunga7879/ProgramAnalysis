@@ -4,6 +4,7 @@ import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.CharValue;
 import analysis.values.IntegerRange;
+import analysis.values.PossibleValues;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -38,36 +39,48 @@ public class CastExprTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        PossibleValues s = variablesState.getVariable(getVariable(compiled, "s"));
+        Assertions.assertTrue(s.isEmpty());
         Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
-    public void validCastIntToLongTest() {
+    public void validCastWithErrorExpression() {
         String code = """
                 public class Main {
                     void test() {
-                        int i = 5;
-                        long l = (long) i;
+                        int a = 5;
+                        char b = (char) (a / 0);
                     }
                 }
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
-        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+        PossibleValues b = variablesState.getVariable(getVariable(compiled, "b"));
+        Assertions.assertTrue(b.isEmpty());
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
     @Test
-    public void validCastLongToIntTest() {
+    public void validCastIntLongTest() {
         String code = """
                 public class Main {
                     void test() {
-                        long l = 5;
-                        int i = (int) l;
+                        int a = 5;
+                        long b = (long) a;
+                        long c = 10;
+                        int d = (int) c;
                     }
                 }
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        IntegerRange b = (IntegerRange) variablesState.getVariable(getVariable(compiled, "b"));
+        IntegerRange d = (IntegerRange) variablesState.getVariable(getVariable(compiled, "d"));
+        Assertions.assertEquals(5, b.getMin());
+        Assertions.assertEquals(5, b.getMax());
+        Assertions.assertEquals(10, d.getMax());
+        Assertions.assertEquals(10, d.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
@@ -83,6 +96,9 @@ public class CastExprTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        IntegerRange y = (IntegerRange) variablesState.getVariable(getVariable(compiled, "y"));
+        Assertions.assertEquals(5 + 1, y.getMin());
+        Assertions.assertEquals(5 + 1, y.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
@@ -108,7 +124,7 @@ public class CastExprTest {
     }
 
     @Test
-    public void validCastCharToIntTest() {
+    public void validCastCharIntTest() {
         String code = """
                 public class Main {
                     void test() {

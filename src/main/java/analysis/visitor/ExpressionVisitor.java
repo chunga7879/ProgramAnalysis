@@ -216,21 +216,25 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
         PossibleValues exprVal = n.getExpression().accept(this, arg);
 
-        if (Objects.equals(exprVal, new EmptyValue())) {
+        // do not perform cast expression is empty
+        if (exprVal instanceof EmptyValue) {
             return new EmptyValue();
         }
 
+        // char to int
         if (Objects.equals(castType.describe(), "char") && Objects.equals(exprType.describe(), "int")) {
             IntegerValue val = (IntegerValue) exprVal;
             return new CharValue((char) val.getMin(), (char) val.getMax());
         }
 
+        // int to char
         if (Objects.equals(castType.describe(), "int") && Objects.equals(exprType.describe(), "char")) {
             CharValue val = (CharValue) exprVal;
             return new IntegerRange(val.getMin(), val.getMax());
         }
 
-        return n.getExpression().accept(this, arg);
+        // int to long, long to int, other
+        return exprVal;
     }
 
     @Override
