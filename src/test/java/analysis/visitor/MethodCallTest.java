@@ -594,5 +594,21 @@ public class MethodCallTest {
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
+
+    @Test
+    public void noNullPointerOnSystemCalls() {
+        String code = """
+                public class Main {                  
+                    void test() {
+                        System.in.read();
+                        System.out.println(1);
+                        System.err.println(2);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
     // endregion ---- annotation tests
 }

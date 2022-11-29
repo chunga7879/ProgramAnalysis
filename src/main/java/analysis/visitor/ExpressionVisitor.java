@@ -402,6 +402,14 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 return new EmptyValue();
             }
         }
+        if (isStatic && n.getScope().isNameExpr() && Objects.equals(n.getScope().asNameExpr().getNameAsString(), "System")) {
+            // System.in, System.out, System.err are not null
+            switch (n.getName().asString()) {
+                case "in", "out", "err" -> {
+                    return new ExtendableObjectValue(false);
+                }
+            }
+        }
         if (valDec instanceof JavaParserFieldDeclaration jpFieldDec) {
             return ValueUtil.getValueForType(valDec.getType(), jpFieldDec.getWrappedNode().getAnnotations(), this);
         }
