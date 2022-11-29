@@ -297,7 +297,15 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(InstanceOfExpr n, ExpressionAnalysisState arg) {
-        return new AnyValue();
+        ResolvedType rightType = n.getType().resolve();
+        ResolvedType leftType = n.getExpression().calculateResolvedType();
+        if (rightType.isAssignableBy(leftType)) {
+            return new BooleanValue(true, false);
+        }
+        if (leftType.isAssignableBy(rightType)) {
+            return new BooleanValue(true, true);
+        }
+        return new BooleanValue(false, true);
     }
 
     @Override
