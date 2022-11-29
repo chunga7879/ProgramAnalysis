@@ -13,7 +13,8 @@ Our analysis tracks the potential domain of local variables and parameters as a 
   - String: length from min/max
   - Arrays: length from min/max
 #### Operations
-Operations will attempt to approximate the potential domain when computes the operation. For example, adding integers with domains `[1, 10]` and `[-4, 3]` will result in an integer with domain `[-3, 13]`. For a list of operations, see [Analyzable Java Code/Operations](./valid-code.md).
+Operations will attempt to approximate the potential domain when computes the operation. For example, adding integers with domains `[1, 10]` and `[-4, 3]` will result in an integer with domain `[-3, 13]`.
+For a list of operations, see [Analyzable Java Code/Operations](./valid-code).
 
 #### Parameters
 Parameters are initialized by their potential domain according to their annotations. Look under **Annotations** section for annotations that are supported.

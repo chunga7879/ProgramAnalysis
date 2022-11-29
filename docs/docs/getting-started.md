@@ -1,8 +1,5 @@
 # Getting Started
 
-### Introduction
-Our analysis is a Static Program Analysis that tracks the potential domain of local variables and parameters to check whether any runtime errors can occur.
-
 ### Running the Analysis
 To run the code, run `src/main/java/ui/Main.java` with the following arguments:
 

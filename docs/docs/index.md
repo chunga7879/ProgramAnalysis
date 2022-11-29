@@ -4,4 +4,7 @@ title: Home
 
 # Runtime Error Detector
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+### Introduction
+Our analysis is a Static Program Analysis that tracks the potential domain of local variables and parameters to check whether any runtime errors can occur.
+
+To start using our analysis tool, look at [Getting Started](./getting-started).
