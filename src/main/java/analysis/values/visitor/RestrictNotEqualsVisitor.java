@@ -23,6 +23,15 @@ public class RestrictNotEqualsVisitor extends RestrictionVisitor {
     }
 
     @Override
+    public PossibleValues visit(CharValue a, CharValue b) {
+        if (b.getMin() != b.getMax()) return a;
+        if (b.getMin() == a.getMin() && b.getMin() == a.getMax()) return new EmptyValue();
+        if (b.getMin() == a.getMin() && a.getMin() != Character.MAX_VALUE) return new CharValue((char) (a.getMin() + 1), (char) a.getMax());
+        if (b.getMin() == a.getMax() && a.getMax() != Character.MIN_VALUE) return new CharValue((char) a.getMin(), (char) (a.getMax() - 1));
+        return a;
+    }
+
+    @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
         if (b.equals(a)) return new EmptyValue();
         return a;

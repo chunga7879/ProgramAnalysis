@@ -21,7 +21,24 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
         return new EmptyValue();
     }
 
-    // TODO: handle equals for different types
+    @Override
+    public PossibleValues visit(StringValue a, StringValue b) {
+        if (a.minStringLength() > b.maxStringLength()) return new EmptyValue();
+        if (a.maxStringLength() < b.minStringLength()) return new EmptyValue();
+        return new StringValue(
+                Integer.max(a.minStringLength(), b.minStringLength()),
+                Integer.min(a.maxStringLength(), b.maxStringLength()),
+                a.canBeNull() && b.canBeNull()
+        );
+    }
+
+    @Override
+    public PossibleValues visit(CharValue a, CharValue b) {
+        if (a.getMin() > b.getMax()) return new EmptyValue();
+        if (a.getMax() < b.getMin()) return new EmptyValue();
+        return new CharValue((char) Integer.max(a.getMin(), b.getMin()), (char) Integer.min(a.getMax(), b.getMax()));
+    }
+
     @Override
     public PossibleValues visit(PossibleValues a, StringValue b) {
         if (a instanceof IntegerValue) return new EmptyValue(); // handle this better
