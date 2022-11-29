@@ -382,22 +382,37 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     @Override
     public PossibleValues visit(FieldAccessExpr n, ExpressionAnalysisState arg) {
         PossibleValues scopeValue = n.getScope().accept(this, arg);
-        ResolvedValueDeclaration valDec = n.resolve();
-        if (scopeValue.canBeNull()) {
-            arg.addError(new AnalysisError(NullPointerException.class, n.getScope(), Objects.equals(scopeValue, NullValue.VALUE)));
-            if (scopeValue instanceof ObjectValue objValue) {
-                VariableUtil.setVariableFromExpression(n.getScope(), objValue.withNotNullable(), arg.getVariablesState());
+        ResolvedValueDeclaration valDec = ResolverUtil.resolveOrNull(n);
+        if (valDec == null) return AnyValue.VALUE;
+        boolean isStatic = valDec.isField() && valDec.asField().isStatic();
+
+        if (!isStatic) {
+            if (!n.getScope().isThisExpr() && scopeValue.canBeNull()) {
+                arg.addError(new AnalysisError(NullPointerException.class, n.getScope(), Objects.equals(scopeValue, NullValue.VALUE)));
+                if (scopeValue instanceof ObjectValue objValue) {
+                    VariableUtil.setVariableFromExpression(n.getScope(), objValue.withNotNullable(), arg.getVariablesState());
+                }
+            }
+            if (scopeValue instanceof ArrayValue arrayValue) {
+                if (valDec.getName().equals("length")) {
+                    return arrayValue.getLength();
+                }
+            }
+            if (scopeValue.isEmpty()) {
+                return new EmptyValue();
             }
         }
-        if (scopeValue instanceof ArrayValue arrayValue) {
-            if (valDec.getName().equals("length")) {
-                return arrayValue.getLength();
+        if (isStatic && n.getScope().isNameExpr() && Objects.equals(n.getScope().asNameExpr().getNameAsString(), "System")) {
+            // System.in, System.out, System.err are not null
+            switch (n.getName().asString()) {
+                case "in", "out", "err" -> {
+                    return new ExtendableObjectValue(false);
+                }
             }
         }
-        if (scopeValue.isEmpty()) {
-            return new EmptyValue();
+        if (valDec instanceof JavaParserFieldDeclaration jpFieldDec) {
+            return ValueUtil.getValueForType(valDec.getType(), jpFieldDec.getWrappedNode().getAnnotations(), this);
         }
-        // TODO: handle field access default value (+ annotations)
         return ValueUtil.getValueForType(valDec.getType());
     }
 
@@ -458,31 +473,35 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(MethodCallExpr n, ExpressionAnalysisState arg) {
         Optional<Expression> scope = n.getScope();
         String methodName = n.getName().asString();
+        ResolvedMethodDeclaration dec = ResolverUtil.resolveOrNull(n);
+        boolean isStatic = dec != null && dec.isStatic();
 
         // handle method scope if present
         if (scope.isPresent()) {
             Expression object = scope.get();
             PossibleValues scopeValue = object.accept(this, arg);
 
-            if (scopeValue.isEmpty()) {
-                return new EmptyValue();
-            }
-            if (scopeValue.canBeNull()) {
-                arg.addError(new AnalysisError(NullPointerException.class, n, scopeValue == NullValue.VALUE));
-                if (scopeValue instanceof ObjectValue objValue) {
-                    VariableUtil.setVariableFromExpression(object, objValue.withNotNullable(), arg.getVariablesState());
+            if (!object.isThisExpr() && !isStatic) {
+                if (scopeValue.isEmpty()) {
+                    return new EmptyValue();
                 }
-            }
-            if (scopeValue instanceof StringValue stringValue) {
-                if (methodName.equals("length")) {
-                    return stringValue.getLengthApproximation();
-                } else if (methodName.equals("isEmpty")) {
-                    return stringValue.getIsEmptyApproximation();
+                if (scopeValue.canBeNull()) {
+                    arg.addError(new AnalysisError(NullPointerException.class, n, scopeValue == NullValue.VALUE));
+                    if (scopeValue instanceof ObjectValue objValue) {
+                        VariableUtil.setVariableFromExpression(object, objValue.withNotNullable(), arg.getVariablesState());
+                    }
+                }
+                if (scopeValue instanceof StringValue stringValue) {
+                    if (methodName.equals("length")) {
+                        return stringValue.getLengthApproximation();
+                    } else if (methodName.equals("isEmpty")) {
+                        return stringValue.getIsEmptyApproximation();
+                    }
                 }
             }
         }
 
-        ResolvedMethodDeclaration dec = n.resolve();
+        if (dec == null) return AnyValue.VALUE;
 
         // handle method args
         NodeList<Expression> methodArgs = n.getArguments();
