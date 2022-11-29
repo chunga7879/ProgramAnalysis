@@ -83,6 +83,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
     public EndState visit(BlockStmt n, AnalysisState arg) {
         EndState endState = new EndState();
         for (Statement s : n.getStatements()) {
+            if (arg.getVariablesState().isDomainEmpty()) return endState;
             endState.add(s.accept(this, arg));
         }
         return endState;
@@ -232,7 +233,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         EndState endState = new EndState();
         VariablesState varState = state.getVariablesState();
         VariablesState mergeState = varState.copy(); // State tracking the values in all iterations
-        VariablesState currentState = mergeState.copy(); // State tracking the values in each iteration
+        VariablesState currentState = varState.copy(); // State tracking the values in each iteration
         VariablesState exitState = new VariablesState(); // State tracking the values when the loop exits
         exitState.setDomainEmpty();
 
@@ -243,7 +244,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
         int i = 0;
         boolean isApprox = false;
         do {
-            AnalysisLogger.logFormat(loopNode, "%s [%s] MERGE STATE: %s", loopName, i, mergeState);
+            VariablesState previousState = currentState.copy();
             if (i > 1000 && !isApprox) {
                 // If # of loop runs is too long, start to approximate changes
                 isApprox = true;
@@ -251,6 +252,9 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
                 loopExprVisitor = new ExpressionVisitor(mergeVisitor, new AddApproximateVisitor(), new DivideVisitor(),
                         new MultiplyVisitor(), new SubtractApproximateVisitor());
                 loopAnalysisVisitor = new AnalysisVisitor(targetMethod, loopExprVisitor);
+            }
+            if (i > 1000) {
+                currentState.merge(mergeVisitor, mergeState);
             }
 
             // Check condition
@@ -289,10 +293,9 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             }
             AnalysisLogger.logEndFormat(loopNode, "%s [%s] ITERATION STATE: %s", loopName, i, currentState);
 
-            VariablesState prevState = mergeState.copy();
             mergeState.merge(mergeVisitor, currentState);
-            if (Objects.equals(mergeState, prevState)) {
-                AnalysisLogger.logEndFormat(loopNode, "%s [%s] UNCHANGED: %s", loopName, i, mergeState);
+            if (Objects.equals(previousState, currentState)) {
+                AnalysisLogger.logEndFormat(loopNode, "%s [%s] UNCHANGED: %s", loopName, i, currentState);
                 break;
             }
             i++;
