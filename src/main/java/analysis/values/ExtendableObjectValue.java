@@ -22,7 +22,7 @@ public class ExtendableObjectValue extends ObjectWithNotNullValue {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        return o instanceof NullValue;
+        return o instanceof ExtendableObjectValue;
     }
 
     @Override
