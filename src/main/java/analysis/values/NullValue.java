@@ -47,6 +47,11 @@ public class NullValue extends ObjectValue {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, BoxedPrimitive a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
     public ObjectValue withNullable() {
         return this;
     }

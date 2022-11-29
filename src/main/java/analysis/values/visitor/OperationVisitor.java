@@ -44,10 +44,6 @@ public interface OperationVisitor<T> {
 
     T visit(StringValue a, StringValue b);
 
-    T visit(PossibleValues a, StringValue b);
-
-    T visit(StringValue a, PossibleValues b);
-
     T visit(NullValue a, ObjectValue b);
 
     T visit(ObjectValue a, NullValue b);

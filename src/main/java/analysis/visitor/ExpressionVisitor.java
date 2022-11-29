@@ -21,6 +21,7 @@ import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaratio
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
@@ -92,21 +93,11 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         AssignExpr.Operator operator = n.getOperator();
         PossibleValues result;
         switch (operator) {
-            case DIVIDE -> {
-                PairValue<PossibleValues, AnalysisError> quotient = left.acceptAbstractOp(divideVisitor, right);
-                AnalysisError error = quotient.getB();
-                if (error != null) {
-                    arg.addError(error.atNode(n));
-                }
-                result = quotient.getA();
-            }
-            case PLUS -> result = left.acceptAbstractOp(addVisitor, right);
-            case MINUS -> result = left.acceptAbstractOp(subtractVisitor, right);
-            case MULTIPLY -> result = left.acceptAbstractOp(multiplyVisitor, right);
+            case DIVIDE -> result = handleDivide(n, n.getTarget(), n.getValue(), left, right, arg);
+            case PLUS -> result = handlePlus(n, n.getTarget(), n.getValue(), left, right, arg);
+            case MINUS -> result = handleMinus(n, n.getTarget(), n.getValue(), left, right, arg);
+            case MULTIPLY -> result = handleMultiply(n, n.getTarget(), n.getValue(), left, right, arg);
             default -> result = right;
-        }
-        if (result instanceof EmptyValue && operator != AssignExpr.Operator.DIVIDE) {
-            arg.addError(new AnalysisError(NullPointerException.class, n, true));
         }
         ResolvedType type = ResolverUtil.calculateResolvedTypeOrNull(n.getTarget());
         if (type != null) result = VariableUtil.implicitTypeCasting(type, n.getValue(), result, arg);
@@ -146,7 +137,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             // Update array length
             VariableUtil.updateArrayLength(n.getName().asNameExpr().resolve(), validLength, arg.getVariablesState());
         }
-        // Update length variable
+        // Update index variable
         VariableUtil.setVariableFromExpression(n.getIndex(), validIndex, arg.getVariablesState());
 
         // Return proper value
@@ -205,23 +196,114 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         BinaryExpr.Operator operator = n.getOperator();
         PossibleValues result;
         switch (operator) {
-            case DIVIDE -> {
-                PairValue<PossibleValues, AnalysisError> quotient = leftValue.acceptAbstractOp(divideVisitor, rightValue);
-                AnalysisError error = quotient.getB();
-                if (error != null) {
-                    arg.addError(error.atNode(n));
-                }
-                result = quotient.getA();
-            }
-            case PLUS -> result = leftValue.acceptAbstractOp(addVisitor, rightValue);
-            case MINUS -> result = leftValue.acceptAbstractOp(subtractVisitor, rightValue);
-            case MULTIPLY -> result = leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
-            default -> result = new AnyValue();
-        }
-        if (result instanceof EmptyValue && operator != BinaryExpr.Operator.DIVIDE) {
-            arg.addError(new AnalysisError(NullPointerException.class, n, true));
+            case DIVIDE -> result = handleDivide(n, n.getLeft(), n.getRight(), leftValue, rightValue, arg);
+            case PLUS -> result = handlePlus(n, n.getLeft(), n.getRight(), leftValue, rightValue, arg);
+            case MINUS -> result = handleMinus(n, n.getLeft(), n.getRight(), leftValue, rightValue, arg);
+            case MULTIPLY -> result = handleMultiply(n, n.getLeft(), n.getRight(), leftValue, rightValue, arg);
+            default -> result = AnyValue.VALUE;
         }
         return result;
+    }
+
+    /**
+     * Handle plus operation
+     */
+    private PossibleValues handlePlus(
+            Expression expr,
+            Expression leftExpr,
+            Expression rightExpr,
+            PossibleValues leftValue,
+            PossibleValues rightValue,
+            ExpressionAnalysisState arg
+    ) {
+        ResolvedType type = ResolverUtil.calculateResolvedTypeOrNull(expr);
+        if (type != null) {
+            if (TypeUtil.isStringType(type)) {
+                return ValueUtil.stringValueConcat(leftValue, rightValue);
+            }
+            boolean isDefinite = handleNullErrors(expr, leftExpr, rightExpr, leftValue, rightValue, arg);
+            if (isDefinite) return EmptyValue.VALUE;
+            return leftValue.acceptAbstractOp(addVisitor, rightValue);
+        }
+        return AnyValue.VALUE;
+    }
+
+    /**
+     * Handle divide operation
+     */
+    private PossibleValues handleDivide(
+            Expression expr,
+            Expression leftExpr,
+            Expression rightExpr,
+            PossibleValues leftValue,
+            PossibleValues rightValue,
+            ExpressionAnalysisState arg
+    ) {
+        boolean isDefinite = handleNullErrors(expr, leftExpr, rightExpr, leftValue, rightValue, arg);
+        if (!isDefinite) {
+            PairValue<PossibleValues, AnalysisError> quotient = leftValue.acceptAbstractOp(divideVisitor, rightValue);
+            AnalysisError error = quotient.getB();
+            if (error != null) {
+                arg.addError(error.atNode(expr));
+            }
+            return quotient.getA();
+        }
+        return EmptyValue.VALUE;
+    }
+
+    /**
+     * Handle minus operation
+     */
+    private PossibleValues handleMinus(
+            Expression expr,
+            Expression leftExpr,
+            Expression rightExpr,
+            PossibleValues leftValue,
+            PossibleValues rightValue,
+            ExpressionAnalysisState arg
+    ) {
+        boolean isDefinite = handleNullErrors(expr, leftExpr, rightExpr, leftValue, rightValue, arg);
+        return isDefinite ? EmptyValue.VALUE : leftValue.acceptAbstractOp(subtractVisitor, rightValue);
+    }
+
+    /**
+     * Handle multiply operation
+     */
+    private PossibleValues handleMultiply(
+            Expression expr,
+            Expression leftExpr,
+            Expression rightExpr,
+            PossibleValues leftValue,
+            PossibleValues rightValue,
+            ExpressionAnalysisState arg
+    ) {
+        boolean isDefinite = handleNullErrors(expr, leftExpr, rightExpr, leftValue, rightValue, arg);
+        return isDefinite ? EmptyValue.VALUE : leftValue.acceptAbstractOp(multiplyVisitor, rightValue);
+    }
+
+    /**
+     * Check NullPointerException in binary operation and properly restrict domain of values
+     */
+    private boolean handleNullErrors(
+            Expression expr,
+            Expression leftExpr,
+            Expression rightExpr,
+            PossibleValues leftValue,
+            PossibleValues rightValue,
+            ExpressionAnalysisState arg
+    ) {
+        if (leftValue.canBeNull() || rightValue.canBeNull()) {
+            boolean isDefinite = leftValue == NullValue.VALUE || rightValue == NullValue.VALUE;
+            arg.addError(new AnalysisError(NullPointerException.class, expr, isDefinite));
+            if (leftValue instanceof ObjectValue objectValue) {
+                VariableUtil.setVariableFromExpression(leftExpr, objectValue.withNotNullable(), arg.getVariablesState());
+            }
+            if (rightValue instanceof ObjectValue objectValue) {
+                VariableUtil.setVariableFromExpression(rightExpr, objectValue.withNotNullable(), arg.getVariablesState());
+            }
+            return isDefinite;
+        }
+        return false;
     }
 
     @Override
@@ -411,7 +493,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             ResolvedParameterDeclaration paramDec = dec.getParam(i);
             if (paramDec instanceof JavaParserParameterDeclaration javaParamDec) {
                 List<AnnotationExpr> annotations = javaParamDec.getWrappedNode().getAnnotations().stream().toList();
-                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations, n.toString());
+                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations, javaParamDec.getName(), n.toString());
                 if (errors.size() != 0) {
                     arg.addErrors(errors);
                 }
@@ -456,7 +538,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
             return state.getVariable(jpParamDec.getWrappedNode());
         }
-        return AnyValue.VALUE;
+        if (dec instanceof JavaParserFieldDeclaration jpFieldDec) {
+            return ValueUtil.getValueForType(dec.getType(), jpFieldDec.getWrappedNode().getAnnotations(), this);
+        }
+        return ValueUtil.getValueForType(dec.getType());
     }
 
     @Override
