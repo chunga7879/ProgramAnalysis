@@ -2,6 +2,7 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.BooleanValue;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
@@ -53,8 +54,9 @@ public class ForStatementTest {
     public void forLoopAnyTest() {
         String code = """
                 public class Main {
-                    void testForLoopFixed(int a, int b) {
+                    void testForLoopFixed(int a, int b, boolean c) {
                         for (int i = 0; i < b; i++) {
+                            c = !c;
                             a = a + i;
                         }
                     }
@@ -64,11 +66,13 @@ public class ForStatementTest {
         ForStmt forStatement = getForStatements(compiled).get(0);
         Parameter a = getParameter(compiled, "a");
         Parameter b = getParameter(compiled, "b");
+        Parameter c = getParameter(compiled, "c");
         VariableDeclarator i = getVariable(compiled, "i");
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(a, new IntegerRange(10, 10));
         varState.setVariable(b, new IntegerRange(Integer.MIN_VALUE, Integer.MAX_VALUE));
+        varState.setVariable(c, BooleanValue.TRUE);
         forStatement.accept(new AnalysisVisitor(""), analysisState);
         IntegerRange aVal = (IntegerRange) varState.getVariable(a);
         Assertions.assertEquals(10, aVal.getMin());

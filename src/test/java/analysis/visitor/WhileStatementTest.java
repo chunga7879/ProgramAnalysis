@@ -3,6 +3,7 @@ package analysis.visitor;
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.AnyValue;
+import analysis.values.BooleanValue;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
@@ -138,5 +139,75 @@ public class WhileStatementTest {
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         Assertions.assertEquals(new IntegerRange(10), varState.getVariable(i));
         Assertions.assertEquals(new IntegerRange(11), varState.getVariable(a));
+    }
+
+    @Test
+    public void whileCoverDomainTest() {
+        String code = """
+                public class Main {
+                    void test() {
+                        boolean a = true;
+                        boolean b = true;
+                        int x = 0;
+                        while(true) {
+                            if (a && b) {
+                                a = false;
+                                b = false;
+                            } else if (!a && !b) {
+                                a = true;
+                                b = false;
+                            } else if (a && !b) {
+                                a = false;
+                                b = true;
+                            } else {
+                                x = 10;
+                                break;
+                            }
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator x = getVariable(compiled, "x");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertFalse(varState.isDomainEmpty());
+        Assertions.assertEquals(new IntegerRange(10), varState.getVariable(x));
+    }
+
+    @Test
+    public void whileSwitchDirectionTest() {
+        String code = """
+                public class Main {
+                    void test() {
+                        boolean up = true;
+                        int sum = 0;
+                        int i = 0;
+                        while (i <= 100 && i >= -100) {
+                            sum++;
+                
+                            if (up) i++;
+                            else i--;
+                
+                            if (i == 100) up = false;
+                            else if (i == -100) up = true;
+                
+                            if (sum == 210) break;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator i = getVariable(compiled, "i");
+        VariableDeclarator up = getVariable(compiled, "up");
+        VariableDeclarator sum = getVariable(compiled, "sum");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertFalse(varState.isDomainEmpty());
+        Assertions.assertEquals(new IntegerRange(-10), varState.getVariable(i));
+        Assertions.assertEquals(new IntegerRange(210), varState.getVariable(sum));
+        Assertions.assertEquals(BooleanValue.FALSE, varState.getVariable(up));
     }
 }
