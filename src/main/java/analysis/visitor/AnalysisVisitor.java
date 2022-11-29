@@ -127,16 +127,18 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
             AnalysisLogger.log(n, exprAnalysisState.getVariablesState(), exprAnalysisState.getErrors());
             arg.addErrors(n, exprAnalysisState.getErrors());
 
-            // Check annotation against return
-            MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
-            if (dec != null) {
-                List<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(
-                        value,
-                        dec.getAnnotations(),
-                        n.getExpression().get().toString()
-                );
-                arg.addErrors(n, errors);
-                AnalysisLogger.logErrors(n, errors);
+            if (!varState.isDomainEmpty()) {
+                // Check annotation against return
+                MethodDeclaration dec = n.findAncestor(MethodDeclaration.class).orElse(null);
+                if (dec != null) {
+                    List<AnalysisError> errors = AnnotationUtil.checkReturnValueWithAnnotation(
+                            value,
+                            dec.getAnnotations(),
+                            n.getExpression().get().toString()
+                    );
+                    arg.addErrors(n, errors);
+                    AnalysisLogger.logErrors(n, errors);
+                }
             }
         }
         varState.setDomainEmpty();

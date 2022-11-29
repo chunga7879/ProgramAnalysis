@@ -115,6 +115,7 @@ public class NullPointerExceptionTest {
     public void noNullPointerExceptionInIfEqualsTest() {
         String code = """
                 public class Main {
+                    @NotNull
                     private Character cha;
                     void test() {
                         Integer a = null;
