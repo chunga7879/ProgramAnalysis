@@ -294,4 +294,26 @@ public class IfStatementTest {
         Assertions.assertEquals(BooleanValue.FALSE, varState.getVariable(b));
         Assertions.assertEquals(BooleanValue.TRUE, varState.getVariable(c));
     }
+
+    @Test
+    public void ifErrorTest() {
+        String code = """
+                public class Main {
+                    int test(int x) {
+                        if (x > 5) {
+                            x = 10 / 0;
+                        } else {
+                            String y = null;
+                            x = y.length();
+                        }
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(2, analysisState.getErrorMap().size());
+    }
 }
