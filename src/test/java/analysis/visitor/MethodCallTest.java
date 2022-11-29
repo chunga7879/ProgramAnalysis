@@ -63,7 +63,7 @@ public class MethodCallTest {
         VariableDeclarator s = getVariable(compiled, "s");
         VariableDeclarator x = getVariable(compiled, "x");
         Assertions.assertEquals(new StringValue(2, 2, false), variablesState.getVariable(s));
-        Assertions.assertEquals(IntegerRange.ANY_VALUE, variablesState.getVariable(x));
+        Assertions.assertEquals(new IntegerRange(2), variablesState.getVariable(x));
         Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
