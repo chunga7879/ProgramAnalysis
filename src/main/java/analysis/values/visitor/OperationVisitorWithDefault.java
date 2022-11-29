@@ -94,16 +94,6 @@ public abstract class OperationVisitorWithDefault implements OperationVisitor<Po
     }
 
     @Override
-    public PossibleValues visit(PossibleValues a, StringValue b) {
-        return new AnyValue();
-    }
-
-    @Override
-    public PossibleValues visit(StringValue a, PossibleValues b) {
-        return new AnyValue();
-    }
-
-    @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
         return new EmptyValue();
     }

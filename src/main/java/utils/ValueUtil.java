@@ -195,4 +195,14 @@ public final class ValueUtil {
             default -> AnyValue.VALUE;
         };
     }
+
+    public static PossibleValues stringValueConcat(PossibleValues left, PossibleValues right) {
+        if (!left.isEmpty() && !right.isEmpty()) {
+            return new StringValue(
+                    MathUtil.addToLimit(left.minStringLength(), right.minStringLength()),
+                    MathUtil.addToLimit(left.maxStringLength(), right.maxStringLength())
+            );
+        }
+        return EmptyValue.VALUE;
+    }
 }

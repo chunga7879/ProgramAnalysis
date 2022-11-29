@@ -40,18 +40,6 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
     }
 
     @Override
-    public PossibleValues visit(PossibleValues a, StringValue b) {
-        if (a instanceof IntegerValue) return new EmptyValue(); // handle this better
-        return a;
-    }
-
-    @Override
-    public PossibleValues visit(StringValue a, PossibleValues b) {
-        if (b instanceof IntegerValue) return new EmptyValue(); // handle this better
-        return a;
-    }
-
-    @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
         if (b.canBeNull()) return a;
         return new EmptyValue();

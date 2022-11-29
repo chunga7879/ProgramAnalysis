@@ -21,29 +21,13 @@ public class AddVisitor extends OperationVisitorWithDefault {
     }
 
     @Override
-    public PossibleValues visit(PossibleValues a, StringValue b) {
-        return new StringValue(
-                MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
-                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
-        );
-    }
-
-    @Override
-    public PossibleValues visit(StringValue a, PossibleValues b) {
-        return this.visit(b, a);
-    }
-
-    @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
-        return new StringValue(
-                MathUtil.addToLimit(a.minStringLength(), b.minStringLength()),
-                MathUtil.addToLimit(a.maxStringLength(), b.maxStringLength())
-        );
+        return new EmptyValue();
     }
 
     @Override
     public PossibleValues visit(ObjectValue a, NullValue b) {
-        return this.visit(b, a);
+        return new EmptyValue();
     }
 
     @Override
