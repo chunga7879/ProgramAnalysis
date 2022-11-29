@@ -33,19 +33,34 @@ public class RestrictNotEqualsVisitor extends RestrictionVisitor {
 
     @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
-        if (b.equals(a)) return new EmptyValue();
+        if (NullValue.VALUE == b) return new EmptyValue();
         return a;
     }
 
     @Override
     public PossibleValues visit(ObjectValue a, NullValue b) {
-        if (a.equals(b)) return new EmptyValue();
+        if (a == NullValue.VALUE) return new EmptyValue();
         return a.withNotNullable();
     }
 
     @Override
     public PossibleValues visit(ArrayValue a, ArrayValue b) {
         // To do this properly, you'd need to keep track of potential pointer values
+        return a;
+    }
+
+    @Override
+    public PossibleValues visit(NullValue a, PossibleValues b) {
+        if (NullValue.VALUE == b) return new EmptyValue();
+        return a;
+    }
+
+    @Override
+    public PossibleValues visit(PossibleValues a, NullValue b) {
+        if (NullValue.VALUE == a) return new EmptyValue();
+        if (a.canBeNull() && a instanceof ObjectValue objectValue) {
+            return objectValue.withNotNullable();
+        }
         return a;
     }
 }

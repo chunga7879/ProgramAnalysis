@@ -1,12 +1,12 @@
 package analysis.values;
 
-import analysis.values.visitor.AddVisitor;
 import analysis.values.visitor.MergeVisitor;
 import analysis.values.visitor.RestrictEqualsVisitor;
 import analysis.values.visitor.RestrictNotEqualsVisitor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import utils.ValueUtil;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,7 +21,7 @@ public class StringValueTest {
         assertFalse(a.canBeNull());
         assertFalse(b.canBeNull());
 
-        PossibleValues s = a.acceptAbstractOp(new AddVisitor(), b);
+        PossibleValues s = ValueUtil.stringValueConcat(a, b);
         assertEquals(wantMin, s.minStringLength());
         assertEquals(wantMax, s.maxStringLength());
         assertFalse(s.canBeNull());
@@ -36,12 +36,12 @@ public class StringValueTest {
         IntegerRange a = new IntegerRange(imin, imax);
         StringValue b = new StringValue(smin, smax, snull);
 
-        PossibleValues s = a.acceptAbstractOp(new AddVisitor(), b);
+        PossibleValues s =  ValueUtil.stringValueConcat(a, b);
         assertEquals(wantMin, s.minStringLength());
         assertEquals(wantMax, s.maxStringLength());
         assertFalse(s.canBeNull());
 
-        s = b.acceptAbstractOp(new AddVisitor(), a);
+        s = ValueUtil.stringValueConcat(b, a);
         assertEquals(wantMin, s.minStringLength());
         assertEquals(wantMax, s.maxStringLength());
         assertFalse(s.canBeNull());
@@ -50,11 +50,11 @@ public class StringValueTest {
     @Test
     public void TestAddStringNullValue() {
         StringValue a = new StringValue(1, 3, false);
-        PossibleValues s = a.acceptAbstractOp(new AddVisitor(), NullValue.VALUE);
+        PossibleValues s = ValueUtil.stringValueConcat(a, NullValue.VALUE);
         assertEquals(1 + 4, s.minStringLength());
         assertEquals(3 + 4, s.maxStringLength());
 
-        s = NullValue.VALUE.acceptAbstractOp(new AddVisitor(), a);
+        s = ValueUtil.stringValueConcat(NullValue.VALUE, a);
         assertEquals(1 + 4, s.minStringLength());
         assertEquals(3 + 4, s.maxStringLength());
     }
@@ -69,12 +69,12 @@ public class StringValueTest {
         StringValue a = new StringValue(smin, smax, snull);
         BooleanValue b = new BooleanValue(t, f);
 
-        PossibleValues s = a.acceptAbstractOp(new AddVisitor(), b);
+        PossibleValues s = ValueUtil.stringValueConcat(a, b);
         assertEquals(wantMin, s.minStringLength());
         assertEquals(wantMax, s.maxStringLength());
         assertFalse(s.canBeNull());
 
-        s = b.acceptAbstractOp(new AddVisitor(), a);
+        s = ValueUtil.stringValueConcat(b, a);
         assertEquals(wantMin, s.minStringLength());
         assertEquals(wantMax, s.maxStringLength());
         assertFalse(s.canBeNull());
@@ -89,7 +89,7 @@ public class StringValueTest {
         StringValue a = new StringValue(smin, smax, snull);
         CharValue b = new CharValue(c);
 
-        PossibleValues s = a.acceptAbstractOp(new AddVisitor(), b);
+        PossibleValues s = ValueUtil.stringValueConcat(a, b);
         assertEquals(wantMin, s.minStringLength());
         assertEquals(wantMax, s.maxStringLength());
         assertFalse(s.canBeNull());

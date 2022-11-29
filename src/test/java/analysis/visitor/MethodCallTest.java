@@ -420,6 +420,125 @@ public class MethodCallTest {
     }
 
     @Test
+    public void notEmptyWithoutError() {
+        String code = """
+                public class Main {
+                    void foo(@NotEmpty String bar, @NotEmpty char[] bar2) {
+                        // ...
+                    }
+                                
+                    void test() {
+                        foo("hello", new char[4]);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void notEmptyWithError() {
+        String code = """
+                public class Main {
+                    void foo(@NotEmpty String bar, @NotEmpty char[] bar2) {
+                        // ...
+                    }
+                                
+                    void test(int i, String a) {
+                        String b = i > 0 ? null : "hi";
+                        foo(a, null);
+                        foo(b, new char[0]);
+                        foo(null, i > 0 ? new char[10] : null);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(3, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void minMaxWithoutError() {
+        String code = """
+                public class Main {
+                    void foo(@Min(value = 10) @Min(value = -20) @Max(value = 100) int bar) {
+                        // ...
+                    }
+                                
+                    void test(int a) {
+                        int b = a > 0 ? 10 : 100;
+                        foo(b);
+                        foo(100);
+                        foo(a > 0 ? 17 : 21);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void minMaxWithError() {
+        String code = """
+                public class Main {
+                    void foo(@Min(value = 10) @Max(value = 100) int bar) {
+                        // ...
+                    }
+                                
+                    void test(int a) {
+                        int b = a > 0 ? -10 : 10;
+                        foo(b);
+                        foo(101);
+                        foo(a > 0 ? -9 : 101);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(3, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void sizeWithoutError() {
+        String code = """
+                public class Main {
+                    void foo(@Size(max = 20, min = 8) int[] bar, @Size(min = 1, max = 4) String[] bar2) {
+                        // ...
+                    }
+                                
+                    void test(int a) {
+                        foo(a > 0 ? new int[8] : new int[20], new String[3]);
+                        foo(new int[12], new String[1]);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void sizeWithError() {
+        String code = """
+                public class Main {
+                    void foo(@Size(max = 20, min = 8) int[] bar, @Size(min = 1, max = 4) String[] bar2) {
+                        // ...
+                    }
+                                
+                    void test(int a) {
+                        foo(a > 0 ? new int[0] : new int[21], new String[4]);
+                        foo(new int[21], new String[0]);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(2, analysisState.getErrorMap().size());
+    }
+
+    @Test
     public void methodCallReturnTypeTest() {
         String code = """
                 public class Main {
