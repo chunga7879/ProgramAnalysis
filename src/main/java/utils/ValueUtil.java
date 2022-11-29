@@ -37,7 +37,7 @@ public final class ValueUtil {
                 case "java.lang.Integer" -> BoxedPrimitive.create(IntegerRange.ANY_VALUE, true);
                 case "java.lang.Boolean" -> BoxedPrimitive.create(BooleanValue.ANY_VALUE, true);
                 case "java.lang.Character" -> BoxedPrimitive.create(CharValue.ANY_VALUE, true);
-                default -> AnyValue.VALUE;
+                default -> new ExtendableObjectValue();
             };
         }
         return AnyValue.VALUE;

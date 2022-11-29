@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static analysis.visitor.VisitorTestUtils.*;
 
-public class ObjectCreationExprTest {
+public class ObjectTest {
     private VariablesState variablesState;
     private AnalysisState analysisState;
 
@@ -42,10 +42,10 @@ public class ObjectCreationExprTest {
     }
 
     @Test
-    public void objectParameterNotNullTest() {
+    public void objectParameterTest() {
         String code = """
                 public class Main {
-                    int test(@NotNull Object a) {
+                    int test(@NotNull Object a, Object b) {
                         // ...
                     }
                 }
@@ -53,8 +53,11 @@ public class ObjectCreationExprTest {
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         Parameter a = getParameter(compiled, "a");
+        Parameter b = getParameter(compiled, "b");
         ExtendableObjectValue valA = (ExtendableObjectValue) variablesState.getVariable(a);
+        ExtendableObjectValue valB = (ExtendableObjectValue) variablesState.getVariable(b);
         Assertions.assertFalse(valA.canBeNull());
+        Assertions.assertTrue(valB.canBeNull());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 }

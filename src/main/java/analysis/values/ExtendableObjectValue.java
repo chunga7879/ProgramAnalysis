@@ -21,8 +21,7 @@ public class ExtendableObjectValue extends ObjectWithNotNullValue {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        return o instanceof ExtendableObjectValue;
+        return this == o;
     }
 
     @Override
