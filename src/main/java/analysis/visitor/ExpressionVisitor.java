@@ -529,7 +529,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 assert n.getArguments().size() == 1;
                 return BoxedPrimitive.create(n.getArguments().get(0).accept(this, arg), false);
             default:
-                return new AnyValue();
+                return ExtendableObjectValue.VALUE;
         }
     }
 
