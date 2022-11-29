@@ -68,10 +68,11 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
         VariablesState state = arg.getVariablesState();
 
         ConditionStates condStates = getConditionStatesFromBinaryExpr(
+                n,
                 leftExpr, rightExpr,
                 leftValues, rightValues,
                 n.getOperator(),
-                state);
+                arg);
         if (condStates == null) return new ConditionStates(state.copy(), state.copy());
         return condStates;
     }
@@ -120,16 +121,19 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
     }
 
     private ConditionStates getConditionStatesFromBinaryExpr(
+            BinaryExpr binaryExpr,
             Expression leftExpr, Expression rightExpr,
             PossibleValues leftValues, PossibleValues rightValues,
             BinaryExpr.Operator operator,
-            VariablesState state
+            ExpressionAnalysisState arg
     ) {
+        VariablesState state = arg.getVariablesState();
         RestrictionVisitor conditionVisitor;
         RestrictionVisitor flippedConditionVisitor;
         RestrictionVisitor oppositeConditionVisitor;
         RestrictionVisitor oppositeFlippedConditionVisitor;
 
+        boolean checkNull = false;
         switch (operator) {
             case EQUALS -> {
                 conditionVisitor = restrictEQVisitor;
@@ -148,28 +152,37 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
                 flippedConditionVisitor = restrictLTVisitor;
                 oppositeConditionVisitor = restrictLTEVisitor;
                 oppositeFlippedConditionVisitor = restrictGTEVisitor;
+                checkNull = true;
             }
             case GREATER_EQUALS -> {
                 conditionVisitor = restrictGTEVisitor;
                 flippedConditionVisitor = restrictLTEVisitor;
                 oppositeConditionVisitor = restrictLTVisitor;
                 oppositeFlippedConditionVisitor = restrictGTVisitor;
+                checkNull = true;
             }
             case LESS -> {
                 conditionVisitor = restrictLTVisitor;
                 flippedConditionVisitor = restrictGTVisitor;
                 oppositeConditionVisitor = restrictGTEVisitor;
                 oppositeFlippedConditionVisitor = restrictLTEVisitor;
+                checkNull = true;
             }
             case LESS_EQUALS -> {
                 conditionVisitor = restrictLTEVisitor;
                 flippedConditionVisitor = restrictGTEVisitor;
                 oppositeConditionVisitor = restrictGTVisitor;
                 oppositeFlippedConditionVisitor = restrictLTEVisitor;
+                checkNull = true;
             }
             default -> {
                 return null;
             }
+        }
+
+        if (checkNull && (leftValues.canBeNull() || rightValues.canBeNull())) {
+            boolean isDefinite = leftValues == NullValue.VALUE || rightValues == NullValue.VALUE;
+            arg.addError(new AnalysisError(NullPointerException.class, binaryExpr, isDefinite));
         }
 
         VariablesState trueState = state.copy();

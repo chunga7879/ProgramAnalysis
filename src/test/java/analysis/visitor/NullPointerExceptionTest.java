@@ -2,8 +2,7 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.EmptyValue;
-import analysis.values.IntegerRange;
+import analysis.values.*;
 import com.github.javaparser.ast.CompilationUnit;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
@@ -110,5 +109,60 @@ public class NullPointerExceptionTest {
         Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(getVariable(compiled, "c")));
         Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(getVariable(compiled, "d")));
         Assertions.assertEquals(4, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void noNullPointerExceptionInIfEqualsTest() {
+        String code = """
+                public class Main {
+                    private Character cha;
+                    void test() {
+                        Integer a = null;
+                        int b = 1;
+                        if (a == 1) {
+                        }
+                        String c = "hi";
+                        if (c == a) {
+                        }
+                        Character d = cha;
+                        if (d != null) {
+                        } else {
+                            throw new RuntimeException();
+                        }
+                        if (null == null) {
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariablesState variablesState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(variablesState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(NullValue.VALUE, variablesState.getVariable(getVariable(compiled, "a")));
+        Assertions.assertEquals(new IntegerRange(1), variablesState.getVariable(getVariable(compiled, "b")));
+        Assertions.assertEquals(new StringValue(2, 2, false), variablesState.getVariable(getVariable(compiled, "c")));
+        Assertions.assertEquals(BoxedPrimitive.create(CharValue.ANY_VALUE, false), variablesState.getVariable(getVariable(compiled, "d")));
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void nullPointerExceptionInIfNumberComparisonTest() {
+        String code = """
+                public class Main {
+                    private Character cha;
+                    void test() {
+                        Integer a = null;
+                        int b = 1;
+                        if (a > 1) {
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariablesState variablesState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(variablesState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertTrue(analysisState.getVariablesState().isDomainEmpty());
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 }
