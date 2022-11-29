@@ -31,3 +31,4 @@ nav:
       - ClassCastException: potential-errors/ClassCastException.md
       - NegativeArraySizeException: potential-errors/NegativeArraySizeException.md
       - NullPointerException: potential-errors/NullPointerException.md
+      - Annotation Errors: potential-errors/AnnotationError.md
