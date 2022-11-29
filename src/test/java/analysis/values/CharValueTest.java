@@ -1,8 +1,6 @@
 package analysis.values;
 
-import analysis.values.visitor.AddVisitor;
-import analysis.values.visitor.MergeVisitor;
-import analysis.values.visitor.SubtractVisitor;
+import analysis.values.visitor.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,10 +62,35 @@ public class CharValueTest {
         CharValue a = new CharValue('a');
         CharValue b = new CharValue('z');
 
-        IntegerValue i = (IntegerValue) a.acceptAbstractOp(new MergeVisitor(), b);
+        CharValue i = (CharValue) a.acceptAbstractOp(new MergeVisitor(), b);
 
-        assertEquals('a', i.getMin());
-        assertEquals('z', i.getMax());
+        assertEquals('a', (char) i.getMin());
+        assertEquals('z', (char) i.getMax());
+    }
+
+    @Test
+    public void TestEquals() {
+        CharValue a = new CharValue('a', 'f');
+        CharValue b = new CharValue('b', 'h');
+        CharValue c = new CharValue('x', 'z');
+
+        PossibleValues i = a.acceptAbstractOp(new RestrictEqualsVisitor(), b);
+        PossibleValues j = a.acceptAbstractOp(new RestrictEqualsVisitor(), c);
+
+        assertEquals(new CharValue('b', 'f'), i);
+        assertEquals(EmptyValue.VALUE, j);
+    }
+
+    @Test
+    public void TestNotEquals() {
+        CharValue a = new CharValue('d', 't');
+        CharValue b = new CharValue('t', 't');
+
+        PossibleValues i = a.acceptAbstractOp(new RestrictNotEqualsVisitor(), b);
+        PossibleValues j = b.acceptAbstractOp(new RestrictNotEqualsVisitor(), b);
+
+        assertEquals(new CharValue('d', 's'), i);
+        assertEquals(EmptyValue.VALUE, j);
     }
 
     @Test

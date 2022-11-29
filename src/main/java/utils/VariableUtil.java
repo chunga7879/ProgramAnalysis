@@ -1,17 +1,16 @@
 package utils;
 
+import analysis.model.AnalysisError;
+import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.AnyValue;
-import analysis.values.ArrayValue;
-import analysis.values.EmptyValue;
-import analysis.values.PossibleValues;
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.FieldAccessExpr;
-import com.github.javaparser.ast.expr.NameExpr;
+import analysis.values.*;
+import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -33,7 +32,17 @@ public final class VariableUtil {
                     updateArrayLength(scopeDec, value, variablesState);
                 }
             }
+        } else if (variableExpression instanceof UnaryExpr unaryExpr) {
+            if (unaryExpr.getOperator() == UnaryExpr.Operator.PREFIX_INCREMENT
+                    || unaryExpr.getOperator() == UnaryExpr.Operator.PREFIX_INCREMENT) {
+                setVariableFromExpression(unaryExpr.getExpression(), value, variablesState);
+            }
+        } else if (variableExpression instanceof AssignExpr assignExpr) {
+            setVariableFromExpression(assignExpr.getTarget(), value, variablesState);
+        } else if (variableExpression instanceof EnclosedExpr enclosedExpr) {
+            setVariableFromExpression(enclosedExpr.getInner(), value, variablesState);
         }
+        // Might want to move to visitor
     }
 
     /**
@@ -58,6 +67,15 @@ public final class VariableUtil {
                     updateArrayLength(scopeDec, value2, variablesState2);
                 }
             }
+        } else if (variableExpression instanceof UnaryExpr unaryExpr) {
+            if (unaryExpr.getOperator() == UnaryExpr.Operator.PREFIX_INCREMENT
+                    || unaryExpr.getOperator() == UnaryExpr.Operator.PREFIX_INCREMENT) {
+                setVariableFromExpression(unaryExpr.getExpression(), value1, variablesState1, value2, variablesState2);
+            }
+        } else if (variableExpression instanceof AssignExpr assignExpr) {
+            setVariableFromExpression(assignExpr.getTarget(), value1, variablesState1, value2, variablesState2);
+        } else if (variableExpression instanceof EnclosedExpr enclosedExpr) {
+            setVariableFromExpression(enclosedExpr.getInner(), value1, variablesState1, value2, variablesState2);
         }
     }
 
@@ -71,6 +89,33 @@ public final class VariableUtil {
         if (dec instanceof JavaParserParameterDeclaration jpParamDec) {
             variablesState.setVariable(jpParamDec.getWrappedNode(), value);
         }
+    }
+
+    public static PossibleValues implicitTypeCasting(
+            ResolvedType type,
+            Expression expr,
+            PossibleValues values,
+            ExpressionAnalysisState arg
+    ) {
+        if (type.isPrimitive()) {
+            if (values instanceof BoxedPrimitive boxed) {
+                if (boxed.canBeNull()) {
+                    arg.addError(new AnalysisError(NullPointerException.class, expr, false));
+                    setVariableFromExpression(expr, boxed.withNotNullable(), arg.getVariablesState());
+                }
+                return boxed.unbox();
+            } else if (Objects.equals(values, NullValue.VALUE)) {
+                arg.addError(new AnalysisError(NullPointerException.class, expr, true));
+                arg.getVariablesState().setDomainEmpty();
+            }
+        } else if (type.isReferenceType() && values instanceof PrimitiveValue) {
+            switch (type.asReferenceType().getQualifiedName()) {
+                case "java.lang.Integer", "java.lang.Boolean", "java.lang.Character" -> {
+                    return BoxedPrimitive.create(values, false);
+                }
+            }
+        }
+        return values;
     }
 
     /**

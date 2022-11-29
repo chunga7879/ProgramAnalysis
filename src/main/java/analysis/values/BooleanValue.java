@@ -5,6 +5,8 @@ import analysis.values.visitor.OperationVisitor;
 
 public class BooleanValue extends PrimitiveValue {
     public static final BooleanValue ANY_VALUE = new BooleanValue(true, true);
+    public static final BooleanValue TRUE = new BooleanValue(true, false);
+    public static final BooleanValue FALSE = new BooleanValue(false, true);
     private final boolean canBeFalse;
     private final boolean canBeTrue;
 

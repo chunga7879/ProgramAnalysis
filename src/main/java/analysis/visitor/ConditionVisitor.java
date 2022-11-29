@@ -1,8 +1,12 @@
 package analysis.visitor;
 
+import analysis.model.AnalysisError;
 import analysis.model.ConditionStates;
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.BooleanValue;
+import analysis.values.BoxedPrimitive;
+import analysis.values.NullValue;
 import analysis.values.PossibleValues;
 import analysis.values.visitor.*;
 import com.github.javaparser.ast.*;
@@ -16,6 +20,8 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.GenericVisitor;
 import utils.VariableUtil;
+
+import java.util.Objects;
 
 /**
  * Visitor to compute conditional TRUE state and FALSE state
@@ -88,10 +94,10 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
                 arg.addErrors(leftAnalysisState);
                 arg.addErrors(rightAnalysisState);
 
-                return new ConditionStates(
-                        leftStates.getTrueState().intersectCopy(intersectVisitor, rightStates.getTrueState()),
-                        leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState())
-                );
+                VariablesState trueState = rightStates.getTrueState(); // T && T
+                VariablesState falseState = leftStates.getFalseState().mergeCopy(mergeVisitor, rightStates.getFalseState()); // F && ? || T && F
+
+                return new ConditionStates(trueState, falseState);
             }
             case OR -> {
                 ExpressionAnalysisState leftAnalysisState = new ExpressionAnalysisState(stateCopy);
@@ -102,10 +108,10 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
                 arg.addErrors(leftAnalysisState);
                 arg.addErrors(rightAnalysisState);
 
-                return new ConditionStates(
-                        leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()),
-                        leftStates.getFalseState().intersectCopy(intersectVisitor, rightStates.getFalseState())
-                );
+                VariablesState trueState = leftStates.getTrueState().mergeCopy(mergeVisitor, rightStates.getTrueState()); // T || ? OR F || T
+                VariablesState falseState = rightStates.getFalseState(); // F && F
+
+                return new ConditionStates(trueState, falseState);
             }
             default -> {
                 return new ConditionStates(stateCopy, stateCopy);
@@ -191,8 +197,21 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
 
     @Override
     public ConditionStates visit(NameExpr n, ExpressionAnalysisState arg) {
-        // TODO: handle when boolean type is added
-        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(arg.getVariablesState().copy());
+        PossibleValues value = n.accept(expressionVisitor, exprAnalysisState);
+        arg.addErrors(exprAnalysisState);
+        if (value instanceof BoxedPrimitive boxedBoolean) {
+            if (boxedBoolean.canBeNull()) {
+                arg.addError(new AnalysisError(NullPointerException.class, n, false));
+                VariableUtil.setVariableFromExpression(n, boxedBoolean.withNotNullable(), exprAnalysisState.getVariablesState());
+            }
+            return getConditionStatesFromBooleanValue(boxedBoolean.unbox(), exprAnalysisState.getVariablesState());
+        }
+        if (value.equals(NullValue.VALUE)) {
+            arg.addError(new AnalysisError(NullPointerException.class, n, true));
+            return new ConditionStates(VariablesState.createEmpty(), VariablesState.createEmpty());
+        }
+        return getConditionStatesFromBooleanValue(value, arg.getVariablesState());
     }
 
     @Override
@@ -217,8 +236,19 @@ public class ConditionVisitor implements GenericVisitor<ConditionStates, Express
 
     @Override
     public ConditionStates visit(AssignExpr n, ExpressionAnalysisState arg) {
-        // TODO: handle assign when boolean is added
-        return new ConditionStates(arg.getVariablesState().copy(), arg.getVariablesState().copy());
+        ExpressionAnalysisState exprAnalysisState = new ExpressionAnalysisState(arg.getVariablesState());
+        PossibleValues value = n.accept(expressionVisitor, exprAnalysisState);
+        arg.addErrors(exprAnalysisState);
+        return getConditionStatesFromBooleanValue(value, arg.getVariablesState());
+    }
+
+    private ConditionStates getConditionStatesFromBooleanValue(PossibleValues value, VariablesState arg) {
+        if (Objects.equals(value, BooleanValue.TRUE)) {
+            return new ConditionStates(arg.copy(), VariablesState.createEmpty());
+        } else if (Objects.equals(value, BooleanValue.FALSE)) {
+            return new ConditionStates(VariablesState.createEmpty(), arg.copy());
+        }
+        return new ConditionStates(arg.copy(), arg.copy());
     }
 
 

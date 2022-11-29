@@ -2,6 +2,8 @@ package analysis.values;
 
 import analysis.values.visitor.AddVisitor;
 import analysis.values.visitor.MergeVisitor;
+import analysis.values.visitor.RestrictEqualsVisitor;
+import analysis.values.visitor.RestrictNotEqualsVisitor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -108,4 +110,29 @@ public class StringValueTest {
         assertEquals(wantNull, ab.canBeNull());
 
     }
+
+    @Test
+    public void TestStringEquals() {
+        StringValue a = new StringValue(10, 100, true);
+        StringValue b = new StringValue(4, 18, false);
+        StringValue c = new StringValue(100, 200, true);
+        NullValue d = NullValue.VALUE;
+
+        PossibleValues ab = a.acceptAbstractOp(new RestrictEqualsVisitor(), b);
+        PossibleValues ac = a.acceptAbstractOp(new RestrictEqualsVisitor(), c);
+        PossibleValues ad = a.acceptAbstractOp(new RestrictEqualsVisitor(), d);
+        assertEquals(new StringValue(10, 18, false), ab);
+        assertEquals(new StringValue(100, 100, true), ac);
+        assertEquals(NullValue.VALUE, ad);
+    }
+
+    @Test
+    public void TestStringNotEquals() {
+        StringValue a = new StringValue(10, 100, true);
+        NullValue b = NullValue.VALUE;
+
+        PossibleValues ab = a.acceptAbstractOp(new RestrictNotEqualsVisitor(), b);
+        assertEquals(new StringValue(10, 100, false), ab);
+    }
+
 }
