@@ -31,7 +31,7 @@ public class Main {
 
 
 For example, the return value could be zero if the array is empty.
-```java hl_lines="3"
+```java hl_lines="4"
 public class Main {
     @Positive
     public int foo(int[] arr) {
