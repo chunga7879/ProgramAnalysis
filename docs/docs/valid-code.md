@@ -27,14 +27,14 @@ Listed below are Java structures that are analyzable by our analysis tool.
     - `&&`, `||`, `()`, `!`
     - `condition ? a : b`
 - Arrays
-  - `new A[]`
-  - `a[index]`
+    - `new A[]`
+    - `a[index]`
 - Objects 
-  - `new A()` 
-  - `a.method()`
-  - `a.field`
-  - `a instanceOf b`
-  - `(type) a`
+    - `new A()` 
+    - `a.method()`
+    - `a.field`
+    - `a instanceOf b`
+    - `(type) a`
 
 #### Statements
 - `if`/`else`/`else if`
