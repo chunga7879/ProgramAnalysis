@@ -1,5 +1,6 @@
 package analysis.visitor;
 
+import analysis.exceptions.UnsupportedNodeException;
 import analysis.model.*;
 import analysis.values.PossibleValues;
 import analysis.values.visitor.*;
@@ -22,7 +23,6 @@ import utils.AnnotationUtil;
 import utils.JavadocUtil;
 import utils.ValueUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -100,12 +100,12 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(SwitchStmt n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("SWITCH statements are not supported");
     }
 
     @Override
     public EndState visit(SwitchEntry n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("SWITCH statements are not supported");
     }
 
     @Override
@@ -194,12 +194,12 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(DoStmt n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("DO-WHILE loops are not supported");
     }
 
     @Override
     public EndState visit(ForEachStmt n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("FOR-EACH loops are not supported");
     }
 
     @Override
@@ -346,12 +346,12 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(TryStmt n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("TRY-CATCH is not supported");
     }
 
     @Override
     public EndState visit(CatchClause n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("TRY-CATCH is not supported");
     }
 
 
@@ -759,7 +759,7 @@ public class AnalysisVisitor implements GenericVisitor<EndState, AnalysisState> 
 
     @Override
     public EndState visit(YieldStmt n, AnalysisState arg) {
-        return null;
+        throw new UnsupportedNodeException("SWITCH statements are not supported");
     }
 
     @Override
