@@ -1,7 +1,11 @@
 package utils;
 
 import analysis.model.AnalysisError;
+import analysis.model.ExpressionAnalysisState;
+import analysis.model.VariablesState;
 import analysis.values.*;
+import analysis.values.visitor.*;
+import analysis.visitor.ExpressionVisitor;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
@@ -34,50 +38,69 @@ public final class AnnotationUtil {
      * Check the return value against a list of annotations
      * @return Set of Errors from when the checks fail
      */
-    public static Set<AnalysisError> checkReturnValueWithAnnotation(
+    public static List<AnalysisError> checkReturnValueWithAnnotation(
             PossibleValues value,
             List<AnnotationExpr> annotations,
             String nodeName
     ) {
-        Set<AnalysisError> errors = new HashSet<>();
-        Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
-        if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
-            boolean isDefinite = value == NullValue.VALUE;
-            errors.add(createReturnError("@NotNull", "null", nodeName, isDefinite));
-        }
-        if (annotationMap.containsKey(AnnotationType.Null) && value != NullValue.VALUE) {
-            boolean isDefinite = !value.canBeNull();
-            errors.add(createReturnError("@Null", "not null", nodeName, isDefinite));
-        }
-        // TODO: Integer, Array
-        return errors;
+        return checkWithAnnotations(value, annotations, "%s return is %s %s: " + nodeName);
     }
 
     public static List<AnalysisError> checkArgumentWithAnnotation(
             PossibleValues value,
             List<AnnotationExpr> annotations,
+            String argName,
             String nodeName
     ) {
+        return checkWithAnnotations(value, annotations, "Argument %s " + argName + " is %s %s: " + nodeName);
+    }
+
+    private static List<AnalysisError> checkWithAnnotations(
+            PossibleValues value,
+            List<AnnotationExpr> annotations,
+            String format
+    ) {
+        if (value.isEmpty()) return Collections.emptyList();
         List<AnalysisError> errors = new ArrayList<>();
         Map<AnnotationType, Set<AnnotationExpr>> annotationMap = getAnnotationMap(annotations);
+        ExpressionVisitor exprVisitor = null;
         if (annotationMap.containsKey(AnnotationType.NotNull) && value.canBeNull()) {
-            errors.add(createArgumentError("@NotNull", "null", nodeName, value == NullValue.VALUE));
+            errors.add(createError(format, "@NotNull", "null", value == NullValue.VALUE));
         }
-        PairValue<Boolean, Boolean> check = checkPositiveAnnotation(value);
-        if (annotationMap.containsKey(AnnotationType.Positive) && !check.getA()) {
-            errors.add(createArgumentError("@Positive", "zero or negative", nodeName, check.getB()));
+        if (annotationMap.containsKey(AnnotationType.Positive)) {
+            PairValue<Boolean, Boolean> check = checkPositiveAnnotation(value);
+            if (!check.getA()) errors.add(createError(format, "@Positive", "zero or negative", check.getB()));
         }
-        check = checkPositiveOrZeroAnnotation(value);
-        if (annotationMap.containsKey(AnnotationType.PositiveOrZero) && !check.getA()) {
-            errors.add(createArgumentError("@PositiveOrZero", "negative", nodeName, check.getB()));
+        if (annotationMap.containsKey(AnnotationType.PositiveOrZero)) {
+            PairValue<Boolean, Boolean> check; check = checkPositiveOrZeroAnnotation(value);
+            if (!check.getA()) errors.add(createError(format, "@PositiveOrZero", "negative", check.getB()));
         }
-        check = checkNegativeAnnotation(value);
-        if (annotationMap.containsKey(AnnotationType.Negative) && !checkNegativeAnnotation(value).getA()) {
-            errors.add(createArgumentError("@Negative", "zero or positive", nodeName, check.getB()));
+        if (annotationMap.containsKey(AnnotationType.Negative)) {
+            PairValue<Boolean, Boolean> check = checkNegativeAnnotation(value);
+            if (!check.getA()) errors.add(createError(format, "@Negative", "zero or positive", check.getB()));
         }
-        check = checkNegativeOrZeroAnnotation(value);
-        if (annotationMap.containsKey(AnnotationType.NegativeOrZero) && !checkNegativeOrZeroAnnotation(value).getA()) {
-            errors.add(createArgumentError("@NegativeOrZero", "positive", nodeName, check.getB()));
+        if (annotationMap.containsKey(AnnotationType.NegativeOrZero)) {
+            PairValue<Boolean, Boolean> check = checkNegativeOrZeroAnnotation(value);
+            if (!check.getA()) errors.add(createError(format, "@NegativeOrZero", "positive", check.getB()));
+        }
+        if (annotationMap.containsKey(AnnotationType.Min)) {
+            exprVisitor = new ExpressionVisitor();
+            PairValue<Boolean, Boolean> check = checkMinAnnotation(value, annotationMap.get(AnnotationType.Min), exprVisitor);
+            if (!check.getA()) errors.add(createError(format, "@Min", "below min", check.getB()));
+        }
+        if (annotationMap.containsKey(AnnotationType.Max)) {
+            if (exprVisitor == null) exprVisitor = new ExpressionVisitor();
+            PairValue<Boolean, Boolean> check = checkMaxAnnotation(value, annotationMap.get(AnnotationType.Max), exprVisitor);
+            if (!check.getA()) errors.add(createError(format, "@Max", "above max", check.getB()));
+        }
+        if (annotationMap.containsKey(AnnotationType.Size)) {
+            if (exprVisitor == null) exprVisitor = new ExpressionVisitor();
+            PairValue<Boolean, Boolean> check = checkSizeAnnotation(value, annotationMap.get(AnnotationType.Size), exprVisitor);
+            if (!check.getA()) errors.add(createError(format, "@Size", "below or above size", check.getB()));
+        }
+        if (annotationMap.containsKey(AnnotationType.NotEmpty)) {
+            PairValue<Boolean, Boolean> check = checkNotEmpty(value);
+            if (!check.getA()) errors.add(createError(format, "@NotEmpty", "empty", check.getB()));
         }
         return errors;
     }
@@ -158,6 +181,113 @@ public final class AnnotationUtil {
         return new PairValue<>(true, false);
     }
 
+    private static PairValue<Boolean, Boolean> checkMinAnnotation(
+            PossibleValues v,
+            Set<AnnotationExpr> annotations,
+            ExpressionVisitor exprVisitor
+    ) {
+        if (Objects.equals(v, AnyValue.VALUE)) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+        if (v instanceof IntegerValue) {
+            PossibleValues lessThanMin = restrictValuesWithAnnotationParameters(
+                    annotations,
+                    exprVisitor,
+                    v,
+                    "value",
+                    RestrictLessThanVisitor.INSTANCE
+            );
+            boolean pass = lessThanMin.isEmpty();
+            return new PairValue<>(pass, !pass && Objects.equals(v, lessThanMin));
+        }
+        return new PairValue<>(true, false);
+    }
+
+    private static PairValue<Boolean, Boolean> checkMaxAnnotation(
+            PossibleValues v,
+            Set<AnnotationExpr> annotations,
+            ExpressionVisitor exprVisitor
+    ) {
+        if (Objects.equals(v, AnyValue.VALUE)) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+        if (v instanceof IntegerValue) {
+            PossibleValues moreThanMax = restrictValuesWithAnnotationParameters(
+                    annotations,
+                    exprVisitor,
+                    v,
+                    "value",
+                    RestrictGreaterThanVisitor.INSTANCE
+            );
+            boolean pass = moreThanMax.isEmpty();
+            return new PairValue<>(pass, !pass && Objects.equals(v, moreThanMax));
+        }
+        return new PairValue<>(true, false);
+    }
+
+    private static PairValue<Boolean, Boolean> checkSizeAnnotation(
+            PossibleValues v,
+            Set<AnnotationExpr> annotations,
+            ExpressionVisitor exprVisitor
+    ) {
+        if (Objects.equals(v, AnyValue.VALUE)) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+        if (v instanceof ArrayValue arrayValue) {
+            PossibleValues length = arrayValue.getLength();
+            Map<String, List<Expression>> annotationParamMap = AnnotationUtil.getAnnotationParameterMap(annotations);
+            List<Expression> minExpressions = annotationParamMap.get("min");
+            List<Expression> maxExpressions = annotationParamMap.get("max");
+
+            boolean pass = true;
+            boolean isDefinite = false;
+            if (minExpressions != null) {
+                PossibleValues belowMinLength = restrictValueWithExpressions(length, RestrictLessThanVisitor.INSTANCE, minExpressions, exprVisitor);
+                if (!belowMinLength.isEmpty()) {
+                    pass = false;
+                    if (Objects.equals(length, belowMinLength)) isDefinite = true;
+                }
+            }
+            if (maxExpressions != null) {
+                PossibleValues aboveMaxLength = restrictValueWithExpressions(length, RestrictGreaterThanVisitor.INSTANCE, maxExpressions, exprVisitor);
+                if (!aboveMaxLength.isEmpty()) {
+                    pass = false;
+                    if (Objects.equals(length, aboveMaxLength)) isDefinite = true;
+                }
+            }
+            return new PairValue<>(pass, isDefinite);
+        }
+        return new PairValue<>(true, false);
+    }
+
+    private static PairValue<Boolean, Boolean> checkNotEmpty(PossibleValues v) {
+        if (v instanceof AnyValue) {
+            // indefinite error
+            return new PairValue<>(false, false);
+        }
+
+        if (Objects.equals(v, NullValue.VALUE)) {
+            return  new PairValue<>(false, true);
+        }
+
+        if (v instanceof ArrayValue av) {
+            boolean pass = !av.canBeNull() && av.getLength().getMin() > 0;
+            boolean isDefinite = (av.getLength().getMin() == 0) && (av.getLength().getMin() == av.getLength().getMax());
+            return new PairValue<>(pass, isDefinite);
+        }
+
+        if (v instanceof StringValue sv) {
+            boolean pass = !sv.canBeNull() && sv.minStringLength() > 0;
+            boolean isDefinite = (sv.minStringLength() == 0) && (sv.minStringLength() == sv.maxStringLength());
+            return new PairValue<>(pass, isDefinite);
+        }
+
+        return new PairValue<>(true, false);
+    }
+
     /**
      * Create annotation map from list of AnnotationExpr
      */
@@ -184,6 +314,39 @@ public final class AnnotationUtil {
             }
         });
         return annotationMap;
+    }
+
+    /**
+     * Restrict value with annotation param value
+     */
+    public static PossibleValues restrictValuesWithAnnotationParameters(
+            Set<AnnotationExpr> annotations,
+            ExpressionVisitor exprVisitor,
+            PossibleValues originalValue,
+            String paramName,
+            RestrictionVisitor restrictionVisitor
+    ) {
+        if (originalValue.isEmpty()) return originalValue;
+        List<Expression> valueExprs = AnnotationUtil.getAnnotationParameterValue(annotations, paramName);
+        return restrictValueWithExpressions(originalValue, restrictionVisitor, valueExprs, exprVisitor);
+    }
+
+    /**
+     * Restrict value with expressions
+     */
+    public static PossibleValues restrictValueWithExpressions(
+            PossibleValues originalValue,
+            RestrictionVisitor restrictionVisitor,
+            List<Expression> valueExprs,
+            ExpressionVisitor exprVisitor
+    ) {
+        if (originalValue.isEmpty()) return originalValue;
+        for (Expression valueExpr : valueExprs) {
+            PossibleValues val = valueExpr.accept(exprVisitor, new ExpressionAnalysisState(new VariablesState()));
+            originalValue = originalValue.acceptAbstractOp(restrictionVisitor, val);
+            if (originalValue.isEmpty()) return originalValue;
+        }
+        return originalValue;
     }
 
     /**
@@ -220,19 +383,9 @@ public final class AnnotationUtil {
     }
 
     /**
-     * Create an AnalysisError for the return annotation error
+     * Create an AnalysisError for the annotation error
      */
-    private static AnalysisError createReturnError(String annotation, String badCondition, String nodeName, boolean isDefinite) {
-        String message = annotation + " return is " + (isDefinite ? "always " : "sometimes ") + badCondition + ": " + nodeName;
-        return new AnalysisError(message, isDefinite);
-    }
-
-    /**
-     * Create an AnalysisError for the argument annotation error
-     */
-    private static AnalysisError createArgumentError(String annotation, String badCondition, String nodeName, boolean isDefinite) {
-        String message = "argument annotated with " + annotation + " is "  + (isDefinite ? "always " : "sometimes ")
-                + badCondition + ": " + nodeName;
-        return new AnalysisError(message, isDefinite);
+    private static AnalysisError createError(String format, String annotation, String badCondition, boolean isDefinite) {
+        return new AnalysisError(String.format(format, annotation, (isDefinite ? "always" : "sometimes"), badCondition), isDefinite);
     }
 }

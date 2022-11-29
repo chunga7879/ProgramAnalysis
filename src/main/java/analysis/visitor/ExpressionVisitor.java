@@ -387,7 +387,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             ResolvedParameterDeclaration paramDec = dec.getParam(i);
             if (paramDec instanceof JavaParserParameterDeclaration javaParamDec) {
                 List<AnnotationExpr> annotations = javaParamDec.getWrappedNode().getAnnotations().stream().toList();
-                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations, n.toString());
+                List<AnalysisError> errors = AnnotationUtil.checkArgumentWithAnnotation(expValue, annotations, javaParamDec.getName(), n.toString());
                 if (errors.size() != 0) {
                     arg.addErrors(errors);
                 }
