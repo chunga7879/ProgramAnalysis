@@ -22,6 +22,7 @@ nav:
   - Analyzable Java Code: valid-code.md
   - How It Works: analysis-description.md
   - Annotations:
+      - annotations/index.md
       - Arrays: annotations/arrays.md
       - Numbers: annotations/numbers.md
   - Potential Errors:
