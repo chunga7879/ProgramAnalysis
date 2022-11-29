@@ -1,6 +1,7 @@
 package analysis.visitor;
 
 import analysis.model.AnalysisError;
+import analysis.model.ConditionStates;
 import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
@@ -29,6 +30,7 @@ import utils.*;
 import java.util.*;
 
 public class ExpressionVisitor implements GenericVisitor<PossibleValues, ExpressionAnalysisState> {
+    private final ConditionVisitor conditionVisitor;
     private final MergeVisitor mergeVisitor;
     private final AddVisitor addVisitor;
     private final DivideVisitor divideVisitor;
@@ -59,6 +61,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         this.restrictGTEVisitor = new RestrictGreaterThanOrEqualVisitor();
         this.restrictLTVisitor = new RestrictLessThanVisitor();
         this.restrictLTEVisitor = new RestrictLessThanOrEqualVisitor();
+        this.conditionVisitor = new ConditionVisitor(this, mergeVisitor, new IntersectVisitor());
     }
 
     @Override
@@ -73,6 +76,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     public PossibleValues visit(VariableDeclarator n, ExpressionAnalysisState arg) {
         if (n.getInitializer().isPresent()) {
             PossibleValues value = n.getInitializer().get().accept(this, arg);
+            ResolvedType type = ResolverUtil.resolveOrNull(n.getType());
+            if (type != null) value = VariableUtil.implicitTypeCasting(type, n.getInitializer().get(), value, arg);
             VariablesState state = arg.getVariablesState();
             state.setVariable(n, value);
             return value;
@@ -103,6 +108,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         if (result instanceof EmptyValue && operator != AssignExpr.Operator.DIVIDE) {
             arg.addError(new AnalysisError(NullPointerException.class, n, true));
         }
+        ResolvedType type = ResolverUtil.calculateResolvedTypeOrNull(n.getTarget());
+        if (type != null) result = VariableUtil.implicitTypeCasting(type, n.getValue(), result, arg);
         VariableUtil.setVariableFromExpression(n.getTarget(), result, arg.getVariablesState());
         return result;
     }
@@ -178,6 +185,18 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
 
     @Override
     public PossibleValues visit(BinaryExpr n, ExpressionAnalysisState arg) {
+        switch (n.getOperator()) {
+            case AND, OR, GREATER, GREATER_EQUALS, LESS, LESS_EQUALS, EQUALS, NOT_EQUALS -> {
+                ConditionStates condStates = n.accept(conditionVisitor, arg);
+                arg.getVariablesState().copyValuesFrom(condStates.getTrueState());
+                arg.getVariablesState().merge(mergeVisitor, condStates.getFalseState());
+                if (!condStates.getTrueState().isDomainEmpty() &&
+                        !condStates.getFalseState().isDomainEmpty()) return BooleanValue.ANY_VALUE;
+                if (!condStates.getTrueState().isDomainEmpty()) return BooleanValue.TRUE;
+                if (!condStates.getFalseState().isDomainEmpty()) return BooleanValue.FALSE;
+                return EmptyValue.VALUE;
+            }
+        }
         PossibleValues leftValue = n.getLeft().accept(this, arg);
         PossibleValues rightValue = n.getRight().accept(this, arg);
         BinaryExpr.Operator operator = n.getOperator();
@@ -404,16 +423,37 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     @Override
     public PossibleValues visit(UnaryExpr n, ExpressionAnalysisState arg) {
         PossibleValues preValue = n.getExpression().accept(this, arg);
+        return unaryOperation(n.getExpression(), n.getOperator(), preValue, arg, false);
+    }
+
+    /**
+     * Perform unary operations<br/>
+     * Note: about wrappers<br/>
+     * - '++'/'--' Integer will return Integer<br/>
+     * - '+'/'-' Integer will return int<br/>
+     * - '!' Boolean will return boolean<br/>
+     */
+    private PossibleValues unaryOperation(
+            Expression expr,
+            UnaryExpr.Operator operator,
+            PossibleValues preValue,
+            ExpressionAnalysisState arg,
+            boolean asBoxed
+    ) {
         if (preValue instanceof IntegerValue intValue) {
             PossibleValues postValue;
-            switch (n.getOperator()) {
+            switch (operator) {
                 case PREFIX_INCREMENT, POSTFIX_INCREMENT -> {
-                    postValue = intValue.acceptAbstractOp(addVisitor, new IntegerRange(1, 1));
-                    VariableUtil.setVariableFromExpression(n.getExpression(), postValue, arg.getVariablesState());
+                    postValue = intValue.acceptAbstractOp(addVisitor, new IntegerRange(1));
+                    postValue = asBoxed ? BoxedPrimitive.create(postValue, false) : postValue;
+                    preValue = asBoxed ? BoxedPrimitive.create(preValue, false) : preValue;
+                    VariableUtil.setVariableFromExpression(expr, postValue, arg.getVariablesState());
                 }
                 case PREFIX_DECREMENT, POSTFIX_DECREMENT -> {
-                    postValue = intValue.acceptAbstractOp(subtractVisitor, new IntegerRange(1, 1));
-                    VariableUtil.setVariableFromExpression(n.getExpression(), postValue, arg.getVariablesState());
+                    postValue = intValue.acceptAbstractOp(subtractVisitor, new IntegerRange(1));
+                    postValue = asBoxed ? BoxedPrimitive.create(postValue, false) : postValue;
+                    preValue = asBoxed ? BoxedPrimitive.create(preValue, false) : preValue;
+                    VariableUtil.setVariableFromExpression(expr, postValue, arg.getVariablesState());
                 }
                 case MINUS -> {
                     postValue = new IntegerRange(
@@ -432,12 +472,30 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                     postValue = preValue.isEmpty() ? new EmptyValue() : new AnyValue();
                 }
             }
-            return switch (n.getOperator()) {
+            return switch (operator) {
                 case POSTFIX_INCREMENT, POSTFIX_DECREMENT -> preValue;
                 default -> postValue;
             };
+        } else if (preValue instanceof BooleanValue) {
+            if (operator == UnaryExpr.Operator.LOGICAL_COMPLEMENT) {
+                if (Objects.equals(preValue, BooleanValue.TRUE)) {
+                    return BooleanValue.FALSE;
+                } else if (Objects.equals(preValue, BooleanValue.FALSE)) {
+                    return BooleanValue.TRUE;
+                } else {
+                    return BooleanValue.ANY_VALUE;
+                }
+            }
+        } else if (preValue instanceof BoxedPrimitive boxedPrimitive) {
+            if (boxedPrimitive.canBeNull()) {
+                arg.addError(new AnalysisError(NullPointerException.class, expr, false));
+            }
+            return unaryOperation(expr, operator, boxedPrimitive.unbox(), arg, true);
+        } else if (Objects.equals(preValue, NullValue.VALUE)) {
+            arg.addError(new AnalysisError(NullPointerException.class, expr, true));
+            arg.getVariablesState().setDomainEmpty();
+            return new EmptyValue();
         }
-        // TODO: booleans
         return preValue.isEmpty() ? new EmptyValue() : new AnyValue();
     }
 

@@ -40,7 +40,12 @@ public abstract class RestrictionVisitor implements OperationVisitor<PossibleVal
 
     @Override
     public PossibleValues visitAbstract(CharValue a, PossibleValues b) {
-        return b.acceptOp(this, b);
+        return b.acceptOp(this, a);
+    }
+
+    @Override
+    public PossibleValues visitAbstract(BooleanValue a, PossibleValues b) {
+        return b.acceptOp(this, a);
     }
 
     @Override
@@ -50,7 +55,7 @@ public abstract class RestrictionVisitor implements OperationVisitor<PossibleVal
 
     @Override
     public PossibleValues visitAbstract(BoxedPrimitive a, PossibleValues b) {
-        return b.acceptOp(this, b);
+        return b.acceptOp(this, a);
     }
 
     @Override
@@ -133,7 +138,17 @@ public abstract class RestrictionVisitor implements OperationVisitor<PossibleVal
 
     @Override
     public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
-        return a;
+        return BoxedPrimitive.create(a.unbox().acceptAbstractOp(this, b.unbox()), false);
+    }
+
+    @Override
+    public PossibleValues visit(BoxedPrimitive a, PrimitiveValue b) {
+        return BoxedPrimitive.create(a.unbox().acceptAbstractOp(this, b), false);
+    }
+
+    @Override
+    public PossibleValues visit(PrimitiveValue a, BoxedPrimitive b) {
+        return a.acceptAbstractOp(this, b.unbox());
     }
 
     @Override

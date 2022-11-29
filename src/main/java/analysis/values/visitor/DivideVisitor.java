@@ -55,4 +55,14 @@ public class DivideVisitor extends AbstractOperationVisitor {
         PairValue<PossibleValues, AnalysisError> p = a.unbox().acceptAbstractOp(this, b.unbox());
         return new PairValue<>(new BoxedPrimitive((PrimitiveValue) p.getA()), p.getB());
     }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(BoxedPrimitive a, PrimitiveValue b) {
+        return a.unbox().acceptAbstractOp(this, b);
+    }
+
+    @Override
+    public PairValue<PossibleValues, AnalysisError> visit(PrimitiveValue a, BoxedPrimitive b) {
+        return a.acceptAbstractOp(this, b.unbox());
+    }
 }

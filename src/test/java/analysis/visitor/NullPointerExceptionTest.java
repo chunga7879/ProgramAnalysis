@@ -3,6 +3,7 @@ package analysis.visitor;
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.EmptyValue;
+import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.Assertions;
@@ -50,6 +51,36 @@ public class NullPointerExceptionTest {
         Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(getVariable(compiled, "g")));
         Assertions.assertEquals(new EmptyValue(), variablesState.getVariable(getVariable(compiled, "h")));
         Assertions.assertEquals(8, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void nullPointerPotentialExceptionOperatorTest() {
+        String code = """
+                public class Main {
+                    int test(@Min(value=10) @Max(value=20)Integer x) {
+                        int a = x + 1;
+                        int b = 1 + x;
+                        int c = 40 / x;
+                        int d = x / 3;
+                        int e = 4 - x;
+                        int f = x - 4;
+                        int g = 3 * x;
+                        int h = x * 3;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(new IntegerRange(11, 21), variablesState.getVariable(getVariable(compiled, "a")));
+        Assertions.assertEquals(new IntegerRange(11, 21), variablesState.getVariable(getVariable(compiled, "b")));
+        Assertions.assertEquals(new IntegerRange(2, 4), variablesState.getVariable(getVariable(compiled, "c")));
+        Assertions.assertEquals(new IntegerRange(3, 6), variablesState.getVariable(getVariable(compiled, "d")));
+        Assertions.assertEquals(new IntegerRange(-16, -6), variablesState.getVariable(getVariable(compiled, "e")));
+        Assertions.assertEquals(new IntegerRange(6, 16), variablesState.getVariable(getVariable(compiled, "f")));
+        Assertions.assertEquals(new IntegerRange(30, 60), variablesState.getVariable(getVariable(compiled, "g")));
+        Assertions.assertEquals(new IntegerRange(30, 60), variablesState.getVariable(getVariable(compiled, "h")));
+        // TODO: should show errors
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
 
     @Test

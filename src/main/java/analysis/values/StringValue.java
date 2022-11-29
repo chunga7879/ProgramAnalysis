@@ -67,6 +67,11 @@ public class StringValue extends ObjectWithNotNullValue {
     }
 
     @Override
+    public <T> T acceptOp(OperationVisitor<T> visitor, BooleanValue a) {
+        return visitor.visit(a, this);
+    }
+
+    @Override
     public ObjectWithNotNullValue copy() {
         return new StringValue(this.min, this.max, this.canBeNull());
     }
