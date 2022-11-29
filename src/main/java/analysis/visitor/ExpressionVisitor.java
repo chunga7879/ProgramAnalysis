@@ -351,6 +351,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
     @Override
     public PossibleValues visit(MethodCallExpr n, ExpressionAnalysisState arg) {
         Optional<Expression> scope = n.getScope();
+        String methodName = n.getName().asString();
 
         // handle method scope if present
         if (scope.isPresent()) {
