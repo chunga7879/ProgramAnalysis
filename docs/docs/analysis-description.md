@@ -21,7 +21,7 @@ Operations will attempt to approximate the potential domain when computes the op
 
 If errors occur in an operation, the domain is restricted to values that would not cause an error. For example, if object can be null after accessing a field inside the object, we will mark a NullPointerException but the domain afterwards will not have null.
 
-For a list of operations, see [Analyzable Java Code/Operations](./valid-code).
+For a list of operations, see [Analyzable Java Code/Operations](/valid-code).
 
 #### Parameters
 Parameters are initialized by their potential domain according to their annotations. Look under **Annotations** section for annotations that are supported.
