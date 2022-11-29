@@ -5,10 +5,6 @@ import analysis.model.ExpressionAnalysisState;
 import analysis.model.VariablesState;
 import analysis.values.*;
 import analysis.values.visitor.*;
-import analysis.values.AnyValue;
-import analysis.values.IntegerRange;
-import analysis.values.PossibleValues;
-import analysis.values.StringValue;
 import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
@@ -28,11 +24,6 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserVariableDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
-import utils.MathUtil;
-import utils.ResolverUtil;
-import utils.ValueUtil;
-import utils.VariableUtil;
-
 import utils.*;
 
 import java.util.*;
@@ -255,6 +246,9 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 return arrayValue.getLength();
             }
         }
+        if (scopeValue.isEmpty()) {
+            return new EmptyValue();
+        }
         // TODO: handle field access default value (+ annotations)
         return ValueUtil.getValueForType(valDec.getType());
     }
@@ -316,8 +310,14 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             Expression object = scope.get();
             PossibleValues objectValue = object.accept(this, arg);
 
+            if (objectValue.isEmpty()) {
+                return new EmptyValue();
+            }
             if (objectValue.canBeNull()) {
                 arg.addError(new AnalysisError(NullPointerException.class, n, objectValue == NullValue.VALUE));
+                if (objectValue instanceof ObjectValue objValue) {
+                    VariableUtil.setVariableFromExpression(object, objValue.withNotNullable(), arg.getVariablesState());
+                }
             }
         }
 
@@ -360,9 +360,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             for (ResolvedType rt: exceptions) {
                 arg.addError(new AnalysisError(rt.describe(), n, false));
             }
+            return ValueUtil.getValueForType(dec.getReturnType(), methodDeclaration.getAnnotations(), this);
         }
 
-        return new AnyValue();
+        return ValueUtil.getValueForType(dec.getReturnType());
     }
 
     @Override

@@ -3,8 +3,7 @@ package analysis.visitor;
 import analysis.model.AnalysisError;
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.NullValue;
-import analysis.values.StringValue;
+import analysis.values.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import logger.AnalysisLogger;
@@ -14,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static analysis.visitor.VisitorTestUtils.*;
+import static analysis.visitor.VisitorTestUtils.compile;
+import static analysis.visitor.VisitorTestUtils.getVariable;
 
 public class MethodCallTest {
     private VariablesState variablesState;
@@ -40,8 +40,30 @@ public class MethodCallTest {
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         VariableDeclarator s = getVariable(compiled, "s");
-        NullValue val = (NullValue) variablesState.getVariable(s);
-        Assertions.assertEquals(NullValue.VALUE, val);
+        VariableDeclarator x = getVariable(compiled, "x");
+        Assertions.assertEquals(EmptyValue.VALUE, variablesState.getVariable(s));
+        Assertions.assertEquals(EmptyValue.VALUE, variablesState.getVariable(x));
+        Assertions.assertEquals(1, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void nullPointerExceptionPossibleTestWithError() {
+        String code = """
+                public class Main {
+                    void test(int a) {
+                        String s;
+                        if (a > 0) s = null;
+                        else s = "hi";
+                        int x = s.length();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        VariableDeclarator s = getVariable(compiled, "s");
+        VariableDeclarator x = getVariable(compiled, "x");
+        Assertions.assertEquals(new StringValue(2, 2, false), variablesState.getVariable(s));
+        Assertions.assertEquals(IntegerRange.ANY_VALUE, variablesState.getVariable(x));
         Assertions.assertEquals(1, analysisState.getErrorMap().size());
     }
 
@@ -394,6 +416,46 @@ public class MethodCallTest {
                 """;
         CompilationUnit compiled = compile(code);
         compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void methodCallReturnTypeTest() {
+        String code = """
+                public class Main {
+                    @Positive
+                    int intMethod() {
+                        return 1;
+                    }
+                    
+                    @NegativeOrZero @NotNull
+                    Integer integerMethod() {
+                        return 0;
+                    }
+                    
+                    @NotEmpty
+                    String stringMethod() {
+                        return "";
+                    }
+                                
+                    void test() {
+                        int a = intMethod();
+                        Integer b = integerMethod();
+                        String c = stringMethod();
+                        char d = c.charAt(0);
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator a = getVariable(compiled, "a");
+        VariableDeclarator b = getVariable(compiled, "b");
+        VariableDeclarator c = getVariable(compiled, "c");
+        VariableDeclarator d = getVariable(compiled, "d");
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(new IntegerRange(1, Integer.MAX_VALUE), variablesState.getVariable(a));
+        Assertions.assertEquals(BoxedPrimitive.create(new IntegerRange(Integer.MIN_VALUE, 0), false), variablesState.getVariable(b));
+        Assertions.assertEquals(new StringValue(1, Integer.MAX_VALUE), variablesState.getVariable(c));
+        Assertions.assertEquals(CharValue.ANY_VALUE, variablesState.getVariable(d));
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
     // endregion ---- annotation tests
