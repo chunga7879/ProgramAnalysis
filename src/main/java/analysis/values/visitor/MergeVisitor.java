@@ -16,9 +16,9 @@ public class MergeVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(CharValue a, CharValue b) {
-        return new IntegerRange(
-                Math.min(a.getMin(), b.getMin()),
-                Math.max(a.getMax(), b.getMax())
+        return new CharValue(
+                (char) Math.min(a.getMin(), b.getMin()),
+                (char) Math.max(a.getMax(), b.getMax())
         );
     }
 
@@ -64,7 +64,10 @@ public class MergeVisitor extends OperationVisitorWithDefault {
 
     @Override
     public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
-        return new BoxedPrimitive((PrimitiveValue) a.unbox().acceptAbstractOp(this, b.unbox()));
+        return new BoxedPrimitive(
+                (PrimitiveValue) a.unbox().acceptAbstractOp(this, b.unbox()),
+                canBeNull(a, b)
+        );
     }
 
     /**

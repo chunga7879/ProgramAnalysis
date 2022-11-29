@@ -4,8 +4,8 @@ import analysis.values.visitor.OperationVisitor;
 
 public class CharValue extends PrimitiveValue {
     public static final CharValue ANY_VALUE = new CharValue(Character.MIN_VALUE, Character.MAX_VALUE);
-    private final int min;
-    private final int max;
+    private final char min;
+    private final char max;
 
     public CharValue(char c) {
         this.min = c;
@@ -70,6 +70,6 @@ public class CharValue extends PrimitiveValue {
 
     @Override
     public String toFormattedString() {
-        return "[" + (this.min == this.max ? this.min : (this.min + "," + this.max)) + "]";
+        return "[" + (this.min == this.max ? this.getMin() : (this.getMin() + "," + this.getMax())) + "]";
     }
 }
