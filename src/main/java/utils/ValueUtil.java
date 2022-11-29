@@ -192,7 +192,7 @@ public final class ValueUtil {
             case "java.lang.Integer" -> BoxedPrimitive.create(getIntegerValue(annotationMap, exprVisitor), !isNotNull);
             case "java.lang.Boolean" -> BoxedPrimitive.create(getValueForType(ResolvedPrimitiveType.BOOLEAN), !isNotNull);
             case "java.lang.Character" -> BoxedPrimitive.create(getValueForType(ResolvedPrimitiveType.CHAR), !isNotNull);
-            default -> AnyValue.VALUE;
+            default -> new ExtendableObjectValue(!isNotNull);
         };
     }
 }

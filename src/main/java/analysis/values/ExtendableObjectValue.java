@@ -4,20 +4,29 @@ package analysis.values;
  * Object values that can have subclasses
  */
 public class ExtendableObjectValue extends ObjectWithNotNullValue {
-    @Override
-    public ObjectWithNotNullValue copy() {
-        return null;
+    public static final ExtendableObjectValue VALUE = new ExtendableObjectValue();
+
+    public ExtendableObjectValue() {
+        super();
+    }
+
+    public ExtendableObjectValue(boolean canBeNull) {
+        super(canBeNull);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        // TODO: implement
-        return false;
+    public ObjectWithNotNullValue copy() {
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o instanceof NullValue;
     }
 
     @Override
     public int hashCode() {
-        // TODO: implement
-        return 0;
+        return 31 * getClass().hashCode();
     }
 }
