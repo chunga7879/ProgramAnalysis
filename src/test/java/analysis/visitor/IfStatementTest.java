@@ -2,6 +2,8 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.BooleanValue;
+import analysis.values.BoxedPrimitive;
 import analysis.values.IntegerRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
@@ -139,9 +141,32 @@ public class IfStatementTest {
     }
 
     @Test
+    public void ifOrTest() {
+        String code = """
+                public class Main {
+                    int test(int x, int y) {
+                        if (x < 10 || y < 10) {
+                            x = x + 2;
+                        }
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        IfStmt ifStatement = getIfStatements(compiled).get(0);
+        Parameter x = getParameter(compiled, "x");
+        Parameter y = getParameter(compiled, "y");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(10, 200));
+        varState.setVariable(y, new IntegerRange(10, 40));
+        ifStatement.accept(new AnalysisVisitor(""), analysisState);
+        Assertions.assertEquals(new IntegerRange(10, 200), varState.getVariable(x));
+        Assertions.assertEquals(new IntegerRange(10, 40), varState.getVariable(y));
+    }
+
+    @Test
     public void ifAndTest() {
-        // TODO: need to compute so that each condition in AND is recomputed
-        //       until it stops changing
         String code = """
                 public class Main {
                     int test(int x, int y) {
@@ -204,17 +229,18 @@ public class IfStatementTest {
     public void assignmentInIfTest() {
         String code = """
                 public class Main {
-                    void test(int x, int y) {
-                        int a = 5;
-                        int b = 5;
-                        int c = 5;
-                        int d = 5;
-                        if ((x = x + 1) == 10 && (y = y + 1) == 10) {
-                            a = x;
-                            b = y;
+                    void test(int x, int y, int z) {
+                        if (++x == 10 && (y = y + 1) == 10) {
+                            int a = x;
+                            int b = y;
                         } else {
-                            c = x;
-                            d = y;
+                            int c = x;
+                            int d = y;
+                        }
+                        if (++z >= 0 || ++z < 0) {
+                            int e = z;
+                        } else {
+                            int f = z;
                         }
                     }
                 }
@@ -227,14 +253,45 @@ public class IfStatementTest {
         VariableDeclarator b = getVariable(compiled, "b");
         VariableDeclarator c = getVariable(compiled, "c");
         VariableDeclarator d = getVariable(compiled, "d");
+        VariableDeclarator e = getVariable(compiled, "e");
+        VariableDeclarator f = getVariable(compiled, "f");
         VariablesState varState = new VariablesState();
         AnalysisState analysisState = new AnalysisState(varState);
         varState.setVariable(x, new IntegerRange(0, 20));
         varState.setVariable(y, new IntegerRange(0, 20));
         block.accept(new AnalysisVisitor(""), analysisState);
-        Assertions.assertEquals(new IntegerRange(1, 21), varState.getVariable(a));
-        Assertions.assertEquals(new IntegerRange(1, 21), varState.getVariable(b));
+        Assertions.assertEquals(new IntegerRange(10), varState.getVariable(a));
+        Assertions.assertEquals(new IntegerRange(10), varState.getVariable(b));
         Assertions.assertEquals(new IntegerRange(1, 21), varState.getVariable(c));
         Assertions.assertEquals(new IntegerRange(0, 21), varState.getVariable(d));
+        Assertions.assertEquals(new IntegerRange(Integer.MIN_VALUE + 1, Integer.MAX_VALUE), varState.getVariable(e));
+        Assertions.assertEquals(new IntegerRange(0), varState.getVariable(f));
+    }
+
+    @Test
+    public void ifBooleanTest() {
+        String code = """
+                public class Main {
+                    void test(Boolean x) {
+                        boolean a = true;
+                        boolean b = false;
+                        if ((a = false) || (b == false && x == true)) {
+                            boolean c = x;
+                        }
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        VariableDeclarator a = getVariable(compiled,"a");
+        VariableDeclarator b = getVariable(compiled,"b");
+        VariableDeclarator c = getVariable(compiled,"c");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(BoxedPrimitive.create(BooleanValue.ANY_VALUE, false), varState.getVariable(x));
+        Assertions.assertEquals(BooleanValue.FALSE, varState.getVariable(a));
+        Assertions.assertEquals(BooleanValue.FALSE, varState.getVariable(b));
+        Assertions.assertEquals(BooleanValue.TRUE, varState.getVariable(c));
     }
 }
