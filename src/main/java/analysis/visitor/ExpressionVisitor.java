@@ -316,7 +316,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         boolean castCharToInt = Objects.equals(castType.describe(), "int")
                 && Objects.equals(exprType.describe(), "char");
 
-        if (!castType.isAssignableBy(exprType) && !castIntToChar && !castCharToInt) {
+        if (!castType.isAssignableBy(exprType) && !castIntToChar) {
             arg.addError(new AnalysisError(ClassCastException.class, n, true));
             return new EmptyValue();
         }
