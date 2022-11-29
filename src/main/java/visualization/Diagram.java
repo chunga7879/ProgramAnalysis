@@ -4,6 +4,7 @@ import net.sourceforge.plantuml.SourceStringReader;
 
 import java.io.*;
 import java.util.List;
+import java.util.Objects;
 
 public class Diagram {
 
@@ -21,7 +22,10 @@ public class Diagram {
     }
 
     public void addEndDiagramNode() {
-        diagramString.append("stop\n");
+        String[] diagram = getDiagramString().split("\n");
+        if (diagram.length > 0 && !Objects.equals(diagram[diagram.length - 1], "stop")) {
+            diagramString.append("stop\n");
+        }
         diagramString.append("@enduml");
     }
 
@@ -59,6 +63,11 @@ public class Diagram {
 
     public void addIfEndNode() {
         diagramString.append("endif\n");
+    }
+
+    public void addReturnNode(DiagramNode returnNode) {
+        addNode(returnNode);
+        diagramString.append("stop\n");
     }
 
     /**
