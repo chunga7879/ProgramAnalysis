@@ -14,9 +14,11 @@ public class Main {
     }
 }
 ```
-![Example PlantUML](images/null-error.png)
 
 1. `x` is potentially `null` here
+
+![Example PlantUML](images/null-error.png)
+
 
 Fix this error by assigning a non null value:
 ```java hl_lines="3"
