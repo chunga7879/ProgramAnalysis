@@ -26,7 +26,7 @@ After the If-Else block, it will merge the potential domains of both the branche
 
 #### Loops
 When our analysis encounters a loop, it will repeatedly execute the body of the loop for a fixed number of runs.
-If the loop continues to execute more than the fixed number, it will begin to approximate the rest of the loop iterations.
+If the analysis recognizes that the loop continues to execute more than the fixed number, it will begin to approximate the rest of the loop iterations.
 
 During the approximation, the potential domains of the run is a merged domain of every loop run so far. In addition, certain operators will approximate up to the limit of the type's domain.
 
