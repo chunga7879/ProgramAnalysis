@@ -68,7 +68,7 @@ public class WhileStatementTest {
         varState.setVariable(b, new AnyValue());
         whileStatement.accept(new AnalysisVisitor(""), analysisState);
         Assertions.assertEquals(new IntegerRange(30, Integer.MAX_VALUE), varState.getVariable(a));
-        Assertions.assertEquals(new AnyValue(), varState.getVariable(b));
+        Assertions.assertEquals(new IntegerRange(50, Integer.MAX_VALUE), varState.getVariable(b));
     }
 
     @Test
