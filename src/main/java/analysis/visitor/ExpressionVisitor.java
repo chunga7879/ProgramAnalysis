@@ -135,7 +135,10 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         PossibleValues validIndex = indexValue.acceptAbstractOp(restrictGTEVisitor, new IntegerRange(0));
         validIndex = validIndex.acceptAbstractOp(restrictLTVisitor, length);
         PossibleValues validLength = length.acceptAbstractOp(restrictGTVisitor, validIndex);
-        if (!Objects.equals(indexValue, validIndex)) {
+
+        PossibleValues lessThanZeroIndex = indexValue.acceptAbstractOp(restrictLTVisitor, new IntegerRange(0));
+        PossibleValues greaterThanLengthIndex = indexValue.acceptAbstractOp(restrictGTEVisitor, length);
+        if (!lessThanZeroIndex.isEmpty() || !greaterThanLengthIndex.isEmpty()) {
             arg.addError(new AnalysisError(ArrayIndexOutOfBoundsException.class, n, validIndex.isEmpty()));
         }
 
