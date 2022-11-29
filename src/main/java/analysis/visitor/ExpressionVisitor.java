@@ -311,13 +311,37 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         ResolvedType castType = n.getType().resolve();
         ResolvedType exprType = n.getExpression().calculateResolvedType();
 
-        // check cast both ways
-        if (!(exprType.isAssignableBy(castType) || castType.isAssignableBy(exprType))) {
+        boolean castIntToChar = Objects.equals(castType.describe(), "char")
+                && Objects.equals(exprType.describe(), "int");
+        boolean castCharToInt = Objects.equals(castType.describe(), "int")
+                && Objects.equals(exprType.describe(), "char");
+
+        if (!castType.isAssignableBy(exprType) && !castIntToChar) {
             arg.addError(new AnalysisError(ClassCastException.class, n, true));
             return new EmptyValue();
         }
 
-        return n.getExpression().accept(this, arg);
+        PossibleValues exprVal = n.getExpression().accept(this, arg);
+
+        // do not perform cast if expression is empty
+        if (exprVal.isEmpty()) {
+            return new EmptyValue();
+        }
+
+        // int to char
+        if (castIntToChar) {
+            IntegerValue val = (IntegerValue) exprVal;
+            return new CharValue((char) val.getMin(), (char) val.getMax());
+        }
+
+        // char to int
+        if (castCharToInt) {
+            CharValue val = (CharValue) exprVal;
+            return new IntegerRange(val.getMin(), val.getMax());
+        }
+
+        // object to object, other
+        return exprVal;
     }
 
     @Override
@@ -540,7 +564,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
                 assert n.getArguments().size() == 1;
                 return BoxedPrimitive.create(n.getArguments().get(0).accept(this, arg), false);
             default:
-                return new AnyValue();
+                return ExtendableObjectValue.VALUE;
         }
     }
 

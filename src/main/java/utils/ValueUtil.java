@@ -41,7 +41,7 @@ public final class ValueUtil {
                 case "java.lang.Integer" -> BoxedPrimitive.create(IntegerRange.ANY_VALUE, true);
                 case "java.lang.Boolean" -> BoxedPrimitive.create(BooleanValue.ANY_VALUE, true);
                 case "java.lang.Character" -> BoxedPrimitive.create(CharValue.ANY_VALUE, true);
-                default -> AnyValue.VALUE;
+                default -> ExtendableObjectValue.VALUE;
             };
         }
         return AnyValue.VALUE;
@@ -164,7 +164,7 @@ public final class ValueUtil {
             case "java.lang.Integer" -> BoxedPrimitive.create(getIntegerValue(annotationMap, exprVisitor), !isNotNull);
             case "java.lang.Boolean" -> BoxedPrimitive.create(getValueForType(ResolvedPrimitiveType.BOOLEAN), !isNotNull);
             case "java.lang.Character" -> BoxedPrimitive.create(getValueForType(ResolvedPrimitiveType.CHAR), !isNotNull);
-            default -> AnyValue.VALUE;
+            default -> new ExtendableObjectValue(!isNotNull);
         };
     }
 
