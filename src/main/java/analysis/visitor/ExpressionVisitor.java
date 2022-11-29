@@ -449,7 +449,7 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             Expression object = scope.get();
             PossibleValues scopeValue = object.accept(this, arg);
 
-            if (!isStatic) {
+            if (!object.isThisExpr() && !isStatic) {
                 if (scopeValue.isEmpty()) {
                     return new EmptyValue();
                 }

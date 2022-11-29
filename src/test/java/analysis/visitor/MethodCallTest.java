@@ -579,12 +579,14 @@ public class MethodCallTest {
     }
 
     @Test
-    public void noNullPointerOnStaticCall() {
+    public void noNullPointerOnStaticOrThisCall() {
         String code = """
                 public class Main {
-                    public static void foo() {}                                
+                    public static void foo() {}      
+                    public void foo2() {}                          
                     void test() {
                         Main.foo();
+                        this.foo2();
                     }
                 }
                 """;
