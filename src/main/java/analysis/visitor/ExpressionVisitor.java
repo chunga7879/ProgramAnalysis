@@ -229,8 +229,12 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         ResolvedType castType = n.getType().resolve();
         ResolvedType exprType = n.getExpression().calculateResolvedType();
 
-        // check cast both ways
-        if (!(exprType.isAssignableBy(castType) || castType.isAssignableBy(exprType))) {
+        boolean castIntToChar = Objects.equals(castType.describe(), "char")
+                && Objects.equals(exprType.describe(), "int");
+        boolean castCharToInt = Objects.equals(castType.describe(), "int")
+                && Objects.equals(exprType.describe(), "char");
+
+        if (!castType.isAssignableBy(exprType) && !castIntToChar && !castCharToInt) {
             arg.addError(new AnalysisError(ClassCastException.class, n, true));
             return new EmptyValue();
         }
@@ -242,14 +246,14 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
             return new EmptyValue();
         }
 
-        // char to int
-        if (Objects.equals(castType.describe(), "char") && Objects.equals(exprType.describe(), "int")) {
+        // int to char
+        if (castIntToChar) {
             IntegerValue val = (IntegerValue) exprVal;
             return new CharValue((char) val.getMin(), (char) val.getMax());
         }
 
-        // int to char
-        if (Objects.equals(castType.describe(), "int") && Objects.equals(exprType.describe(), "char")) {
+        // char to int
+        if (castCharToInt) {
             CharValue val = (CharValue) exprVal;
             return new IntegerRange(val.getMin(), val.getMax());
         }
