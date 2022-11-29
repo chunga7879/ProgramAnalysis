@@ -7,6 +7,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.AssignExpr;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
@@ -78,5 +79,15 @@ public final class VisitorTestUtils {
                 x instanceof ExpressionStmt expressionStmt &&
                         expressionStmt.getExpression() instanceof VariableDeclarationExpr varDecExpr &&
                         varDecExpr.getVariables().stream().anyMatch(v -> Objects.equals(v.getNameAsString(), decName)));
+    }
+
+    public static Set<AnalysisError> getVariableAssignmentErrors(
+            Map<Node, Set<AnalysisError>> errorMap,
+            String targetName
+    ) {
+        return getErrors(errorMap, (x) ->
+                x instanceof ExpressionStmt expressionStmt &&
+                        expressionStmt.getExpression() instanceof AssignExpr assign &&
+                        assign.getTarget().isNameExpr() && Objects.equals(assign.getTarget().asNameExpr().getNameAsString(), targetName));
     }
 }

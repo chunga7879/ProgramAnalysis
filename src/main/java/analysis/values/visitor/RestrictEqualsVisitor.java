@@ -40,18 +40,6 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
     }
 
     @Override
-    public PossibleValues visit(PossibleValues a, StringValue b) {
-        if (a instanceof IntegerValue) return new EmptyValue(); // handle this better
-        return a;
-    }
-
-    @Override
-    public PossibleValues visit(StringValue a, PossibleValues b) {
-        if (b instanceof IntegerValue) return new EmptyValue(); // handle this better
-        return a;
-    }
-
-    @Override
     public PossibleValues visit(NullValue a, ObjectValue b) {
         if (b.canBeNull()) return a;
         return new EmptyValue();
@@ -67,5 +55,17 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
     public PossibleValues visit(ArrayValue a, ArrayValue b) {
         // To do this properly, you'd need to keep track of potential pointer values
         return a;
+    }
+
+    @Override
+    public PossibleValues visit(NullValue a, PossibleValues b) {
+        if (b.canBeNull()) return a;
+        return EmptyValue.VALUE;
+    }
+
+    @Override
+    public PossibleValues visit(PossibleValues a, NullValue b) {
+        if (a.canBeNull()) return b;
+        return EmptyValue.VALUE;
     }
 }

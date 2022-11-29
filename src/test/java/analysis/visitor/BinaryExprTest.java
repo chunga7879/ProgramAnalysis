@@ -2,8 +2,10 @@ package analysis.visitor;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
+import analysis.values.BoxedPrimitive;
 import analysis.values.EmptyValue;
 import analysis.values.IntegerRange;
+import analysis.values.StringValue;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -23,7 +25,7 @@ public class BinaryExprTest {
     public void runBefore() {
         variablesState = new NonEmptyVariablesState();
         analysisState = new AnalysisState(variablesState);
-        AnalysisLogger.setLog(false);
+        AnalysisLogger.setLog(true);
     }
 
     @Test
@@ -43,6 +45,82 @@ public class BinaryExprTest {
         Assertions.assertEquals(100 + 200, sum.getMin());
         Assertions.assertEquals(100 + 200, sum.getMax());
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
+
+    @Test
+    public void integerAddTest() {
+        String code = """
+                public class Main {
+                    private Integer intField = 123;
+                    void test(@Max(value=10) @Min(value=-20) Integer intParam) {
+                        Integer a = null;
+                        Integer b = 123;
+                        Integer c = intField;
+                        Integer x = a + a; 
+                        Integer y = b - c; 
+                        
+                        Integer h = null;
+                        Integer j = intField;
+                        Integer k = intParam;
+                        int z = 3 * h;
+                        char v = j / 5;
+                        int w = -40;
+                        w *= k;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator a = getVariable(compiled, "a");
+        VariableDeclarator b = getVariable(compiled, "b");
+        VariableDeclarator c = getVariable(compiled, "c");
+        VariableDeclarator h = getVariable(compiled, "h");
+        VariableDeclarator j = getVariable(compiled, "j");
+        VariableDeclarator x = getVariable(compiled, "x");
+        VariableDeclarator y = getVariable(compiled, "y");
+        VariableDeclarator z = getVariable(compiled, "z");
+        VariableDeclarator v = getVariable(compiled, "v");
+        VariableDeclarator w = getVariable(compiled, "w");
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(EmptyValue.VALUE, variablesState.getVariable(a));
+        Assertions.assertEquals(BoxedPrimitive.create(new IntegerRange(123), false), variablesState.getVariable(b));
+        Assertions.assertEquals(BoxedPrimitive.create(IntegerRange.ANY_VALUE, false), variablesState.getVariable(c));
+        Assertions.assertEquals(EmptyValue.VALUE, variablesState.getVariable(h));
+        Assertions.assertEquals(BoxedPrimitive.create(IntegerRange.ANY_VALUE, false), variablesState.getVariable(j));
+        Assertions.assertEquals(EmptyValue.VALUE, variablesState.getVariable(x));
+        Assertions.assertEquals(BoxedPrimitive.create(new IntegerRange(123 - Integer.MAX_VALUE, Integer.MAX_VALUE), false), variablesState.getVariable(y));
+        Assertions.assertEquals(EmptyValue.VALUE, variablesState.getVariable(z));
+        Assertions.assertEquals(new IntegerRange(Integer.MIN_VALUE / 5, Integer.MAX_VALUE / 5), variablesState.getVariable(v));
+        Assertions.assertEquals(new IntegerRange(-400, 800), variablesState.getVariable(w));
+        Assertions.assertEquals(5, analysisState.getErrorMap().size());
+        Assertions.assertEquals(1, getVariableDeclarationErrors(analysisState.getErrorMap(), "x").size());
+        Assertions.assertEquals(1, getVariableDeclarationErrors(analysisState.getErrorMap(), "y").size());
+        Assertions.assertEquals(1, getVariableDeclarationErrors(analysisState.getErrorMap(), "z").size());
+        Assertions.assertEquals(1, getVariableDeclarationErrors(analysisState.getErrorMap(), "v").size());
+        Assertions.assertEquals(1, getVariableAssignmentErrors(analysisState.getErrorMap(), "w").size());
+    }
+
+    @Test
+    public void stringAddTest() {
+        String code = """
+                public class Main {
+                    int test() {
+                        String a = null;
+                        String b = "hello";
+                        String x = a + a; 
+                        String y = a + b; 
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariableDeclarator x = getVariable(compiled, "x");
+        VariableDeclarator y = getVariable(compiled, "y");
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        String stringNull = null;
+        String stringHello = "hello";
+        String xExpected = stringNull + stringNull;
+        String yExpected = stringNull + stringHello;
+        Assertions.assertEquals(new StringValue(xExpected.length(), xExpected.length(), false), variablesState.getVariable(x));
+        Assertions.assertEquals(new StringValue(yExpected.length(), yExpected.length(), false), variablesState.getVariable(y));
     }
 
     @Test
