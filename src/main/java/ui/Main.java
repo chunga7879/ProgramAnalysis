@@ -10,20 +10,28 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import logger.AnalysisLogger;
+import visualization.model.VisualizationState;
+import visualization.visitor.VisualizationVisitor;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) throw new IOException("Requires: [Java file path] [Method name] -d");
+        if (args.length < 2) throw new IOException("Requires: [Java file path] [Method name] [Output file path (optional)] -d");
         String filePath = args[0];
         String method = args[1];
-        if (args.length >= 3 && Objects.equals(args[2], "-d")) AnalysisLogger.setLog(true);
+        String output = "output.png";
+        if (args.length >= 3) {
+            if (!args[2].startsWith("-")) output = args[2];
+            Set<String> otherArgs = Set.of(Arrays.copyOfRange(args, 2, args.length));
+            if (otherArgs.contains("-d")) AnalysisLogger.setLog(true);
+        }
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(new ReflectionTypeSolver()));
         CompilationUnit compilationUnit;
         try {
@@ -36,7 +44,9 @@ public class Main {
                 AnalysisState analysisState = new AnalysisState(new VariablesState());
                 compilationUnit.accept(new AnalysisVisitor(method), analysisState);
                 System.out.println("Finished analysis");
-                // TODO: compilationUnit.accept(new VisualizationVisitor(), new VisualizationState(analysisState.getErrorMap()));
+                VisualizationState visualizationState = new VisualizationState(analysisState.getErrorMap());
+                compilationUnit.accept(new VisualizationVisitor(method), visualizationState);
+                visualizationState.diagram.createDiagramPNG(output);
             } catch (Exception e) {
                 System.err.println("Analysis error: " + e.getMessage());
             }
