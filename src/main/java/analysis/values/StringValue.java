@@ -96,4 +96,17 @@ public class StringValue extends ObjectWithNotNullValue {
         result = 31 * result + max;
         return result;
     }
+
+    public PossibleValues getLengthApproximation() {
+        return new IntegerRange(min, max);
+    }
+
+    public PossibleValues getIsEmptyApproximation() {
+        boolean canBeTrue = (0 >= min && 0 <= max);
+        boolean canBeFalse = canBeTrue;
+        if (min == 0 && max == 0) {
+            canBeFalse = false;
+        }
+        return new BooleanValue(canBeTrue, canBeFalse);
+    }
 }

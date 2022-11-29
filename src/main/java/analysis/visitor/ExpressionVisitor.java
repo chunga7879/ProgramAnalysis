@@ -306,15 +306,22 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         // handle method scope if present
         if (scope.isPresent()) {
             Expression object = scope.get();
-            PossibleValues objectValue = object.accept(this, arg);
+            PossibleValues scopeValue = object.accept(this, arg);
 
-            if (objectValue.isEmpty()) {
+            if (scopeValue.isEmpty()) {
                 return new EmptyValue();
             }
-            if (objectValue.canBeNull()) {
-                arg.addError(new AnalysisError(NullPointerException.class, n, objectValue == NullValue.VALUE));
-                if (objectValue instanceof ObjectValue objValue) {
+            if (scopeValue.canBeNull()) {
+                arg.addError(new AnalysisError(NullPointerException.class, n, scopeValue == NullValue.VALUE));
+                if (scopeValue instanceof ObjectValue objValue) {
                     VariableUtil.setVariableFromExpression(object, objValue.withNotNullable(), arg.getVariablesState());
+                }
+            }
+            if (scopeValue instanceof StringValue stringValue) {
+                if (methodName.equals("length")) {
+                    return stringValue.getLengthApproximation();
+                } else if (methodName.equals("isEmpty")) {
+                    return stringValue.getIsEmptyApproximation();
                 }
             }
         }
