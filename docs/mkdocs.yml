@@ -20,6 +20,8 @@ markdown_extensions:
 nav:
   - index.md
   - Getting Started: getting-started.md
+  - Analyzable Java Code: valid-code.md
+  - How It Works: analysis-description.md
   - Annotations:
       - Arrays: annotations/arrays.md
       - Numbers: annotations/numbers.md
