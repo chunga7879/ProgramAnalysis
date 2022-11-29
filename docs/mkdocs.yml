@@ -1,6 +1,5 @@
 ---
 site_name: Runtime Error Detector
-site_dir: ../docs/
 theme:
   name: material
   features:
