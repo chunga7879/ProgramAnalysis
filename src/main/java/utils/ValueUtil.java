@@ -1,9 +1,10 @@
 package utils;
 
-import analysis.model.ExpressionAnalysisState;
-import analysis.model.VariablesState;
 import analysis.values.*;
-import analysis.values.visitor.*;
+import analysis.values.visitor.RestrictGreaterThanOrEqualVisitor;
+import analysis.values.visitor.RestrictGreaterThanVisitor;
+import analysis.values.visitor.RestrictLessThanOrEqualVisitor;
+import analysis.values.visitor.RestrictLessThanVisitor;
 import analysis.visitor.ExpressionVisitor;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
@@ -14,6 +15,9 @@ import utils.AnnotationUtil.AnnotationType;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static utils.AnnotationUtil.restrictValueWithExpressions;
+import static utils.AnnotationUtil.restrictValuesWithAnnotationParameters;
 
 public final class ValueUtil {
 
@@ -61,38 +65,6 @@ public final class ValueUtil {
             return getObjectValue(annotationMap, type, exprVisitor);
         }
         return AnyValue.VALUE;
-    }
-
-    /**
-     * Restrict value with annotation param value
-     */
-    private static PossibleValues restrictValuesWithAnnotationParameters(
-            Set<AnnotationExpr> annotations,
-            ExpressionVisitor exprVisitor,
-            PossibleValues originalValue,
-            String paramName,
-            RestrictionVisitor restrictionVisitor
-    ) {
-        if (originalValue.isEmpty()) return originalValue;
-        List<Expression> valueExprs = AnnotationUtil.getAnnotationParameterValue(annotations, paramName);
-        return restrictValueWithExpressions(originalValue, restrictionVisitor, valueExprs, exprVisitor);
-    }
-
-    /**
-     * Restrict value with expressions
-     */
-    private static PossibleValues restrictValueWithExpressions(
-            PossibleValues originalValue,
-            RestrictionVisitor restrictionVisitor,
-            List<Expression> valueExprs,
-            ExpressionVisitor exprVisitor
-    ) {
-        if (originalValue.isEmpty()) return originalValue;
-        for (Expression valueExpr : valueExprs) {
-            PossibleValues val = valueExpr.accept(exprVisitor, new ExpressionAnalysisState(new VariablesState()));
-            originalValue = originalValue.acceptAbstractOp(restrictionVisitor, val);
-        }
-        return originalValue;
     }
 
     /**
