@@ -107,7 +107,12 @@ public class StringValue extends ObjectWithNotNullValue {
     }
 
     public PossibleValues getIsEmptyApproximation() {
-        boolean canBeTrue = (0 >= min && 0 <= max);
-        return new BooleanValue(canBeTrue, !canBeTrue);
+        if (min == 0 && max == 0) {
+            return new BooleanValue(true, false);
+        }
+        if (0 >= min && 0 <= max) {
+            return new BooleanValue(true, true);
+        }
+        return new BooleanValue(false, true);
     }
 }

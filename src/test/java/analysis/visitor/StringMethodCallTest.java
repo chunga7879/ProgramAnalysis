@@ -63,7 +63,7 @@ public class StringMethodCallTest {
                         String b = "str";
                         boolean x = a.isEmpty();
                         boolean y = b.isEmpty();
-                        boolean c = c.isEmpty();
+                        boolean z = c.isEmpty();
                     }
                 }
                 """;
