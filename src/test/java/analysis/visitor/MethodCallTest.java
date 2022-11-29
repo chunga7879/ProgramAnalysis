@@ -577,5 +577,20 @@ public class MethodCallTest {
         Assertions.assertEquals(CharValue.ANY_VALUE, variablesState.getVariable(d));
         Assertions.assertEquals(0, analysisState.getErrorMap().size());
     }
+
+    @Test
+    public void noNullPointerOnStaticCall() {
+        String code = """
+                public class Main {
+                    public static void foo() {}                                
+                    void test() {
+                        Main.foo();
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(0, analysisState.getErrorMap().size());
+    }
     // endregion ---- annotation tests
 }
