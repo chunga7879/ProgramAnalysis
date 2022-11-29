@@ -92,6 +92,7 @@ public class ArrayVisitorTest {
         Assertions.assertEquals(IntegerRange.ANY_VALUE, bValue);
         Assertions.assertEquals(IntegerRange.ANY_VALUE, cValue);
         Assertions.assertEquals(new IntegerRange(7, 10), dValue);
+        Assertions.assertEquals(3, analysisState.getErrorMap().size());
     }
 
     @Test
