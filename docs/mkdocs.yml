@@ -36,6 +36,7 @@ nav:
       - ClassCastException: potential-errors/ClassCastException.md
       - NegativeArraySizeException: potential-errors/NegativeArraySizeException.md
       - NullPointerException: potential-errors/NullPointerException.md
+      - Annotation Errors: potential-errors/AnnotationError.md
   - Examples:
-    - Annotation: examples/annotation.md
-    - Binary Search: examples/binary-search.md
+      - Annotation: examples/annotation.md
+      - Binary Search: examples/binary-search.md
