@@ -51,11 +51,21 @@ public class Diagram {
      * @param node Node that represents the diagram node. The node's statement should just be the conditional.
      */
     public void addIfThenStartNode(DiagramNode node) {
-        if (!node.errors().isEmpty()) addNode(node);
+        if (!node.errors().isEmpty()) {
+            if (node.errorType() == ErrorType.POTENTIAL) {
+                diagramString.append("#Orange:");
+            } else {
+                diagramString.append("#Red:");
+            }
+        }
+
         String conditional = "if (" + node.statement() + ") then (true)\n";
-//        DiagramNode conditionalNode = new DiagramNode(conditional, node.error(), node.errorDescription());
-//        addNode(conditionalNode);
+
         diagramString.append(conditional);
+
+        if (!node.errors().isEmpty()) {
+            addErrorInsightNote(node.errors());
+        }
     }
 
     public void addIfElseNode() {
