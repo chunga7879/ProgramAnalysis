@@ -49,4 +49,20 @@ public class ConditionalExprTest {
         Assertions.assertEquals(new IntegerRange(3, 17), varState.getVariable(y));
         Assertions.assertEquals(new IntegerRange(2, 100), varState.getVariable(z));
     }
+
+    @Test
+    public void conditionExprErrorsTest() {
+        String code = """
+                public class Main {
+                    void test(String a, String b, String c, String d) {
+                        int z = a.length() > 0 && b.length < 20 ? c.length() : d.length();                
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(4, analysisState.getErrorMap().entrySet().stream().iterator().next().getValue().size());
+    }
 }

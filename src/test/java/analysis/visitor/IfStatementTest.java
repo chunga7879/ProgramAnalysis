@@ -316,4 +316,23 @@ public class IfStatementTest {
         compiled.accept(new AnalysisVisitor("test"), analysisState);
         Assertions.assertEquals(2, analysisState.getErrorMap().size());
     }
+
+    @Test
+    public void ifConditionErrorTest() {
+        String code = """
+                public class Main {
+                    int test(Integer x, @Size(Max = 14) String a) {
+                        if (x > 5 || a.length() == 2) {
+                            return x + 1;
+                        }
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        compiled.accept(new AnalysisVisitor("test"), analysisState);
+        Assertions.assertEquals(2, analysisState.getErrorMap().entrySet().iterator().next().getValue().size());
+    }
 }

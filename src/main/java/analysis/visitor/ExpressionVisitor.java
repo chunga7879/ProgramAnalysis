@@ -364,6 +364,8 @@ public class ExpressionVisitor implements GenericVisitor<PossibleValues, Express
         if (!trueVarState.isDomainEmpty()) mergedState.copyValuesFrom(trueVarState);
         if (!falseVarState.isDomainEmpty()) mergedState.merge(mergeVisitor, falseVarState);
         arg.getVariablesState().copyValuesFrom(mergedState);
+        arg.addErrors(trueState);
+        arg.addErrors(falseState);
         if (!trueVarState.isDomainEmpty() && !falseVarState.isDomainEmpty()) {
             return trueValue.acceptAbstractOp(mergeVisitor, falseValue);
         } else if (!trueVarState.isDomainEmpty()) {

@@ -68,4 +68,9 @@ public class RestrictEqualsVisitor extends RestrictionVisitor {
         if (a.canBeNull()) return b;
         return EmptyValue.VALUE;
     }
+
+    @Override
+    public PossibleValues visit(BoxedPrimitive a, BoxedPrimitive b) {
+        return BoxedPrimitive.create(a.unbox().acceptAbstractOp(this, b.unbox()), a.canBeNull() && b.canBeNull());
+    }
 }

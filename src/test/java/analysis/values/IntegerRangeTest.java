@@ -9,6 +9,7 @@ public class IntegerRangeTest {
     private MergeVisitor mergeVisitor;
     private AddVisitor addVisitor;
     private SubtractVisitor subtractVisitor;
+    private RestrictEqualsVisitor restrictEQVisitor;
     private RestrictGreaterThanVisitor restrictGTVisitor;
     private RestrictLessThanOrEqualVisitor restrictLTEVisitor;
 
@@ -17,6 +18,7 @@ public class IntegerRangeTest {
         mergeVisitor = new MergeVisitor();
         addVisitor = new AddVisitor();
         subtractVisitor = new SubtractVisitor();
+        restrictEQVisitor = new RestrictEqualsVisitor();
         restrictGTVisitor = new RestrictGreaterThanVisitor();
         restrictLTEVisitor = new RestrictLessThanOrEqualVisitor();
     }
@@ -31,6 +33,10 @@ public class IntegerRangeTest {
 
     public PossibleValues subtract(PossibleValues a, PossibleValues b) {
         return a.acceptAbstractOp(subtractVisitor, b);
+    }
+
+    public PossibleValues restrictEQ(PossibleValues a, PossibleValues b) {
+        return a.acceptAbstractOp(restrictEQVisitor, b);
     }
 
     public PossibleValues restrictGT(PossibleValues a, PossibleValues b) {
@@ -141,5 +147,26 @@ public class IntegerRangeTest {
         BoxedPrimitive ab = (BoxedPrimitive) merge(a, b);
         Assertions.assertEquals(1, ((IntegerRange) ab.unbox()).getMin());
         Assertions.assertEquals(20, ((IntegerRange) ab.unbox()).getMax());
+    }
+
+    @Test
+    public void boxedIntegerEquals() {
+        BoxedPrimitive a = new BoxedPrimitive(new IntegerRange(1, 20), true);
+        BoxedPrimitive b = new BoxedPrimitive(new IntegerRange(2, 27), true);
+        BoxedPrimitive c = new BoxedPrimitive(new IntegerRange(-4, 16), false);
+        BoxedPrimitive d = new BoxedPrimitive(new IntegerRange(-40, -20), true);
+        IntegerValue e = new IntegerRange(14, 200);
+        PossibleValues ab = restrictEQ(a, b);
+        PossibleValues bc = restrictEQ(b, c);
+        PossibleValues cd = restrictEQ(c, d);
+        PossibleValues ce = restrictEQ(c, e);
+        PossibleValues an = restrictEQ(a, NullValue.VALUE);
+        PossibleValues cn = restrictEQ(c, NullValue.VALUE);
+        Assertions.assertEquals(BoxedPrimitive.create(new IntegerRange(2, 20), true), ab);
+        Assertions.assertEquals(BoxedPrimitive.create(new IntegerRange(2, 16), false), bc);
+        Assertions.assertEquals(EmptyValue.VALUE, cd);
+        Assertions.assertEquals(BoxedPrimitive.create(new IntegerRange(14, 16), false), ce);
+        Assertions.assertEquals(NullValue.VALUE, an);
+        Assertions.assertEquals(EmptyValue.VALUE, cn);
     }
 }
