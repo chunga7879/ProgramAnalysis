@@ -2,7 +2,6 @@ package visualization;
 
 import analysis.model.AnalysisState;
 import analysis.model.VariablesState;
-import analysis.values.ArrayValue;
 import analysis.values.IntegerRange;
 import analysis.visitor.AnalysisVisitor;
 import com.github.javaparser.ast.CompilationUnit;
@@ -10,14 +9,13 @@ import com.github.javaparser.ast.body.Parameter;
 import logger.AnalysisLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import visualization.Diagram;
 import visualization.model.VisualizationState;
 import visualization.visitor.VisualizationVisitor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.PositiveOrZero;
 
-import static analysis.visitor.VisitorTestUtils.*;
+import static analysis.visitor.VisitorTestUtils.compile;
 import static analysis.visitor.VisitorTestUtils.getParameter;
 
 public class VisualizationTest {
@@ -143,6 +141,36 @@ public class VisualizationTest {
         vv.visit(compiled, visualizationState);
 
         visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testIfStmtTwo.png");
+    }
+
+    @Test
+    public void testIfStmtThree() {
+        String code = """
+                public class Main {
+                    int test(Integer x, Integer y) {
+                        if (x == y && x >= 0) {
+                            x = x + 2;
+                        }
+                        return x;
+                    }
+                }
+                """;
+        CompilationUnit compiled = compile(code);
+        Parameter x = getParameter(compiled, "x");
+        Parameter y = getParameter(compiled, "y");
+        VariablesState varState = new VariablesState();
+        AnalysisState analysisState = new AnalysisState(varState);
+        varState.setVariable(x, new IntegerRange(-33, 115));
+        varState.setVariable(y, new IntegerRange(-5, 300));
+        VisualizationState visualizationState = new VisualizationState(new Diagram(), analysisState.getErrorMap());
+
+        AnalysisVisitor av = new AnalysisVisitor("test");
+        VisualizationVisitor vv = new VisualizationVisitor("test");
+
+        av.visit(compiled, analysisState);
+        vv.visit(compiled, visualizationState);
+
+        visualizationState.getDiagram().createDiagramPNG("src/test/java/visualization/outputs/testIfStmtThree.png");
     }
 
     @Test
